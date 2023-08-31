@@ -93,7 +93,7 @@ impl<'a> CwIbcCoreContext<'a> {
         self.validate_packet_not_expired(packet, current_host_height, current_host_timestamp)?;
 
         let client_id = connection_end.client_id();
-        let client_state = self.client_state(deps.storage, client_id)?;
+        let client_state = self.client_state(deps.as_ref(), client_id)?;
         // The client must not be frozen.
         if client_state.is_frozen() {
             return Err(PacketError::FrozenClient {
@@ -104,7 +104,7 @@ impl<'a> CwIbcCoreContext<'a> {
         cw_println!(deps, "client state created ",);
 
         let consensus_state_of_a_on_b =
-            self.consensus_state(deps.storage, client_id, &proof_height)?;
+            self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
         let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
 
         let expected_commitment_on_a = commitment::compute_packet_commitment_bytes(

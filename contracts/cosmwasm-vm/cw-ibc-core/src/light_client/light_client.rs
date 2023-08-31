@@ -1,4 +1,8 @@
 use crate::{ContractError, EXECUTE_UPDATE_CLIENT};
+use common::client_state::IClientState;
+use common::consensus_state::IConsensusState;
+use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
+use common::traits::AnyTypes;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Binary, CosmosMsg, Deps, SubMsg};
 use cw_common::client_msg::{LightClientPacketMessage, VerifyConnectionState};
@@ -174,16 +178,34 @@ impl LightClient {
         &self,
         deps: Deps,
         client_id: &IbcClientId,
-    ) -> Result<Vec<u8>, ContractError> {
+    ) -> Result<Box<dyn IClientState>, ContractError> {
+        let client_state_any = self.get_client_state_any(deps, client_id)?;
+        let client_state = ClientState::from_any(client_state_any)
+            .map_err(|e| ContractError::IbcDecodeError { error: e })?;
+        Ok(Box::new(client_state))
+    }
+
+    pub fn build_client_state_query(client_id: &IbcClientId) -> Result<Binary, ContractError> {
         let query_message = cw_common::client_msg::QueryMsg::GetClientState {
             client_id: client_id.as_str().to_string(),
         };
         let msg = to_binary(&query_message).map_err(ContractError::Std)?;
+        Ok(msg)
+    }
+
+    pub fn get_client_state_any(
+        &self,
+        deps: Deps,
+        client_id: &IbcClientId,
+    ) -> Result<Any, ContractError> {
+        let msg = LightClient::build_client_state_query(client_id)?;
 
         let query = build_smart_query(self.address.clone(), msg);
 
         let response: Vec<u8> = deps.querier.query(&query).map_err(ContractError::Std)?;
-        Ok(response)
+        let any = Any::decode(response.as_slice())
+            .map_err(|e| ContractError::IbcDecodeError { error: e })?;
+        Ok(any)
     }
 
     fn to_validation_result(&self, result: bool, msg: &str) -> Result<(), ContractError> {
@@ -192,22 +214,61 @@ impl LightClient {
             false => Err(ContractError::LightClientValidationFailed(msg.to_string())),
         }
     }
-    pub fn get_consensus_state(
-        &self,
-        deps: Deps,
+
+    pub fn build_consensus_state_query(
         client_id: &IbcClientId,
         height: u64,
-    ) -> Result<Vec<u8>, ContractError> {
+    ) -> Result<Binary, ContractError> {
         let query_message = cw_common::client_msg::QueryMsg::GetConsensusState {
             client_id: client_id.as_str().to_string(),
             height,
         };
         let msg = to_binary(&query_message).map_err(ContractError::Std)?;
+        Ok(msg)
+    }
+
+    pub fn get_latest_consensus_state(
+        &self,
+        deps: Deps,
+        client_id: &IbcClientId,
+    ) -> Result<Any, ContractError> {
+        let query_message = cw_common::client_msg::QueryMsg::GetLatestConsensusState {
+            client_id: client_id.as_str().to_string(),
+        };
+        let msg = to_binary(&query_message).map_err(ContractError::Std)?;
+        let query = build_smart_query(self.address.clone(), msg);
+
+        let response: Vec<u8> = deps.querier.query(&query).map_err(ContractError::Std)?;
+        let state = ConsensusState::decode(response.as_slice())
+            .map_err(|e| ContractError::IbcDecodeError { error: e })?;
+        Ok(state.to_any())
+    }
+    pub fn get_consensus_state_any(
+        &self,
+        deps: Deps,
+        client_id: &IbcClientId,
+        height: u64,
+    ) -> Result<Any, ContractError> {
+        let msg = LightClient::build_consensus_state_query(client_id, height)?;
 
         let query = build_smart_query(self.address.clone(), msg);
 
         let response: Vec<u8> = deps.querier.query(&query).map_err(ContractError::Std)?;
-        Ok(response)
+        let any = Any::decode(response.as_slice())
+            .map_err(|e| ContractError::IbcDecodeError { error: e })?;
+        Ok(any)
+    }
+
+    pub fn get_consensus_state(
+        &self,
+        deps: Deps,
+        client_id: &IbcClientId,
+        height: u64,
+    ) -> Result<Box<dyn IConsensusState>, ContractError> {
+        let consensus_state_any = self.get_consensus_state_any(deps, client_id, height)?;
+        let consensus_state = ConsensusState::from_any(consensus_state_any)
+            .map_err(|e| ContractError::IbcDecodeError { error: e })?;
+        Ok(Box::new(consensus_state))
     }
     pub fn get_timestamp_at_height_query(
         client_id: &IbcClientId,

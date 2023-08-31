@@ -501,6 +501,10 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             client_id: _,
             height: _,
         } => to_binary(&0_u64),
+        QueryMsg::GetLatestConsensusState { client_id } => {
+            let res = QueryHandler::get_latest_consensus_state(deps.storage, &client_id).unwrap();
+            to_binary(&res)
+        }
     }
 }
 

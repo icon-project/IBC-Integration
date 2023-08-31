@@ -1,5 +1,6 @@
 pub mod setup;
 
+use std::collections::HashMap;
 use std::str::FromStr;
 
 use common::client_state::{get_default_icon_client_state, IClientState};
@@ -8,7 +9,8 @@ use common::ibc::{signer::Signer, Height};
 use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use common::traits::AnyTypes;
 use common::utils::keccak256;
-use cosmwasm_std::{to_binary, Addr, Event, Reply, SubMsgResponse};
+use cosmwasm_std::testing::mock_env;
+use cosmwasm_std::{to_binary, Addr, Binary, Event, Reply, SubMsgResponse};
 use cw_common::client_response::{
     CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
 };
@@ -360,21 +362,18 @@ fn check_for_client_state_from_storage() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("alice", "umlg", 2000);
+    let client_type = ClientType::new("iconclient".to_string());
+    let client_id = ClientId::new(client_type.clone(), 0).unwrap();
+    let mut test_context = TestContext::default(mock_env());
+    test_context.client_id = client_id;
+    test_context.init_context(deps.as_mut().storage, &contract);
 
     contract
         .init_client_counter(deps.as_mut().storage, 0)
         .unwrap();
 
-    let client_state: ClientState = get_dummy_client_state();
-
-    let consenus_state: ConsensusState = common::icon::icon::lightclient::v1::ConsensusState {
-        message_root: "message_root".as_bytes().to_vec(),
-        next_proof_context_hash: vec![1, 2, 3, 4],
-    }
-    .try_into()
-    .unwrap();
-
-    let client_type = ClientType::new("iconclient".to_string());
+    let client_state: ClientState = test_context.client_state.clone().unwrap();
+    let consenus_state: ConsensusState = test_context.consensus_state.clone().unwrap();
     let light_client = Addr::unchecked("lightclient");
     contract
         .register_client(deps.as_mut(), client_type.clone(), light_client)
@@ -413,6 +412,8 @@ fn check_for_client_state_from_storage() {
         }),
     };
 
+    mock_lightclient_query(test_context.mock_queries, &mut deps);
+
     contract
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
         .unwrap();
@@ -420,9 +421,7 @@ fn check_for_client_state_from_storage() {
     let client_id =
         common::ibc::core::ics24_host::identifier::ClientId::from_str("iconclient-0").unwrap();
 
-    let client_state = contract
-        .client_state(deps.as_ref().storage, &client_id)
-        .unwrap();
+    let client_state = contract.client_state(deps.as_ref(), &client_id).unwrap();
 
     assert_eq!(client_state.client_type().as_str(), "iconclient");
 }
@@ -466,7 +465,7 @@ fn check_for_consensus_state_from_storage() {
 
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
-        "10-15".to_string(),
+        client_state.latest_height().to_string(),
         keccak256(&client_state.encode_to_vec()).to_vec(),
         keccak256(&consenus_state.encode_to_vec()).to_vec(),
         client_state.to_any().encode_to_vec(),
@@ -484,18 +483,25 @@ fn check_for_consensus_state_from_storage() {
             data: Some(mock_data_binary),
         }),
     };
+    let client_id =
+        common::ibc::core::ics24_host::identifier::ClientId::from_str("iconclient-0").unwrap();
+
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &client_id,
+        &consenus_state,
+        client_state.latest_height,
+    );
+    mock_lightclient_query(query_map, &mut deps);
 
     contract
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
         .unwrap();
 
-    let client_id =
-        common::ibc::core::ics24_host::identifier::ClientId::from_str("iconclient-0").unwrap();
+    let height = client_state.latest_height();
 
-    let height = Height::new(10, 15).unwrap();
-
-    let consensus_state_result =
-        contract.consensus_state(deps.as_ref().storage, &client_id, &height);
+    let consensus_state_result = contract.consensus_state(deps.as_ref(), &client_id, &height);
 
     assert!(consensus_state_result.is_ok());
     assert_eq!(
@@ -627,6 +633,16 @@ fn check_for_update_client_message() {
         .create_client(deps.as_mut(), info.clone(), create_client_message)
         .unwrap();
     assert_eq!(response.messages[0].id, 21);
+    let client_id = ClientId::from_str("iconclient-0").unwrap();
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &client_id,
+        &consenus_state,
+        client_state.latest_height().revision_height(),
+    );
+    query_map = mock_client_state_query(query_map, &client_id, &client_state);
+    mock_lightclient_query(query_map, &mut deps);
 
     assert_eq!(response.attributes[0].value, "create_client");
     let client_state_any = client_state.to_any();
@@ -651,8 +667,6 @@ fn check_for_update_client_message() {
             data: Some(mock_data_binary),
         }),
     };
-
-    let client_id = ClientId::from_str("iconclient-0").unwrap();
 
     contract
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
@@ -711,7 +725,7 @@ fn check_for_update_client_message() {
 
 #[test]
 #[should_panic(
-    expected = "IbcClientError { error: ClientNotFound { client_id: ClientId(\"iconclient-0\") } }"
+    expected = "IbcClientError { error: ClientSpecific { description: \"LightclientNotFount\" } }"
 )]
 fn fails_on_updating_non_existing_client() {
     let mut deps = deps();
@@ -808,6 +822,10 @@ fn check_for_upgrade_client() {
     };
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(query_map, &client_id, &consenus_state, 100);
+    query_map = mock_client_state_query(query_map, &client_id, &client_state);
+    mock_lightclient_query(query_map, &mut deps);
 
     contract
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
@@ -899,6 +917,10 @@ fn fails_on_upgrade_client_invalid_trusting_period() {
     };
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(query_map, &client_id, &consenus_state, 100);
+    query_map = mock_client_state_query(query_map, &client_id, &client_state);
+    mock_lightclient_query(query_map, &mut deps);
 
     contract
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
@@ -962,7 +984,7 @@ fn fails_on_upgrade_client_frozen_client() {
     contract
         .register_client(deps.as_mut(), client_type.clone(), light_client)
         .unwrap();
-
+    let client_id = ClientId::from_str("iconclient-0").unwrap();
     let client_state = ClientState {
         frozen_height: 3,
         ..get_dummy_client_state()
@@ -974,6 +996,15 @@ fn fails_on_upgrade_client_frozen_client() {
     }
     .try_into()
     .unwrap();
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &client_id,
+        &consenus_state,
+        client_state.latest_height().revision_height(),
+    );
+    query_map = mock_client_state_query(query_map, &client_id, &client_state);
+    mock_lightclient_query(query_map, &mut deps);
 
     let mock_reponse_data = CreateClientResponse::new(
         client_type.as_str().to_string(),
@@ -1093,6 +1124,15 @@ fn check_for_execute_upgrade_client() {
     };
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &client_id,
+        &consenus_state,
+        client_state.latest_height().revision_height(),
+    );
+    query_map = mock_client_state_query(query_map, &client_id, &client_state);
+    mock_lightclient_query(query_map, &mut deps);
 
     contract
         .execute_create_client_reply(deps.as_mut(), get_mock_env(), reply_message)
@@ -1337,7 +1377,7 @@ fn sucess_on_getting_client() {
 
 #[test]
 #[should_panic(
-    expected = "IbcClientError { error: ClientNotFound { client_id: ClientId(\"new_client_type-0\") } }"
+    expected = "IbcClientError { error: ClientSpecific { description: \"LightclientNotFount\" } }"
 )]
 fn fails_on_getting_client_empty_client() {
     let mock_deps = deps();
@@ -1408,29 +1448,32 @@ fn success_on_getting_client_state() {
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
 
-    let state = contract
-        .get_client_state(deps.as_mut().storage, &client_id)
-        .unwrap();
-    let client_state_any = Any::decode(state.as_slice()).unwrap();
-    let client_state: ClientState = ClientState::from_any(client_state_any).unwrap();
-    let client_state: Box<dyn IClientState> = Box::new(client_state);
+    let mut query_map = HashMap::<Binary, Binary>::new();
+    query_map = mock_consensus_state_query(
+        query_map,
+        &client_id,
+        &consenus_state,
+        client_state.latest_height().revision_height(),
+    );
+    query_map = mock_client_state_query(query_map, &client_id, &client_state);
+    mock_lightclient_query(query_map, &mut deps);
 
-    assert_eq!(None, client_state.frozen_height())
+    let state = contract.client_state(deps.as_ref(), &client_id).unwrap();
+
+    assert_eq!(None, state.frozen_height())
 }
 
 #[test]
 #[should_panic(
-    expected = "IbcDecodeError { error: DecodeError { description: \"NotFound ClientId(iconclient-0)\", stack: [] } }"
+    expected = "IbcClientError { error: ClientSpecific { description: \"LightclientNotFount\" } }"
 )]
 fn fails_on_getting_client_state() {
-    let mut deps = deps();
+    let deps = deps();
     let contract = CwIbcCoreContext::default();
 
     let client_id = ClientId::from_str("iconclient-0").unwrap();
 
-    contract
-        .get_client_state(deps.as_mut().storage, &client_id)
-        .unwrap();
+    let _state = contract.client_state(deps.as_ref(), &client_id).unwrap();
 }
 
 #[test]
@@ -1455,11 +1498,10 @@ fn sucess_on_misbehaviour_validate() {
         .unwrap();
 
     contract
-        .store_client_state(
+        .store_client_commitment(
             deps.as_mut().storage,
             &get_mock_env(),
             &client_id,
-            client_state.to_any().encode_to_vec(),
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -1478,6 +1520,10 @@ fn sucess_on_misbehaviour_validate() {
         misbehaviour: Some(misbehaviour),
         signer: get_dummy_account_id().to_string(),
     };
+    let mut query_map = HashMap::<Binary, Binary>::new();
+
+    query_map = mock_client_state_query(query_map, &client_id, &client_state);
+    mock_lightclient_query(query_map, &mut deps);
 
     let result = contract.misbehaviour(deps.as_mut(), info, misbehaviour_message);
 
@@ -1512,11 +1558,10 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
         .unwrap();
 
     contract
-        .store_client_state(
+        .store_client_commitment(
             deps.as_mut().storage,
             &get_mock_env(),
             &client_id,
-            client_state.to_any().encode_to_vec(),
             client_state.get_keccak_hash().to_vec(),
         )
         .unwrap();
@@ -1535,6 +1580,10 @@ fn fails_on_frozen_client_on_misbehaviour_validate() {
         misbehaviour: misbehaviour.into(),
         signer: get_dummy_account_id().to_string(),
     };
+    let mut query_map = HashMap::<Binary, Binary>::new();
+
+    query_map = mock_client_state_query(query_map, &client_id, &client_state);
+    mock_lightclient_query(query_map, &mut deps);
 
     contract
         .misbehaviour(deps.as_mut(), info, misbehaviour_message)

@@ -1,11 +1,8 @@
 use common::ibc::core::ics24_host::identifier::ConnectionId;
-use common::icon::icon::lightclient::v1::ClientState;
-use common::icon::icon::lightclient::v1::ConsensusState;
-use common::traits::AnyTypes;
+
 use common::{client_state::IClientState, consensus_state::IConsensusState};
+use cosmwasm_std::Deps;
 use cosmwasm_std::Env;
-use prost::DecodeError;
-use prost::Message;
 
 use crate::ics24_host::LastProcessedOn;
 use crate::light_client::light_client::LightClient;
@@ -330,43 +327,12 @@ impl<'a> CwIbcCoreContext<'a> {
         let client = self.get_client_implementations(store, client_id).ok();
 
         if client.is_none() {
-            return Err(ClientError::ClientNotFound {
-                client_id: client_id.clone(),
+            return Err(ClientError::ClientSpecific {
+                description: "LightclientNotFount".to_string(),
             })
             .map_err(Into::<ContractError>::into);
         }
         Ok(client.unwrap())
-    }
-
-    /// This method retrieves the client state from storage using the client ID.
-    ///
-    /// Arguments:
-    ///
-    /// * `store`: `store` is a reference to a trait object of type `dyn Storage`. This is an abstract
-    /// type that represents a key-value store where data can be stored and retrieved. The specific
-    /// implementation of the `Storage` trait is not specified in this function, allowing for
-    /// flexibility in choosing the type of storage
-    /// * `client_id`: The `client_id` parameter is of type `ClientId` and represents the identifier of
-    /// an IBC client. It is used to retrieve the client state from the storage.
-    ///
-    /// Returns:
-    ///
-    /// a `Result` containing either a `Vec<u8>` representing the client state or a `ContractError` if
-    /// there was an error loading the client state from the storage.
-    pub fn get_client_state(
-        &self,
-        store: &dyn Storage,
-        client_id: &ClientId,
-    ) -> Result<Vec<u8>, ContractError> {
-        let client_state = self
-            .ibc_store()
-            .client_states()
-            .load(store, client_id)
-            .map_err(|_| ContractError::IbcDecodeError {
-                error: DecodeError::new("NotFound ClientId(".to_owned() + client_id.as_str() + ")"),
-            })?;
-
-        Ok(client_state)
     }
 
     /// This method retrieves the commitment from storage using the commitment key (PacketCommitment,AckCommitment,Connection,Channel,Client).
@@ -434,59 +400,43 @@ impl<'a> CwIbcCoreContext<'a> {
 impl<'a> CwIbcCoreContext<'a> {
     pub fn client_state(
         &self,
-        store: &dyn Storage,
+        deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Box<dyn IClientState>, ContractError> {
-        let client_state_any = self.client_state_any(store, client_id)?;
-
-        let client_state =
-            ClientState::from_any(client_state_any).map_err(Into::<ContractError>::into)?;
-
-        Ok(Box::new(client_state))
+        let light_client = self.get_client(deps.storage, client_id)?;
+        return light_client.get_client_state(deps, client_id);
     }
 
     pub fn client_state_any(
         &self,
-        store: &dyn Storage,
+        deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Any, ContractError> {
-        let client_key = commitment::client_state_commitment_key(client_id);
-
-        let client_state_any_data = self.ibc_store().client_states().load(store, client_id)?;
-        let client_state_any =
-            Any::decode(client_state_any_data.as_slice()).map_err(Into::<ContractError>::into)?;
-        Ok(client_state_any)
+        let light_client = self.get_client(deps.storage, client_id)?;
+        light_client.get_client_state_any(deps, client_id)
     }
 
     pub fn consensus_state(
         &self,
-        store: &dyn Storage,
+        deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
         height: &common::ibc::Height,
     ) -> Result<Box<dyn IConsensusState>, ContractError> {
-        let consensus_state_key = commitment::consensus_state_commitment_key(
-            client_id,
-            height.revision_number(),
-            height.revision_height(),
-        );
-        let consensus_state_any = self.consensus_state_any(store, client_id)?;
-
-        let consensus_state: ConsensusState =
-            ConsensusState::from_any(consensus_state_any).map_err(Into::<ContractError>::into)?;
-
-        Ok(Box::new(consensus_state))
+        let client_impl = self.get_client(deps.storage, client_id)?;
+        let height = height.revision_height();
+        return client_impl.get_consensus_state(deps, client_id, height);
     }
 
     pub fn consensus_state_any(
         &self,
-        store: &dyn Storage,
+        deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Any, ContractError> {
-        let consensus_state_data = self.ibc_store().consensus_states().load(store, client_id)?;
-        let consensus_state_any =
-            Any::decode(consensus_state_data.as_slice()).map_err(Into::<ContractError>::into)?;
-        Ok(consensus_state_any)
+        let client_impl = self.get_client(deps.storage, client_id)?;
+
+        client_impl.get_latest_consensus_state(deps, client_id)
     }
+
     pub fn host_height(&self, env: &Env) -> Result<common::ibc::Height, ContractError> {
         let height = env.block.height;
         let height = common::ibc::Height::new(0, height).map_err(Into::<ContractError>::into)?;
@@ -544,18 +494,14 @@ impl<'a> CwIbcCoreContext<'a> {
 }
 
 impl<'a> CwIbcCoreContext<'a> {
-    pub fn store_client_state(
+    pub fn store_client_commitment(
         &self,
         store: &mut dyn Storage,
         env: &Env,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
-        client_state_any: Vec<u8>,
         client_state_hash: Vec<u8>,
     ) -> Result<(), ContractError> {
         let client_key = commitment::client_state_commitment_key(client_id);
-        self.ibc_store()
-            .client_states()
-            .save(store, client_id, &client_state_any)?;
 
         self.ibc_store()
             .save_commitment(store, client_key, &client_state_hash)?;
@@ -564,12 +510,11 @@ impl<'a> CwIbcCoreContext<'a> {
         Ok(())
     }
 
-    pub fn store_consensus_state(
+    pub fn store_consensus_commitment(
         &self,
         store: &mut dyn Storage,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
         height: common::ibc::Height,
-        consensus_state_any: Vec<u8>,
         consensus_state_hash: Vec<u8>,
     ) -> Result<(), ContractError> {
         let consensus_key = commitment::consensus_state_commitment_key(
@@ -577,10 +522,6 @@ impl<'a> CwIbcCoreContext<'a> {
             height.revision_number(),
             height.revision_height(),
         );
-
-        self.ibc_store()
-            .consensus_states()
-            .save(store, client_id, &consensus_state_any)?;
 
         self.ibc_store()
             .save_commitment(store, consensus_key, &consensus_state_hash)?;

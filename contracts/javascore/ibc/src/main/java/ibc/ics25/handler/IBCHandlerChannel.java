@@ -44,7 +44,6 @@ public class IBCHandlerChannel extends IBCHandlerConnection implements IIBCChann
     @External
     public void channelOpenInit(MsgChannelOpenInit msg) {
         IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
-        // TODO optimize to not do decoding twice
         Channel channel = Channel.decode(msg.getChannel());
         String id = _channelOpenInit(msg);
         module.onChanOpenInit(
@@ -62,7 +61,6 @@ public class IBCHandlerChannel extends IBCHandlerConnection implements IIBCChann
     @External
     public void channelOpenTry(MsgChannelOpenTry msg) {
         IIBCModuleScoreInterface module = lookupModuleByPort(msg.getPortId());
-        // TODO optimize to not do decoding twice
         Channel channel = Channel.decode(msg.getChannel());
         String id = _channelOpenTry(msg);
         module.onChanOpenTry(

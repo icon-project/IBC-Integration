@@ -91,9 +91,11 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
+        let client_id_on_a = conn_end_on_a.client_id();
+        let _client_state_of_b_on_a = self.client_state(deps.as_ref(), client_id_on_a)?;
 
         let consensus_state_of_b_on_a =
-            self.consensus_state(deps.storage, client_id, &proof_height)?;
+            self.consensus_state(deps.as_ref(), client_id_on_a, &proof_height)?;
 
         self.verify_connection_delay_passed(
             deps.storage,

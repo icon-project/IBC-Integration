@@ -46,10 +46,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let connection_identifier = self.generate_connection_idenfier(deps.storage)?;
 
-        self.client_state(deps.storage, &client_id)?;
-
-        let client = self.get_client(deps.as_ref().storage, &client_id)?;
-        let client_state = self.client_state(deps.as_ref().storage, &client_id)?;
+        let client_state = self.client_state(deps.as_ref(), &client_id)?;
 
         if client_state.is_frozen() {
             return Err(ClientError::ClientFrozen {
@@ -58,16 +55,9 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(Into::<ContractError>::into);
         }
 
-        let response: Vec<u8> = client.get_client_state(deps.as_ref(), &client_id)?;
-
         let delay_period = Duration::from_nanos(message.delay_period);
         let ibc_version = to_ibc_version(message.version).ok();
         let ibc_counterparty = to_ibc_counterparty(message.counterparty)?;
-
-        if response.is_empty() {
-            return Err(ClientError::ClientNotFound { client_id })
-                .map_err(Into::<ContractError>::into);
-        }
 
         let versions = match ibc_version {
             Some(version) => {
@@ -182,7 +172,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let connection_id = to_ibc_connection_id(&msg.connection_id)?;
         let mut connection_end = self.connection_end(deps.storage, &connection_id)?;
         let client_id = connection_end.client_id();
-        let client_state = self.client_state(deps.as_ref().storage, client_id)?;
+        let client_state = self.client_state(deps.as_ref(), client_id)?;
 
         if client_state.is_frozen() {
             return Err(ClientError::ClientFrozen {
@@ -206,7 +196,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         cw_println!(deps, "[ConnOpenAck]: State Matched");
 
-        let consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
+        let consensus_state = self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
 
         let client = self.get_client(deps.as_ref().storage, client_id)?;
 
@@ -326,7 +316,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let consensus_height = to_ibc_height(message.consensus_height)?;
         let proof_height = to_ibc_height(message.proof_height)?;
 
-        let client_state = self.client_state(deps.as_ref().storage, &client_id)?;
+        let client_state = self.client_state(deps.as_ref(), &client_id)?;
 
         if client_state.is_frozen() {
             return Err(ClientError::ClientFrozen {
@@ -372,7 +362,7 @@ impl<'a> CwIbcCoreContext<'a> {
             HexString::from_bytes(&expected_connection_end.encode_vec().unwrap())
         );
 
-        let consensus_state = self.consensus_state(deps.storage, &client_id, &proof_height)?;
+        let consensus_state = self.consensus_state(deps.as_ref(), &client_id, &proof_height)?;
         cw_println!(
             deps,
             "[ConnOpenTry]: root: {:?} ",
@@ -506,7 +496,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let connection_id = to_ibc_connection_id(&msg.connection_id)?;
         let mut connection_end = self.connection_end(deps.storage, &connection_id)?;
         let client_id = connection_end.client_id();
-        let client_state = self.client_state(deps.as_ref().storage, client_id)?;
+        let client_state = self.client_state(deps.as_ref(), client_id)?;
 
         if client_state.is_frozen() {
             return Err(ClientError::ClientFrozen {
@@ -531,7 +521,7 @@ impl<'a> CwIbcCoreContext<'a> {
 
         cw_println!(deps, "Connection State Matched");
 
-        let consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
+        let consensus_state = self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
 
         cw_println!(deps, "Consensus State Decoded");
 
