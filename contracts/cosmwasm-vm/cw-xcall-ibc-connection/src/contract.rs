@@ -139,7 +139,9 @@ impl<'a> CwIbcConnection<'a> {
                 nid,
                 packet_fee,
                 ack_fee,
-            } => self.set_fee(deps.storage, nid, packet_fee, ack_fee),
+            } => {
+                self.ensure_admin(deps.as_ref().storage, info.sender)?;
+                self.set_fee(deps.storage, nid, packet_fee, ack_fee)},
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelOpen { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
