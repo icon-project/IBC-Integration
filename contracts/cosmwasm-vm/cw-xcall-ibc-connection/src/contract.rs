@@ -107,7 +107,7 @@ impl<'a> CwIbcConnection<'a> {
                 self.send_message(deps, info, env, to, sn, msg)
             }
             ExecuteMsg::SetXCallHost { address } => {
-                self.ensure_owner(deps.as_ref().storage, &info)?;
+                self.ensure_admin(deps.as_ref().storage, info.sender)?;
                 let validated_address =
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
                 self.set_xcall_host(deps.storage, validated_address)?;
@@ -120,7 +120,7 @@ impl<'a> CwIbcConnection<'a> {
                 client_id,
                 timeout_height,
             } => {
-                self.ensure_owner(deps.as_ref().storage, &info)?;
+                self.ensure_admin(deps.as_ref().storage, info.sender)?;
                 self.configure_connection(
                     deps.storage,
                     connection_id,
