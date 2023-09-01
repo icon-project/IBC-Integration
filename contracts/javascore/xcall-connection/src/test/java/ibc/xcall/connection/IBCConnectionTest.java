@@ -16,6 +16,7 @@ import icon.proto.core.channel.Packet;
 import icon.proto.core.client.Height;
 
 import java.math.BigInteger;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,10 +29,24 @@ public class IBCConnectionTest extends IBCConnectionTestBase {
 
     @BeforeEach
     public void setup() throws Exception {
-      super.setup();
+        super.setup();
     }
 
     ArgumentCaptor<byte[]> packetCaptor = ArgumentCaptor.forClass(byte[].class);
+
+    @Test
+    public void channelOpe_NotConfigured() {
+        // Arrange
+        String errorMessage = "Reverted(0): Invalid counterparty network id";
+
+        // Act
+        AssertionError e1 = assertThrows(AssertionError.class,
+                () -> channelOpenTry("connectionId", "counterpartyPort", "channelId", "counterpartyChannel"));
+        AssertionError e2 = assertThrows(AssertionError.class,
+                () -> channelOpenInit("connectionId", "counterpartyPort", "channelId"));
+        assertEquals(errorMessage, e1.getMessage());
+        assertEquals(errorMessage, e2.getMessage());
+    }
 
     @Test
     public void sendMessage_noResponse() {
@@ -337,6 +352,24 @@ public class IBCConnectionTest extends IBCConnectionTestBase {
 
         assertEquals(packetFee2, connection.call("getFee", nid, false));
         assertEquals(packetFee2.add(ackFee2), connection.call("getFee", nid, true));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void getIBCConfig() {
+        // Arrange
+        establishDefaultConnection();
+
+        // Act
+        Map<String, String> config = (Map<String, String>) connection.call("getIBCConfig", defaultCounterpartyNid);
+
+        // Assert
+        assertEquals(config.get("channelId"), defaultChannel);
+        assertEquals(config.get("port"), port);
+        assertEquals(config.get("destinationChannelId"),defaultCounterpartyChannel);
+        assertEquals(config.get("destinationPort"), defaultCounterpartyPort);
+        assertEquals(config.get("lightClient"), defaultClientId);
+        assertEquals(config.get("timeoutHeight"), defaultTimeoutHeight.toString());
     }
 
     @Test
