@@ -152,7 +152,6 @@ impl<'a> CwIbcConnection<'a> {
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelClose { msg } => {
-                self.ensure_ibc_handler(deps.as_ref().storage, info.clone().sender)?;
                 self.ensure_admin(deps.as_ref().storage, info.sender)?;
                 Ok(self.on_channel_close(msg)?)
             }
