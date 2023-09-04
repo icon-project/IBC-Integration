@@ -9,6 +9,6 @@ build {
 
   provisioner "file" {
     source      = "${path.root}/relayer.Dockerfile"
-    destination = "Dockerfile"
+    destination = "/tmp/Dockerfile"
   }
 }

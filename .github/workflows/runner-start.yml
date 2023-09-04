@@ -1,11 +1,12 @@
-on: workflow_call
+on:
+  workflow_call:
+    outputs:
+      label: ${{ jobs.runner.start.outputs.label }}
+      ec2-instance-id: ${{ jobs.runner.start.outputs.ec2-instance-id }}
 jobs:
-  start-runner:
+  runner:
     name: Start runner
     runs-on: ubuntu-latest
-    outputs:
-      label: ${{ steps.start-ec2-runner.outputs.label }}
-      ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
@@ -17,33 +18,29 @@ jobs:
         id: ami-id
         run: |
           ami_id=$(aws ec2 describe-images \
-            --filters "Name=tag:Name,Values=github-runner" "Name=tag:ManagedBy,Values=Packer" \
+            --filters "Name=tag:Name,Values=github-runner" "Name=tag:Project,Values=IBC" "Name=tag:ManagedBy,Values=Packer" \
             --query 'Images[*].[ImageId]' \
             --output text --max-items 1)
           echo "AMI_ID=$ami_id" >> $GITHUB_OUTPUT
       - name: Checkout
         uses: actions/checkout@v3
       - name: Start EC2 runner
-        id: start-runner
+        id: start
         uses: machulav/ec2-github-runner@v2
         with:
           mode: start
-          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           ec2-image-id: ${{ steps.ami-id.outputs.AMI_ID }}
           ec2-instance-type: c5a.2xlarge
           subnet-id: subnet-123
           security-group-id: sg-123
-          iam-role-name: my-role-name # optional, requires additional permissions
-          aws-resource-tags: > # optional, requires additional permissions
+          iam-role-name: my-role-name
+          aws-resource-tags: >
             [
               {"Key": "Name", "Value": "ec2-github-runner"},
               {"Key": "GitHubRepository", "Value": "${{ github.repository }}"},
-              {"Key": "Project", "Value": "Icon"}
+              {"Key": "Project", "Value": "IBC"}
             ]
           pre-runner-script: |
             #!/bin/sh
             docker build -t relayer --build-args VERSION=v0.1.0-alpha.7 .
-
-      - name: Export running ec2 instance id
-        id: running-instance
-        run: echo "EC2_INSTANCE_ID=$EC2_INSTANCE_ID" >> $GITHUB_OUTPUT

@@ -6,32 +6,30 @@ permissions:
   contents: read
   issues: read
   pull-requests: read
+  statuses: write
 jobs:
   runner-start:
-    uses: ./.github/workflows/runner-start.yml@main
+    if: github.event.issue.pull_request && contains(github.event.comment.body, '/run e2e')
+    uses: ./.github/workflows/runner-start.yml
     secrets: inherit
   e2e:
     name: E2E tests
-    if: github.event.issue.pull_request && contains(github.event.comment.body, '/run e2e')
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: runner-start
     steps:
       - name: Get PR branch
-        uses: xt0rted/pull-request-comment-branch@v
+        uses: xt0rted/pull-request-comment-branch@v2
         id: comment-branch
-
       - name: Set latest commit status as pending
         uses: myrotvorets/set-commit-status-action@master
         with:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
           status: pending
-
       - name: Checkout PR branch
         uses: actions/checkout@v3
         with:
           ref: ${{ steps.comment-branch.outputs.head_ref }}
-
       - name: Set latest commit status as ${{ job.status }}
         uses: myrotvorets/set-commit-status-action@master
         if: always()
@@ -39,7 +37,9 @@ jobs:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
-
   runner-stop:
-    uses: ./.github/workflows/runner-stop.yml@main
+    uses: ./.github/workflows/runner-stop.yml
     secrets: inherit
+    needs:
+      - runner-start
+      - e2e

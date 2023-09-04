@@ -24,11 +24,21 @@ pull_archway_images() {
   docker pull archwaynetwork/archwayd:sha-8f53ac8
 }
 
+configure_relayer() {
+  mv /tmp/Dockerfile .
+}
+
 build_services() {
   build_goloop_images
   pull_archway_images
+  configure_relayer
+}
+
+cleanup(){
+  sudo yum uninstall -y git make tar perl-Digest-SHA
 }
 
 install_deps
 configure_docker
 build_services
+cleanup

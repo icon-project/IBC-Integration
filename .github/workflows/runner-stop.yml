@@ -1,11 +1,8 @@
 on: workflow_call
 jobs:
-  stop-runner:
+  runner:
     name: Stop self-hosted EC2 runner
-    needs:
-      - start-runner
-    runs-on: ubuntu-latest
-    if: always()
+    runs-on: self-hosted
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
@@ -17,6 +14,6 @@ jobs:
         uses: machulav/ec2-github-runner@v2
         with:
           mode: stop
-          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          label: ${{ needs.start-runner.outputs.label }}
-          ec2-instance-id: ${{ needs.start-runner.outputs.EC2_INSTANCE_ID }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          label: ${{ needs.runner-start.outputs.label }}
+          ec2-instance-id: ${{ needs.runner-start.outputs.ec2-instance-id }}
