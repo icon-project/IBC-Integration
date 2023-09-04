@@ -32,9 +32,8 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           ec2-image-id: ${{ steps.ami-id.outputs.AMI_ID }}
           ec2-instance-type: c5a.2xlarge
-          subnet-id: subnet-123
-          security-group-id: sg-123
-          iam-role-name: my-role-name
+          subnet-id: subnet-f1fcd4df
+          security-group-id: sg-03cb8034e27e1caeb
           aws-resource-tags: >
             [
               {"Key": "Name", "Value": "ec2-github-runner"},
