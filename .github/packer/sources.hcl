@@ -1,6 +1,6 @@
 # source ami to use
 
-source "amazon-ebs" "amazon-linux" {
+source "amazon-ebs" "linux" {
   ami_name      = local.name
   instance_type = var.instance_type
   region        = var.aws_region

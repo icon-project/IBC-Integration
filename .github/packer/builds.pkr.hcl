@@ -1,6 +1,6 @@
 build {
-  name    = local.name
-  sources = ["source.amazon-ebs.amazon-linux"]
+  name    = "test"
+  sources = ["source.amazon-ebs.linux"]
 
   provisioner "shell" {
     execute_command = "sudo -S bash -c '{{ .Path }}'"
