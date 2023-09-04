@@ -36,7 +36,7 @@ func (c *IconLocalnet) GetQueryParam(method string, params map[string]interface{
 	switch method {
 	case chains.HasPacketReceipt:
 		query = Query{
-			"hasPacketReceipt",
+			"getPacketReceipt",
 			Value{map[string]interface{}{
 				"portId":    params["port_id"],
 				"channelId": params["channel_id"],
