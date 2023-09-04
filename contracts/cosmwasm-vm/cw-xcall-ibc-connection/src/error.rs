@@ -52,5 +52,5 @@ pub enum ContractError {
     #[error("InvalidPortId")]
     InvalidPortId,
     #[error("InsufficientFunds")]
-    InsufficientFunds
+    InsufficientFunds,
 }

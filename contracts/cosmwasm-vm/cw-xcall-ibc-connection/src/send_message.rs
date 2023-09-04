@@ -1,5 +1,5 @@
 use common::rlp::Nullable;
-use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, Storage, Coin, Uint128};
+use cosmwasm_std::{Coin, DepsMut, Env, MessageInfo, Response, Storage, Uint128};
 use cw_xcall_lib::network_address::NetId;
 
 use crate::{
@@ -43,7 +43,7 @@ impl<'a> CwIbcConnection<'a> {
         let config = self.get_config(deps.storage)?;
 
         let fund = get_amount_for_denom(&info.funds, config.denom);
-        
+
         if fund < total_fee.into() {
             return Err(ContractError::InsufficientFunds {});
         }
