@@ -17,9 +17,8 @@ use crate::{
         XCALL_HANDLE_ERROR_REPLY_ID, XCALL_HANDLE_MESSAGE_REPLY_ID,
     },
     types::{
-        channel_config::ChannelConfig, config::Config, connection_config::ConnectionConfig,
-        config_response::to_config_response,
-        message::Message, LOG_PREFIX,
+        channel_config::ChannelConfig, config::Config, config_response::to_config_response,
+        connection_config::ConnectionConfig, message::Message, LOG_PREFIX,
     },
 };
 
@@ -694,9 +693,10 @@ impl<'a> CwIbcConnection<'a> {
         client_id: String,
         timeout_height: u64,
     ) -> Result<(), ContractError> {
-        if self.get_connection_config(store, &connection_id).is_ok() && self
-            .get_counterparty_nid(store, &connection_id, &counterparty_port_id)
-            .is_ok()
+        if self.get_connection_config(store, &connection_id).is_ok()
+            && self
+                .get_counterparty_nid(store, &connection_id, &counterparty_port_id)
+                .is_ok()
         {
             return Err(ContractError::ConnectionAlreadyConfigured {
                 connection_id,
