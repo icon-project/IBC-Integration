@@ -143,7 +143,6 @@ impl<'a> CwIbcCoreContext<'a> {
             next_seq_recv_verification_result,
         )?;
 
-        // Getting the module address for on packet timeout call
         let contract_address = self.lookup_modules(deps.storage, src_port.as_bytes().to_vec())?;
 
         let src = CwEndPoint {

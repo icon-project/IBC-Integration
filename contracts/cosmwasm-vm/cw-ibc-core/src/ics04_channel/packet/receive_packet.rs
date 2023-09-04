@@ -98,7 +98,6 @@ impl<'a> CwIbcCoreContext<'a> {
 
         let client_id = connection_end.client_id();
         let client_state = self.client_state(deps.storage, client_id)?;
-        // The client must not be frozen.
         if client_state.is_frozen() {
             return Err(PacketError::FrozenClient {
                 client_id: client_id.clone(),
@@ -148,7 +147,6 @@ impl<'a> CwIbcCoreContext<'a> {
         cw_println!(deps, "before packet already received ");
 
         let port_id = packet.destination_port.clone();
-        // Getting the module address for on packet timeout call
         let contract_address = self.lookup_modules(deps.storage, port_id.as_bytes().to_vec())?;
 
         let src = CwEndPoint {

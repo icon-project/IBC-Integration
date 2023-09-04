@@ -172,7 +172,6 @@ impl<'a> CwIbcCoreContext<'a> {
             self.store_channel_end(deps.storage, &src_port, &src_channel, &channel_end)?;
         }
 
-        // Getting the module address for on packet timeout call
         let contract_address = self.lookup_modules(deps.storage, src_port.as_bytes().to_vec())?;
 
         let src = CwEndPoint {
