@@ -5,7 +5,7 @@ variable "aws_region" {
 
 variable "instance_type" {
   type    = string
-  default = "t3.medium"
+  default = "c5.xlarge"
 }
 
 variable "ssh_username" {

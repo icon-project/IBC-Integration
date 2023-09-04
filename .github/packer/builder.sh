@@ -21,12 +21,12 @@ build_goloop_images() {
 }
 
 pull_archway_images() {
-  docker pull ghcr.io/archway-network/archwayd:v4.0.0
+  docker pull archwaynetwork/archwayd:sha-8f53ac8
 }
 
 build_services() {
   build_goloop_images
-  build_archway_images
+  pull_archway_images
 }
 
 install_deps

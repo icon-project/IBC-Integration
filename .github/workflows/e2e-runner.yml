@@ -7,10 +7,14 @@ permissions:
   issues: read
   pull-requests: read
 jobs:
+  runner-start:
+    uses: ./.github/workflows/runner-start.yml@main
+    secrets: inherit
   e2e:
     name: E2E tests
     if: github.event.issue.pull_request && contains(github.event.comment.body, '/run e2e')
     runs-on: ubuntu-latest
+    needs: runner-start
     steps:
       - name: Get PR branch
         uses: xt0rted/pull-request-comment-branch@v
@@ -28,8 +32,6 @@ jobs:
         with:
           ref: ${{ steps.comment-branch.outputs.head_ref }}
 
-      ## TODO
-
       - name: Set latest commit status as ${{ job.status }}
         uses: myrotvorets/set-commit-status-action@master
         if: always()
@@ -37,3 +39,7 @@ jobs:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
+
+  runner-stop:
+    uses: ./.github/workflows/runner-stop.yml@main
+    secrets: inherit

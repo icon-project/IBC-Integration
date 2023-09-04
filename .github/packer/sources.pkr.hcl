@@ -17,5 +17,6 @@ source "amazon-ebs" "linux" {
   tags = {
     Name = local.name
     Project = "icon"
+    ManagedBy = "Packer"
   }
 }
