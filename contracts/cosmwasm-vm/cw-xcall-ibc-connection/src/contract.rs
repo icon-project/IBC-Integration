@@ -17,9 +17,8 @@ use crate::{
         XCALL_HANDLE_ERROR_REPLY_ID, XCALL_HANDLE_MESSAGE_REPLY_ID,
     },
     types::{
-        channel_config::ChannelConfig, config::Config, connection_config::ConnectionConfig,
-        config_response::to_config_response,
-        message::Message, LOG_PREFIX,
+        channel_config::ChannelConfig, config::Config, config_response::to_config_response,
+        connection_config::ConnectionConfig, message::Message, LOG_PREFIX,
     },
 };
 
@@ -100,6 +99,11 @@ impl<'a> CwIbcConnection<'a> {
                 let validated_address =
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
                 self.add_admin(deps.storage, info, validated_address.to_string())
+            }
+            ExecuteMsg::TransferAdmin { address } => {
+                let validated_address =
+                    CwIbcConnection::validate_address(deps.api, address.as_str())?;
+                self.update_admin(deps.storage, info, validated_address.to_string())
             }
             ExecuteMsg::SendMessage { to, sn, msg } => {
                 println!("{LOG_PREFIX} Received Payload From XCall App");

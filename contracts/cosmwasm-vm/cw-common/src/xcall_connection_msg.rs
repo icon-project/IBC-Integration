@@ -11,6 +11,9 @@ pub enum ExecuteMsg {
     SetAdmin {
         address: String,
     },
+    TransferAdmin {
+        address: String,
+    },
     SetXCallHost {
         address: String,
     },
@@ -63,7 +66,6 @@ pub enum ExecuteMsg {
         msg: CwPacketTimeoutMsg,
     },
 }
-
 
 #[cw_serde]
 pub struct ConfigResponse {
