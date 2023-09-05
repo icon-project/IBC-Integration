@@ -123,11 +123,7 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
 
     @External(readonly = true)
     public boolean getPacketReceipt(String portId, String channelId, BigInteger sequence) {
-        try {
-            return packetReceipts.at(portId).at(channelId).get(sequence);
-        } catch (Exception e) {
-            return false;
-        }
+           return packetReceipts.at(portId).at(channelId).getOrDefault(sequence, false);
     }
 
     @External(readonly = true)
