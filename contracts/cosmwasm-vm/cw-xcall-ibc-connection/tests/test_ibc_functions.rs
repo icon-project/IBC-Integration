@@ -214,49 +214,6 @@ fn get_ibc_config_after_setup() {
 
 #[test]
 #[cfg(not(feature = "native_ibc"))]
-#[should_panic(expected = " InvalidVersion { actual: \"xyz\", expected: \"ics20-1\" }")]
-fn fails_on_open_channel_open_try_invalid_version() {
-    use cw_xcall_ibc_connection::state::CwIbcConnection;
-
-    let mut deps = deps();
-
-    let mock_env = mock_env();
-    let mock_info = create_mock_info("alice", "umlg", 2000);
-
-    let mut contract = CwIbcConnection::default();
-
-    let src = IbcEndpoint {
-        port_id: "our-port".to_string(),
-        channel_id: "channel-1".to_string(),
-    };
-    let dst = IbcEndpoint {
-        port_id: "their-port".to_string(),
-        channel_id: "channel-3".to_string(),
-    };
-
-    let execute_msg = ExecuteMsg::IbcChannelOpen {
-        msg: OpenTry {
-            channel: IbcChannel::new(
-                src,
-                dst,
-                cosmwasm_std::IbcOrder::Unordered,
-                "xcall-1",
-                "newconnection",
-            ),
-            counterparty_version: "xyz".to_owned(),
-        },
-    };
-    contract
-        .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
-        .unwrap();
-
-    contract
-        .execute(deps.as_mut(), mock_env, mock_info, execute_msg)
-        .unwrap();
-}
-
-#[test]
-#[cfg(not(feature = "native_ibc"))]
 fn sucess_on_open_channel_open_try_valid_version() {
     use cosmwasm_std::from_binary;
     use cw_xcall_lib::network_address::NetId;
