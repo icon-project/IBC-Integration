@@ -8,14 +8,14 @@ permissions:
   pull-requests: read
   statuses: write
 jobs:
-  runner-start:
+  start-runner:
     if: github.event.issue.pull_request && contains(github.event.comment.body, '/run e2e')
     uses: ./.github/workflows/runner-start.yml
     secrets: inherit
   e2e:
     name: E2E tests
     runs-on: self-hosted
-    needs: runner-start
+    needs: start-runner
     steps:
       - name: Get PR branch
         uses: xt0rted/pull-request-comment-branch@v2
@@ -46,9 +46,11 @@ jobs:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
-  runner-stop:
+  stop-runner:
     uses: ./.github/workflows/runner-stop.yml
     secrets: inherit
+    with:
+      label: ${{ needs.start-runner.outputs.label }}
+      ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
     needs:
-      - runner-start
       - e2e

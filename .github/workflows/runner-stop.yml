@@ -1,6 +1,16 @@
-on: workflow_call
+on:
+  workflow_call:
+    inputs:
+      label:
+        description: "Label of the self-hosted runner"
+        type: string
+        required: true
+      ec2-instance-id:
+        description: "ID of the EC2 instance"
+        type: string
+        required: true
 jobs:
-  runner:
+  runner-stop:
     name: Stop self-hosted EC2 runner
     runs-on: self-hosted
     steps:
@@ -15,5 +25,5 @@ jobs:
         with:
           mode: stop
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          label: ${{ needs.runner-start.outputs.label }}
-          ec2-instance-id: ${{ needs.runner-start.outputs.ec2-instance-id }}
+          label: ${{ inputs.label }}
+          ec2-instance-id: ${{ inputs.ec2-instance-id }}

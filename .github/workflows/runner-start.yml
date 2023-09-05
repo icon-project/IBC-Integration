@@ -2,9 +2,9 @@ on:
   workflow_call:
     outputs:
       label: ${{ jobs.runner.start.outputs.label }}
-      ec2-instance-id: ${{ jobs.runner.start.outputs.ec2-instance-id }}
+      ec2-instance-id: ${{ jobs.runner-start.start.outputs.ec2-instance-id }}
 jobs:
-  runner:
+  runner-start:
     name: Start runner
     runs-on: ubuntu-latest
     steps:
@@ -24,22 +24,22 @@ jobs:
           echo "AMI_ID=$ami_id" >> $GITHUB_OUTPUT
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Start EC2 runner
+      - name: Start EC2 instance
         id: start
         uses: machulav/ec2-github-runner@v2
         with:
           mode: start
           github-token: ${{ secrets.GITHUB_TOKEN }}
           ec2-image-id: ${{ steps.ami-id.outputs.AMI_ID }}
-          ec2-instance-type: c5a.2xlarge
+          ec2-instance-type: c5.2xlarge
           subnet-id: subnet-f1fcd4df
           security-group-id: sg-03cb8034e27e1caeb
           aws-resource-tags: >
             [
               {"Key": "Name", "Value": "ec2-github-runner"},
-              {"Key": "GitHubRepository", "Value": "${{ github.repository }}"},
+              {"Key": "Repository", "Value": "${{ github.repository }}"},
               {"Key": "Project", "Value": "IBC"}
             ]
           pre-runner-script: |
             #!/bin/sh
-            docker build -t relayer --build-args VERSION=v0.1.0-alpha.7 .
+            docker build -t relayer --build-args VERSION=0.1.0-alpha.7 .
