@@ -24,7 +24,7 @@ deploy_wasm() {
 }
 
 # This wasm directory is inside the docker container
-for CONTRACT_WASM in /contracts/artifacts/archway/*.wasm; do
+for CONTRACT_WASM in /contracts/*.wasm; do
   echo "=> Deploying $CONTRACT_WASM"
   deploy_wasm "$CONTRACT_WASM"
 done
