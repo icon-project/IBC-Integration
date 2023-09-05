@@ -17,9 +17,8 @@ use crate::{
         XCALL_HANDLE_ERROR_REPLY_ID, XCALL_HANDLE_MESSAGE_REPLY_ID,
     },
     types::{
-        channel_config::ChannelConfig, config::Config, connection_config::ConnectionConfig,
-        config_response::to_config_response,
-        message::Message, LOG_PREFIX,
+        channel_config::ChannelConfig, config::Config, config_response::to_config_response,
+        connection_config::ConnectionConfig, message::Message, LOG_PREFIX,
     },
 };
 
@@ -139,7 +138,10 @@ impl<'a> CwIbcConnection<'a> {
                 nid,
                 packet_fee,
                 ack_fee,
-            } => self.set_fee(deps.storage, nid, packet_fee, ack_fee),
+            } => {
+                self.ensure_admin(deps.as_ref().storage, info.sender)?;
+                self.set_fee(deps.storage, nid, packet_fee, ack_fee)
+            }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelOpen { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
