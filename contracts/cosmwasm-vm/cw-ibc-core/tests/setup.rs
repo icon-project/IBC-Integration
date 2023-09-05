@@ -5,6 +5,7 @@ use cw_ibc_core::conversions::{
     to_ibc_port_id, to_ibc_timeout_height, to_ibc_timestamp,
 };
 use cw_ibc_core::ics03_connection::State as ConnectionState;
+use cw_ibc_core::light_client::light_client::LightClient;
 
 pub fn mock_height(
     number: u64,
@@ -489,6 +490,26 @@ pub fn get_mock_env() -> Env {
     env
 }
 
+pub fn mock_lightclient_query(
+    mocks: HashMap<Binary, Binary>,
+    deps: &mut OwnedDeps<MockStorage, MockApi, MockQuerier, Empty>,
+) {
+    deps.querier.update_wasm(move |r| match r {
+        WasmQuery::Smart {
+            contract_addr: _,
+            msg,
+        } => {
+            if mocks.get(msg).is_some() {
+                let res = mocks.get(msg).unwrap().clone();
+                SystemResult::Ok(ContractResult::Ok(res))
+            } else {
+                SystemResult::Ok(ContractResult::Ok(to_binary(&true).unwrap()))
+            }
+        }
+        _ => todo!(),
+    });
+}
+
 pub fn mock_lightclient_reply(deps: &mut OwnedDeps<MockStorage, MockApi, MockQuerier, Empty>) {
     deps.querier.update_wasm(|r| match r {
         WasmQuery::Smart {
@@ -522,26 +543,6 @@ pub fn mock_client_state_query(
     let reply = to_binary(&reply_any.encode_to_vec()).unwrap();
     query_map.insert(query, reply);
     query_map
-}
-
-pub fn mock_lightclient_query(
-    mocks: HashMap<Binary, Binary>,
-    deps: &mut OwnedDeps<MockStorage, MockApi, MockQuerier, Empty>,
-) {
-    deps.querier.update_wasm(move |r| match r {
-        WasmQuery::Smart {
-            contract_addr: _,
-            msg,
-        } => {
-            if mocks.get(msg).is_some() {
-                let res = mocks.get(msg).unwrap().clone();
-                SystemResult::Ok(ContractResult::Ok(res))
-            } else {
-                SystemResult::Ok(ContractResult::Ok(to_binary(&true).unwrap()))
-            }
-        }
-        _ => todo!(),
-    });
 }
 
 pub fn get_dummy_endpoints() -> (IbcEndpoint, IbcEndpoint) {
@@ -579,8 +580,8 @@ use cw_common::ibc_types::IbcClientId;
 use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::ics04_channel::Counterparty;
 use cw_ibc_core::ics04_channel::State;
+use cw_ibc_core::ConnectionEnd;
 use cw_ibc_core::{compute_packet_commitment, ChannelEnd, Sequence};
-use cw_ibc_core::{light_client::light_client::LightClient, ConnectionEnd};
 use prost::Message;
 
 use std::time::Duration;
@@ -1050,7 +1051,15 @@ impl TestContext {
             contract
                 .store_last_processed_on(storage, &self.env, &self.client_id)
                 .unwrap();
+            self.save_timestamp_at_height(client_state.latest_height, 0_u64);
         }
+    }
+
+    pub fn save_timestamp_at_height(&mut self, height: u64, timestamp: u64) {
+        let timestamp_query =
+            LightClient::get_timestamp_at_height_query(&self.client_id, height).unwrap();
+        self.mock_queries
+            .insert(timestamp_query, to_binary(&timestamp).unwrap());
     }
 
     pub fn save_consensus_state(&mut self, _storage: &mut dyn Storage, height: u64) {

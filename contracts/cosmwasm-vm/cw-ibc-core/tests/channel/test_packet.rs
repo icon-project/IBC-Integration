@@ -20,7 +20,7 @@ fn test_packet_send() {
     let src_channel = to_ibc_channel_id(&packet.source_channel).unwrap();
     let info = create_mock_info("moduleaddress", "test", 100);
     let res = contract.send_packet(deps.as_mut(), &mock_env(), info, packet);
-
+    println!("{res:?}");
     assert!(res.is_ok());
     let res = res.unwrap();
     assert_eq!(res.attributes[0].value, "send_packet");
@@ -171,6 +171,65 @@ fn test_packet_send_fails_for_invalid_port() {
     test_context.init_send_packet(deps.as_mut().storage, &contract);
     let info = create_mock_info("moduleaddress", "test", 100);
     packet.source_port = "invalidPort".to_string();
+    contract
+        .send_packet(deps.as_mut(), &mock_env(), info, packet)
+        .unwrap();
+}
+
+#[should_panic(
+    expected = " IbcPacketError { error: LowPacketHeight { chain_height: Height { revision: 0, height: 100 }, timeout_height: At(Height { revision: 0, height: 90 }) } }"
+)]
+#[test]
+fn test_packet_send_fails_on_timedout_height() {
+    let contract = CwIbcCoreContext::default();
+    let mut deps = deps();
+    let env = get_mock_env();
+    let timestamp_future = Timestamp::default();
+    let timeout_height_future = 90;
+    let mut packet = get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds());
+    packet.sequence = 1;
+    packet.data = vec![0];
+    let mut test_context = TestContext::for_send_packet(env, &packet);
+
+    test_context.init_send_packet(deps.as_mut().storage, &contract);
+
+    mock_lightclient_query(test_context.mock_queries, &mut deps);
+    let info = create_mock_info("moduleaddress", "test", 100);
+    contract
+        .send_packet(deps.as_mut(), &mock_env(), info, packet)
+        .unwrap();
+}
+
+#[should_panic(expected = "IbcPacketError { error: LowPacketTimestamp }")]
+#[test]
+fn test_packet_send_fails_on_timedout_timestamp() {
+    let contract = CwIbcCoreContext::default();
+    let mut deps = deps();
+    let env = get_mock_env();
+    let timestamp_future = Timestamp::from_nanoseconds(1692668413 * 1000000000).unwrap();
+    let timeout_height_future = 110;
+
+    let mut packet = get_dummy_raw_packet(timeout_height_future, timestamp_future.nanoseconds());
+    packet.sequence = 1;
+    packet.data = vec![0];
+    let mut test_context = TestContext::for_send_packet(env, &packet);
+    let client_state = test_context.client_state.clone().unwrap();
+
+    test_context.init_send_packet(deps.as_mut().storage, &contract);
+    let timestamp_query = LightClient::get_timestamp_at_height_query(
+        &IbcClientId::default(),
+        client_state.latest_height,
+    )
+    .unwrap();
+    let mut mocks = test_context.mock_queries.clone();
+    let expiry_future = Timestamp::from_nanoseconds(1692768413 * 1000000000).unwrap();
+    mocks.insert(
+        timestamp_query,
+        to_binary(&(expiry_future.nanoseconds())).unwrap(),
+    );
+    mock_lightclient_query(mocks, &mut deps);
+
+    let info = create_mock_info("moduleaddress", "test", 100);
     contract
         .send_packet(deps.as_mut(), &mock_env(), info, packet)
         .unwrap();

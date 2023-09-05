@@ -270,6 +270,30 @@ impl LightClient {
             .map_err(|e| ContractError::IbcDecodeError { error: e })?;
         Ok(Box::new(consensus_state))
     }
+    pub fn get_timestamp_at_height_query(
+        client_id: &IbcClientId,
+        height: u64,
+    ) -> Result<Binary, ContractError> {
+        let query_message = cw_common::client_msg::QueryMsg::GetTimestampAtHeight {
+            client_id: client_id.as_str().to_string(),
+            height,
+        };
+        let msg = to_binary(&query_message).map_err(ContractError::Std)?;
+        Ok(msg)
+    }
+
+    pub fn get_timestamp_at_height(
+        &self,
+        deps: Deps,
+        client_id: &IbcClientId,
+        height: u64,
+    ) -> Result<u64, ContractError> {
+        let msg = Self::get_timestamp_at_height_query(client_id, height)?;
+        let query = build_smart_query(self.address.clone(), msg);
+
+        let response: u64 = deps.querier.query(&query).map_err(ContractError::Std)?;
+        Ok(response)
+    }
 
     pub fn get_previous_consensus_state(
         &self,
