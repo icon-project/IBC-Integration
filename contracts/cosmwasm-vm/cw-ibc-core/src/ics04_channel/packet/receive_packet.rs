@@ -15,6 +15,7 @@ use crate::conversions::{
     to_ibc_channel_id, to_ibc_height, to_ibc_port_id, to_ibc_timeout_block, to_ibc_timeout_height,
     to_ibc_timestamp,
 };
+use common::ibc::timestamp::Timestamp;
 
 use super::*;
 
@@ -84,17 +85,12 @@ impl<'a> CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into)?;
         }
-        let latest_height = self.host_height(&env)?;
+        let current_host_height = self.host_height(&env)?;
+        let current_host_timestamp = self.host_timestamp(&env)?;
         let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone())?;
-
-        if packet_timeout_height.has_expired(latest_height) {
-            return Err(PacketError::LowPacketHeight {
-                chain_height: latest_height,
-                timeout_height: packet_timeout_height,
-            })
-            .map_err(Into::<ContractError>::into)?;
-        }
-        cw_println!(deps, "packet height is greater than timeout height");
+        let proof_height = to_ibc_height(msg.proof_height.clone())?;
+        // validate packet not expired on receive
+        self.validate_packet_not_expired(packet, current_host_height, current_host_timestamp)?;
 
         let client_id = connection_end.client_id();
         let client_state = self.client_state(deps.as_ref(), client_id)?;
@@ -106,8 +102,6 @@ impl<'a> CwIbcCoreContext<'a> {
             .map_err(Into::<ContractError>::into)?;
         }
         cw_println!(deps, "client state created ",);
-
-        let proof_height = to_ibc_height(msg.proof_height.clone())?;
 
         let consensus_state_of_a_on_b =
             self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
@@ -284,6 +278,63 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
+        Ok(())
+    }
+
+    pub fn validate_packet_not_expired(
+        &self,
+        packet: &RawPacket,
+        host_height: Height,
+        host_timestamp: Timestamp,
+    ) -> Result<(), ContractError> {
+        let packet_height = packet
+            .timeout_height
+            .clone()
+            .map(|h| h.revision_height)
+            .unwrap_or(0);
+        if packet_height == 0 && packet.timeout_timestamp == 0 {
+            return Err(ContractError::IbcPacketError {
+                error: PacketError::InvalidTimeoutHeight,
+            });
+        }
+
+        if packet_height > 0 {
+            let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone())?;
+
+            if packet_timeout_height.has_expired(host_height) {
+                return Err(PacketError::LowPacketHeight {
+                    chain_height: host_height,
+                    timeout_height: packet_timeout_height,
+                })
+                .map_err(Into::<ContractError>::into)?;
+            }
+        }
+        if packet.timeout_timestamp > 0 {
+            let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
+
+            if let Expiry::Expired = host_timestamp.check_expiry(&packet_timestamp) {
+                return Err(ContractError::IbcPacketError {
+                    error: PacketError::LowPacketTimestamp,
+                });
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn validate_packet_expired(
+        &self,
+        packet: &RawPacket,
+        host_height: Height,
+        host_timestamp: Timestamp,
+    ) -> Result<(), ContractError> {
+        let packet_not_expired = self
+            .validate_packet_not_expired(packet, host_height, host_timestamp)
+            .is_ok();
+        if packet_not_expired {
+            return Err(ContractError::PacketNotExpired);
+        }
+
         Ok(())
     }
 

@@ -1,6 +1,7 @@
 use super::*;
 use crate::channel::test_receive_packet::{get_dummy_raw_msg_recv_packet, make_ack_success};
 
+use common::ibc::core::ics02_client::height::Height;
 use cw_common::core_msg::InstantiateMsg;
 use cw_common::{core_msg::ExecuteMsg as CoreExecuteMsg, hex_string::HexString};
 
@@ -238,9 +239,25 @@ fn test_for_packet_send() {
         .unwrap();
 
     assert_eq!(response.attributes[0].value, "instantiate");
+
+    let height: Height = RawHeight {
+        revision_number: 0,
+        revision_height: 100,
+    }
+    .try_into()
+    .unwrap();
+
     let mut test_context = TestContext::for_send_packet(env.clone(), &raw);
+
     test_context.init_send_packet(deps.as_mut().storage, &contract);
-    mock_lightclient_query(test_context.mock_queries, &mut deps);
+    let timestamp_query = LightClient::get_timestamp_at_height_query(
+        &IbcClientId::default(),
+        height.revision_height(),
+    )
+    .unwrap();
+    let mut mocks = test_context.mock_queries.clone();
+    mocks.insert(timestamp_query, to_binary(&0_u64).unwrap());
+    mock_lightclient_query(mocks, &mut deps);
     let res = contract.execute(
         deps.as_mut(),
         env,
