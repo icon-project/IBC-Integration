@@ -66,7 +66,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let conn_id_on_a = channel_end.connection_hops()[0].clone();
         let conn_end_on_a = self.connection_end(deps.storage, &conn_id_on_a)?;
         let client_id = conn_end_on_a.client_id();
-        let client = self.get_client(deps.storage, client_id)?;
+        let client = self.get_light_client(deps.storage, client_id)?;
         let timestamp_at_height = client.get_timestamp_at_height(
             deps.as_ref(),
             client_id,
@@ -138,7 +138,12 @@ impl<'a> CwIbcCoreContext<'a> {
                 }
             };
 
-        client.verify_timeout(deps.as_ref(), client_id, next_seq_recv_verification_result)?;
+        let client = self.get_light_client(deps.as_ref().storage, client_id_on_a)?;
+        client.verify_timeout(
+            deps.as_ref(),
+            client_id_on_a,
+            next_seq_recv_verification_result,
+        )?;
 
         // Getting the module address for on packet timeout call
         let contract_address = self.lookup_modules(deps.storage, src_port.as_bytes().to_vec())?;

@@ -158,7 +158,7 @@ impl<'a> CwIbcCoreContext<'a> {
             }
         };
 
-        let client = self.get_client(deps.as_ref().storage, client_id)?;
+        let client = self.get_light_client(deps.as_ref().storage, client_id)?;
         client.verify_timeout_on_close(
             deps.as_ref(),
             client_id,

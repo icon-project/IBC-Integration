@@ -7,10 +7,11 @@ use common::icon::icon::types::v1::BtpHeader as RawBtpHeader;
 use common::icon::icon::types::v1::MerkleNode as RawMerkleNode;
 use common::icon::icon::types::v1::SignedHeader as RawSignedHeader;
 use common::utils::keccak256;
+use cosmwasm_std::testing::mock_env;
 
 use cosmwasm_std::Binary;
 use cosmwasm_std::{to_binary, Addr, Event, Reply, SubMsgResponse};
-use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
+use cw_common::client_response::UpdateClientResponse;
 use cw_common::core_msg::ExecuteMsg;
 use cw_common::hex_string::HexString;
 
@@ -20,7 +21,8 @@ use std::collections::HashMap;
 
 use cw_common::ProstMessage;
 
-use cw_ibc_core::{IbcClientType, EXECUTE_CREATE_CLIENT, EXECUTE_UPDATE_CLIENT};
+use cw_ibc_core::ics04_channel::IbcClient;
+use cw_ibc_core::{IbcClientType, EXECUTE_UPDATE_CLIENT};
 
 use cw_common::core_msg::InstantiateMsg;
 use cw_ibc_core::context::CwIbcCoreContext;
@@ -78,34 +80,10 @@ fn test_for_create_client_execution_message() {
     };
 
     let response = contract
-        .execute(deps.as_mut(), env.clone(), info, create_client_message)
+        .execute(deps.as_mut(), env, info, create_client_message)
         .unwrap();
 
-    assert_eq!(response.attributes[0].value, "create_client");
-
-    let mock_reponse_data = CreateClientResponse::new(
-        "iconclient".to_string(),
-        "10-15".to_string(),
-        keccak256(&client_state.encode_to_vec()).to_vec(),
-        keccak256(&consenus_state.encode_to_vec()).to_vec(),
-        client_state.encode_to_vec(),
-        consenus_state.encode_to_vec(),
-    );
-
-    let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
-
-    let event = Event::new("empty");
-
-    let reply_message = Reply {
-        id: EXECUTE_CREATE_CLIENT,
-        result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
-            events: vec![event],
-            data: Some(mock_data_binary),
-        }),
-    };
-    let response = contract.reply(deps.as_mut(), env, reply_message).unwrap();
-
-    assert_eq!(response.attributes[0].value, "execute_create_client_reply")
+    assert_eq!(response.attributes[1].value, "create_client");
 }
 
 #[test]
@@ -155,31 +133,15 @@ fn test_for_update_client_execution_messages() {
     contract
         .instantiate(deps.as_mut(), env.clone(), info.clone(), InstantiateMsg {})
         .unwrap();
-    let client_state_any = client_state.to_any();
-    let consensus_state_any = consenus_state.to_any();
-    let mock_reponse_data = CreateClientResponse::new(
-        "iconclient".to_string(),
-        "10-15".to_string(),
-        keccak256(&client_state.encode_to_vec()).to_vec(),
-        keccak256(&consenus_state.encode_to_vec()).to_vec(),
-        client_state_any.encode_to_vec(),
-        consensus_state_any.encode_to_vec(),
-    );
 
-    let mock_data_binary = to_binary(&mock_reponse_data).unwrap();
-
-    let event = Event::new("empty");
-
-    let reply_message = Reply {
-        id: EXECUTE_CREATE_CLIENT,
-        result: cosmwasm_std::SubMsgResult::Ok(SubMsgResponse {
-            events: vec![event],
-            data: Some(mock_data_binary),
-        }),
+    let msg = RawMsgCreateClient {
+        client_state: Some(client_state.to_any()),
+        consensus_state: Some(consenus_state.to_any()),
+        signer: "signer".to_string(),
     };
 
     contract
-        .reply(deps.as_mut(), env.clone(), reply_message)
+        .create_client(deps.as_mut(), info.clone(), mock_env(), msg)
         .unwrap();
 
     let merkle_node = RawMerkleNode {

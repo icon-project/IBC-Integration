@@ -108,7 +108,7 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::CreateClient { msg } => {
                 cw_println!(deps, "[IBCCore] CreateClient Called");
                 let message: RawMsgCreateClient = Self::raw_from_hex(&msg)?;
-                self.create_client(deps, info, message)
+                self.create_client(deps, info, env, message)
             }
             CoreExecuteMsg::UpdateClient { msg } => {
                 cw_println!(deps, "[IBCCore] UpdateClient Called");
@@ -288,7 +288,7 @@ impl<'a> CwIbcCoreContext<'a> {
             }
             QueryMsg::GetConsensusStateByHeight { client_id, height } => {
                 let client_val = IbcClientId::from_str(&client_id).unwrap();
-                let client = self.get_client(deps.storage, &client_val).unwrap();
+                let client = self.get_light_client(deps.storage, &client_val).unwrap();
                 let res = client
                     .get_consensus_state(deps, &client_val, height)
                     .unwrap();
@@ -498,7 +498,7 @@ impl<'a> CwIbcCoreContext<'a> {
             }
             QueryMsg::GetPreviousConsensusStateHeight { client_id, height } => {
                 let client_val = IbcClientId::from_str(&client_id).unwrap();
-                let client = self.get_client(deps.storage, &client_val).unwrap();
+                let client = self.get_light_client(deps.storage, &client_val).unwrap();
                 let res = client
                     .get_previous_consensus_state(deps, &client_val, height)
                     .unwrap();
@@ -530,7 +530,6 @@ impl<'a> CwIbcCoreContext<'a> {
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.id {
-            EXECUTE_CREATE_CLIENT => self.execute_create_client_reply(deps, env, message),
             EXECUTE_UPDATE_CLIENT => self.execute_update_client_reply(deps, env, message),
             EXECUTE_UPGRADE_CLIENT => self.execute_upgrade_client_reply(deps, env, message),
             MISBEHAVIOUR => self.execute_misbehaviour_reply(deps, env, message),

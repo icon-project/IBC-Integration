@@ -20,15 +20,10 @@ pub trait IbcClient {
         &self,
         deps: DepsMut,
         info: MessageInfo,
+        env: Env,
         message: RawMsgCreateClient,
     ) -> Result<Response, ContractError>;
 
-    fn execute_create_client_reply(
-        &self,
-        deps: DepsMut,
-        env: Env,
-        message: Reply,
-    ) -> Result<Response, ContractError>;
     fn update_client(
         &self,
         deps: DepsMut,

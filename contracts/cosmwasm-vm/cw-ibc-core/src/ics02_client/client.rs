@@ -1,5 +1,10 @@
+use common::constants::ICON_CLIENT_STATE_TYPE_URL;
+use common::constants::ICON_CONSENSUS_STATE_TYPE_URL;
 use common::ibc::core::ics24_host::identifier::ConnectionId;
 
+use common::icon::icon::lightclient::v1::ClientState;
+use common::icon::icon::lightclient::v1::ConsensusState;
+use common::traits::AnyTypes;
 use common::{client_state::IClientState, consensus_state::IConsensusState};
 use cosmwasm_std::Deps;
 use cosmwasm_std::Env;
@@ -319,7 +324,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ///
     /// a `Result` object that contains either a `String` representing the client or a `ContractError` if
     /// there was an error retrieving the client from the storage or if the client was not found.
-    pub fn get_client(
+    pub fn get_light_client(
         &self,
         store: &dyn Storage,
         client_id: &ClientId,
@@ -403,7 +408,7 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Box<dyn IClientState>, ContractError> {
-        let light_client = self.get_client(deps.storage, client_id)?;
+        let light_client = self.get_light_client(deps.storage, client_id)?;
         return light_client.get_client_state(deps, client_id);
     }
 
@@ -412,7 +417,7 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Any, ContractError> {
-        let light_client = self.get_client(deps.storage, client_id)?;
+        let light_client = self.get_light_client(deps.storage, client_id)?;
         light_client.get_client_state_any(deps, client_id)
     }
 
@@ -422,7 +427,7 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
         height: &common::ibc::Height,
     ) -> Result<Box<dyn IConsensusState>, ContractError> {
-        let client_impl = self.get_client(deps.storage, client_id)?;
+        let client_impl = self.get_light_client(deps.storage, client_id)?;
         let height = height.revision_height();
         return client_impl.get_consensus_state(deps, client_id, height);
     }
@@ -432,7 +437,7 @@ impl<'a> CwIbcCoreContext<'a> {
         deps: Deps,
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Any, ContractError> {
-        let client_impl = self.get_client(deps.storage, client_id)?;
+        let client_impl = self.get_light_client(deps.storage, client_id)?;
 
         client_impl.get_latest_consensus_state(deps, client_id)
     }
@@ -490,6 +495,35 @@ impl<'a> CwIbcCoreContext<'a> {
 
     pub fn max_expected_time_per_block(&self) -> std::time::Duration {
         Duration::from_secs(60)
+    }
+
+    pub fn decode_client_state(
+        &self,
+        client_state: Any,
+    ) -> Result<Box<dyn IClientState>, ContractError> {
+        match client_state.type_url.as_str() {
+            ICON_CLIENT_STATE_TYPE_URL => {
+                let client_state = ClientState::from_any(client_state)
+                    .map_err(|e| ContractError::IbcDecodeError { error: e })?;
+
+                Ok(Box::new(client_state))
+            }
+            _ => Err(ContractError::FailedConversion),
+        }
+    }
+    pub fn decode_consensus_state(
+        &self,
+        consensus_state: Any,
+    ) -> Result<Box<dyn IConsensusState>, ContractError> {
+        match consensus_state.type_url.as_str() {
+            ICON_CONSENSUS_STATE_TYPE_URL => {
+                let consensus_state = ConsensusState::from_any(consensus_state)
+                    .map_err(|e| ContractError::IbcDecodeError { error: e })?;
+
+                Ok(Box::new(consensus_state))
+            }
+            _ => Err(ContractError::FailedConversion),
+        }
     }
 }
 

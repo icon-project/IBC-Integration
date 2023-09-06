@@ -160,7 +160,7 @@ impl<'a> CwIbcCoreContext<'a> {
             ack: msg.acknowledgement.clone(),
         };
 
-        let client = self.get_client(deps.as_ref().storage, client_id_on_a)?;
+        let client = self.get_light_client(deps.as_ref().storage, client_id_on_a)?;
 
         client.verify_packet_acknowledge(
             deps.as_ref(),
