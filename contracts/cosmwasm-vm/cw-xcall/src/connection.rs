@@ -15,7 +15,7 @@ use crate::{
 impl<'a> CwCallService<'a> {
     pub fn call_connection_send_message(
         &self,
-        address: &str,
+        address: &Addr,
         fee: Vec<Coin>,
         to: NetId,
         sn: i64,
@@ -71,6 +71,7 @@ impl<'a> CwCallService<'a> {
         address: Addr,
     ) -> Result<Response, ContractError> {
         self.ensure_admin(deps.storage, info.sender)?;
+        deps.api.addr_validate(address.as_str())?;
         self.store_default_connection(deps.storage, nid, address)?;
 
         Ok(Response::new().add_attribute("method", "set_default_connection"))

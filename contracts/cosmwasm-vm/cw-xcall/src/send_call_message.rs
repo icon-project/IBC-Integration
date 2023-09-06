@@ -55,7 +55,7 @@ impl<'a> CwCallService<'a> {
 
         let call_request = CSMessageRequest::new(
             from,
-            to.account(),
+            deps.api.addr_validate(to.account().as_str())?,
             sequence_no,
             need_response,
             data.to_vec(),
@@ -76,14 +76,9 @@ impl<'a> CwCallService<'a> {
                         } else {
                             vec![]
                         };
+                        let address = deps.api.addr_validate(r)?;
 
-                        self.call_connection_send_message(
-                            &r.to_string(),
-                            fund,
-                            to.nid(),
-                            sn,
-                            &message,
-                        )
+                        self.call_connection_send_message(&address, fund, to.nid(), sn, &message)
                     });
             })
             .collect::<Result<Vec<SubMsg>, ContractError>>()?;

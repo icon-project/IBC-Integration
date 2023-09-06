@@ -43,7 +43,7 @@ impl<'a> CwCallService<'a> {
             return Err(ContractError::ProtocolsMismatch);
         }
 
-        let to = request.to();
+        let to = deps.api.addr_validate(request.to().as_str())?;
 
         if request.protocols().len() > 1 {
             let key = keccak256(data).to_vec();

@@ -108,7 +108,15 @@ impl<'a> CwCallService<'a> {
             }
             submsgs = reply_address
                 .iter()
-                .map(|to| self.call_connection_send_message(to, vec![], from.nid(), sn, &message))
+                .map(|to| {
+                    self.call_connection_send_message(
+                        &deps.api.addr_validate(to)?,
+                        vec![],
+                        from.nid(),
+                        sn,
+                        &message,
+                    )
+                })
                 .collect::<Result<Vec<SubMsg>, ContractError>>()?;
         }
 
