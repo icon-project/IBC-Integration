@@ -108,7 +108,7 @@ impl<'a> CwIbcCoreContext<'a> {
             CoreExecuteMsg::CreateClient { msg } => {
                 cw_println!(deps, "[IBCCore] CreateClient Called");
                 let message: RawMsgCreateClient = Self::raw_from_hex(&msg)?;
-                self.create_client(deps, info, message)
+                self.create_client(deps, info, env, message)
             }
             CoreExecuteMsg::UpdateClient { msg } => {
                 cw_println!(deps, "[IBCCore] UpdateClient Called");
@@ -277,7 +277,7 @@ impl<'a> CwIbcCoreContext<'a> {
             }
             QueryMsg::GetConsensusState { client_id } => {
                 let res = self
-                    .consensus_state_any(deps.storage, &IbcClientId::from_str(&client_id).unwrap())
+                    .consensus_state_any(deps, &IbcClientId::from_str(&client_id).unwrap())
                     .map_err(|_e| {
                         cw_println!(deps, "{_e:?}");
                         ContractError::InvalidClientId { client_id }
@@ -288,15 +288,16 @@ impl<'a> CwIbcCoreContext<'a> {
             }
             QueryMsg::GetConsensusStateByHeight { client_id, height } => {
                 let client_val = IbcClientId::from_str(&client_id).unwrap();
-                let client = self.get_client(deps.storage, &client_val).unwrap();
+                let client = self.get_light_client(deps.storage, &client_val).unwrap();
                 let res = client
                     .get_consensus_state(deps, &client_val, height)
                     .unwrap();
-                to_binary(&hex::encode(res))
+                let state = res.as_bytes();
+                to_binary(&hex::encode(state))
             }
             QueryMsg::GetClientState { client_id } => {
                 let res = self
-                    .client_state_any(deps.storage, &IbcClientId::from_str(&client_id).unwrap())
+                    .client_state_any(deps, &IbcClientId::from_str(&client_id).unwrap())
                     .map_err(|_| ContractError::InvalidClientId { client_id })
                     .unwrap();
 
@@ -497,7 +498,7 @@ impl<'a> CwIbcCoreContext<'a> {
             }
             QueryMsg::GetPreviousConsensusStateHeight { client_id, height } => {
                 let client_val = IbcClientId::from_str(&client_id).unwrap();
-                let client = self.get_client(deps.storage, &client_val).unwrap();
+                let client = self.get_light_client(deps.storage, &client_val).unwrap();
                 let res = client
                     .get_previous_consensus_state(deps, &client_val, height)
                     .unwrap();
@@ -529,7 +530,6 @@ impl<'a> CwIbcCoreContext<'a> {
         message: Reply,
     ) -> Result<Response, ContractError> {
         match message.id {
-            EXECUTE_CREATE_CLIENT => self.execute_create_client_reply(deps, env, message),
             EXECUTE_UPDATE_CLIENT => self.execute_update_client_reply(deps, env, message),
             EXECUTE_UPGRADE_CLIENT => self.execute_upgrade_client_reply(deps, env, message),
             MISBEHAVIOUR => self.execute_misbehaviour_reply(deps, env, message),
@@ -683,22 +683,13 @@ impl<'a> CwIbcCoreContext<'a> {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
 
     use crate::context::CwIbcCoreContext;
     use crate::contract::{CONTRACT_NAME, CONTRACT_VERSION};
-    use common::ibc::core::ics02_client::height::Height;
-    use common::{
-        constants::ICON_CONSENSUS_STATE_TYPE_URL,
-        icon::icon::lightclient::v1::ConsensusState as RawConsensusState, traits::AnyTypes,
-    };
 
     use crate::msg::MigrateMsg;
     use cw2::{get_contract_version, ContractVersion};
     use cw_common::ibc_types::IbcClientType;
-
-    use cw_common::cw_println;
-    use prost::Message;
 
     use super::{instantiate, query, InstantiateMsg, QueryMsg};
 
@@ -707,8 +698,7 @@ mod tests {
         testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
         Addr, OwnedDeps,
     };
-    use cw_common::ibc_types::IbcClientId;
-    use cw_common::raw_types::{Any, RawHeight};
+
     const SENDER: &str = "sender";
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
@@ -755,43 +745,6 @@ mod tests {
         let result = query(deps.as_ref(), mock_env(), msg).unwrap();
         let result_parsed: Addr = from_binary(&result).unwrap();
         assert_eq!(client, result_parsed.as_str());
-    }
-
-    #[test]
-    fn test_query_get_consensus_state() {
-        let contract = CwIbcCoreContext::default();
-        let client_id = "test_client_1".to_string();
-        let mut deps = setup();
-        let commitment_root =
-            "0x7702db70e830e07b4ff46313456fc86d677c7eeca0c011d7e7dcdd48d5aacfe2".to_string();
-        let consensus_state = RawConsensusState {
-            message_root: commitment_root.encode_to_vec(),
-            next_proof_context_hash: vec![1, 2, 3, 4],
-        };
-
-        let height = Height::new(123, 456).unwrap();
-        let _raw_height: RawHeight = RawHeight::from(height);
-        contract
-            .store_consensus_state(
-                deps.as_mut().storage,
-                &IbcClientId::from_str(&client_id).unwrap(),
-                height,
-                consensus_state.to_any().encode_to_vec(),
-                consensus_state.get_keccak_hash().to_vec(),
-            )
-            .unwrap();
-
-        let msg = QueryMsg::GetConsensusState { client_id };
-        let result = query(deps.as_ref(), mock_env(), msg).unwrap();
-        let result_parsed: String = from_binary(&result).unwrap();
-        let result_bytes = hex::decode(result_parsed).unwrap();
-
-        let result_decoded = Any::decode(result_bytes.as_ref()).unwrap();
-        cw_println!(deps, "{result_decoded:?}");
-        assert_eq!(
-            ICON_CONSENSUS_STATE_TYPE_URL.to_string(),
-            result_decoded.type_url
-        );
     }
 
     #[test]

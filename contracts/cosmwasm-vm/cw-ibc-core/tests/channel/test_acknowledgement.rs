@@ -24,7 +24,7 @@ fn test_acknowledgement_packet_validate_ordered() {
         .store_next_sequence_ack(&mut deps.storage, &src_port, &src_channel, &1.into())
         .unwrap();
 
-    mock_lightclient_reply(&mut deps);
+    mock_lightclient_query(test_context.mock_queries, &mut deps);
     let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, env, &msg);
     println!("{:?}", res);
     assert!(res.is_ok());
@@ -46,7 +46,7 @@ fn test_acknowledgement_packet_validate_unordered() {
     test_context.channel_end = Some(channel_end);
     test_context.init_acknowledge_packet(deps.as_mut().storage, &contract);
 
-    mock_lightclient_reply(&mut deps);
+    mock_lightclient_query(test_context.mock_queries, &mut deps);
 
     let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, env, &msg);
     assert!(res.is_ok());
