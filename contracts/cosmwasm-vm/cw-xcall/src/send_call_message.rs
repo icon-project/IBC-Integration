@@ -21,11 +21,7 @@ impl<'a> CwCallService<'a> {
         let config = self.get_config(deps.as_ref().storage)?;
         let nid = config.network_id;
 
-        self.ensure_caller_is_contract_and_rollback_is_null(
-            deps.as_ref(),
-            caller.clone(),
-            rollback.clone(),
-        )?;
+        self.ensure_caller_is_contract_and_rollback_is_null(deps.as_ref(), &caller, &rollback)?;
 
         let need_response = rollback.is_some();
 

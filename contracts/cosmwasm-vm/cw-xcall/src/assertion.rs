@@ -27,8 +27,8 @@ impl<'a> CwCallService<'a> {
     pub fn ensure_caller_is_contract_and_rollback_is_null(
         &self,
         deps: Deps,
-        address: Addr,
-        rollback: Option<Vec<u8>>,
+        address: &Addr,
+        rollback: &Option<Vec<u8>>,
     ) -> Result<(), ContractError> {
         if rollback.is_some() {
             ensure!(
@@ -200,6 +200,6 @@ impl<'a> CwCallService<'a> {
 /// `querier` object to get information about the contract at the given `address`. If the query is
 /// successful, it returns `true`, indicating that the address is a valid contract. If the query fails,
 /// it returns `
-fn is_contract(querier: QuerierWrapper, address: Addr) -> bool {
+fn is_contract(querier: QuerierWrapper, address: &Addr) -> bool {
     querier.query_wasm_contract_info(address).is_ok()
 }
