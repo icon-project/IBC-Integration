@@ -102,42 +102,4 @@ impl<'a> CwCallService<'a> {
         }
         Ok(res)
     }
-
-    /// This function sends a reply message and returns a response or an error.
-    ///
-    /// Arguments:
-    ///
-    /// * `message`: The `message` parameter is of type `Reply`, which is a struct that contains
-    /// information about the result of a sub-message that was sent by the contract. It has two fields:
-    /// `id`, which is a unique identifier for the sub-message, and `result`, which is an enum that
-    /// represents
-    ///
-    /// Returns:
-    ///
-    /// The function `reply_sendcall_message` returns a `Result` object, which can either be an `Ok`
-    /// variant containing a `Response` object with two attributes ("action" and "method"), or an `Err`
-    /// variant containing a `ContractError` object with a code and a message.
-    pub fn send_call_message_reply(&self, message: Reply) -> Result<Response, ContractError> {
-        println!("{LOG_PREFIX} Received Callback From SendCallMessage");
-
-        match message.result {
-            SubMsgResult::Ok(res) => {
-                println!("{LOG_PREFIX} Call Success");
-                println!("{:?}", res);
-                Ok(Response::new()
-                    .add_attribute("action", "reply")
-                    .add_attribute("method", "sendcall_message"))
-            }
-            SubMsgResult::Err(error) => {
-                println!(
-                    "{} SendMessageCall Failed with error {}",
-                    LOG_PREFIX, &error
-                );
-                Err(ContractError::ReplyError {
-                    code: message.id,
-                    msg: error,
-                })
-            }
-        }
-    }
 }

@@ -187,8 +187,6 @@ impl<'a> CwCallService<'a> {
     pub fn reply(&self, deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractError> {
         match msg.id {
             EXECUTE_CALL_ID => self.execute_call_reply(deps, env, msg),
-            EXECUTE_ROLLBACK_ID => self.execute_rollback_reply(deps.as_ref(), msg),
-            SEND_CALL_MESSAGE_REPLY_ID => self.send_call_message_reply(msg),
             _ => Err(ContractError::ReplyError {
                 code: msg.id,
                 msg: "Unknown".to_string(),

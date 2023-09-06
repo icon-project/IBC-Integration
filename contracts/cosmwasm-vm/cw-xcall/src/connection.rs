@@ -34,7 +34,7 @@ impl<'a> CwCallService<'a> {
             id: SEND_CALL_MESSAGE_REPLY_ID,
             msg: cosm_msg,
             gas_limit: None,
-            reply_on: cosmwasm_std::ReplyOn::Always,
+            reply_on: cosmwasm_std::ReplyOn::Never,
         };
         println!("{LOG_PREFIX} sent message to connection :{address}");
         Ok(submessage)

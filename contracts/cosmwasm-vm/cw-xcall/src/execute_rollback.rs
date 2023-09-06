@@ -60,47 +60,4 @@ impl<'a> CwCallService<'a> {
             .add_event(event)
             .add_submessage(sub_msg))
     }
-
-    /// This function handles the response of a call to a service and generates a response with an
-    /// event.
-    ///
-    /// Arguments:
-    ///
-    /// * `deps`: `deps` is an instance of the `Deps` struct, which provides access to the contract's
-    /// dependencies such as storage, API, and context.
-    /// * `msg`: `msg` is a `Reply` struct that contains the result of a sub-message that was sent by
-    /// the contract to another contract or external system. It is used to construct a
-    /// `CallServiceMessageResponse` that will be returned as part of the `Response` to the original
-    /// message that triggered the
-    ///
-    /// Returns:
-    ///
-    /// a `Result<Response, ContractError>` where `Response` is a struct representing the response to be
-    /// returned by the contract and `ContractError` is an enum representing any errors that may occur
-    /// during contract execution.
-    pub fn execute_rollback_reply(
-        &self,
-        _deps: Deps,
-        msg: Reply,
-    ) -> Result<Response, ContractError> {
-        match msg.result {
-            SubMsgResult::Ok(res) => {
-                println!("{LOG_PREFIX} Rollback Success");
-                println!("{:?}", res);
-                Ok(Response::new()
-                    .add_attribute("action", "reply")
-                    .add_attribute("method", "execute_rollback"))
-            }
-            SubMsgResult::Err(error) => {
-                println!(
-                    "{} Execute Rollback Failed with error {}",
-                    LOG_PREFIX, &error
-                );
-                Err(ContractError::ReplyError {
-                    code: msg.id,
-                    msg: error,
-                })
-            }
-        }
-    }
 }
