@@ -66,7 +66,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let conn_id_on_a = channel_end.connection_hops()[0].clone();
         let conn_end_on_a = self.connection_end(deps.storage, &conn_id_on_a)?;
         let client_id = conn_end_on_a.client_id();
-        let client = self.get_client(deps.storage, client_id)?;
+        let client = self.get_light_client(deps.storage, client_id)?;
         let timestamp_at_height = client.get_timestamp_at_height(
             deps.as_ref(),
             client_id,
