@@ -4,6 +4,9 @@ members = [
     "libraries/rust/common",
 ]
 
+exclude = ["contracts/cosmwasm-vm/archway"]
+
+
 [workspace.package]
 authors = ["Icon Foundation<foo@icon.foundation>"]
 repository = "https://github.com/icon-project/ibc-integration.git"

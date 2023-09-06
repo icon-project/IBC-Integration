@@ -65,6 +65,16 @@ pub enum ExecuteMsg {
 }
 
 #[cw_serde]
+pub struct ConfigResponse {
+    pub channel_id: String,
+    pub port: String,
+    pub destination_channel_id: String,
+    pub destination_port_id: String,
+    pub light_client_id: String,
+    pub timeout_height: u64,
+}
+
+#[cw_serde]
 #[derive(QueryResponses)]
 /// This is a Rust enum representing different types of queries that can be made to the contract. Each
 /// variant of the enum corresponds to a specific query and has a return type specified using the
@@ -78,4 +88,6 @@ pub enum QueryMsg {
     GetFee { nid: NetId, response: bool },
     #[returns(u64)]
     GetUnclaimedFee { nid: NetId, relayer: String },
+    #[returns(ConfigResponse)]
+    GetIbcConfig { nid: NetId },
 }

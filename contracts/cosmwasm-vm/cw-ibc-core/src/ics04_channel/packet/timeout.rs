@@ -167,6 +167,14 @@ impl<'a> CwIbcCoreContext<'a> {
             &src_channel,
             packet.sequence.into(),
         )?;
+        // reset height to zero once packet has timed out
+        self.ibc_store().store_sent_packet(
+            deps.storage,
+            &src_port,
+            &src_channel,
+            packet.sequence,
+            0,
+        )?;
 
         if let Order::Ordered = channel_end.ordering {
             channel_end.state = State::Closed;

@@ -20,4 +20,4 @@ include(':mockapp')
 project(':mockapp').projectDir = file("modules/mockapp")
 project(':mockapp').name = "mockapp"
 
-includeBuild "../../xCall/contracts/javascore/"
+includeBuild "../../xcall-multi/contracts/javascore/"

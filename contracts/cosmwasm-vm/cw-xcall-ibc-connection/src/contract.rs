@@ -15,8 +15,8 @@ use crate::{
         XCALL_HANDLE_ERROR_REPLY_ID, XCALL_HANDLE_MESSAGE_REPLY_ID,
     },
     types::{
-        channel_config::ChannelConfig, config::Config, connection_config::ConnectionConfig,
-        message::Message, LOG_PREFIX,
+        channel_config::ChannelConfig, config::Config, config_response::to_config_response,
+        connection_config::ConnectionConfig, message::Message, LOG_PREFIX,
     },
 };
 
@@ -136,7 +136,10 @@ impl<'a> CwIbcConnection<'a> {
                 nid,
                 packet_fee,
                 ack_fee,
-            } => self.set_fee(deps.storage, nid, packet_fee, ack_fee),
+            } => {
+                self.ensure_admin(deps.as_ref().storage, info.sender)?;
+                self.set_fee(deps.storage, nid, packet_fee, ack_fee)
+            }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelOpen { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
@@ -216,6 +219,13 @@ impl<'a> CwIbcConnection<'a> {
             }
             QueryMsg::GetUnclaimedFee { nid, relayer } => {
                 to_binary(&self.get_unclaimed_fee(deps.storage, nid, relayer))
+            }
+            QueryMsg::GetIbcConfig { nid } => {
+                let ibc_config = self.get_ibc_config(deps.storage, &nid).unwrap();
+                let channel_config = self
+                    .get_channel_config(deps.storage, &ibc_config.src_endpoint().channel_id)
+                    .unwrap();
+                to_binary(&to_config_response(ibc_config, channel_config))
             }
         }
     }

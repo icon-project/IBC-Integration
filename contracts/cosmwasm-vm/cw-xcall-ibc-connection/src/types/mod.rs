@@ -3,6 +3,7 @@ pub use common::rlp;
 
 pub mod channel_config;
 pub mod config;
+pub mod config_response;
 pub mod connection_config;
 pub mod message;
 pub mod network_fees;

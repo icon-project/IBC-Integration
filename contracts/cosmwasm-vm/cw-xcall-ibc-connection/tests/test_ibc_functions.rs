@@ -137,6 +137,83 @@ fn success_on_open_channel_open_init_unordered_channel() {
 
 #[test]
 #[cfg(not(feature = "native_ibc"))]
+fn get_ibc_config_after_setup() {
+    use cw_common::xcall_connection_msg::ConfigResponse;
+    use cw_xcall_ibc_connection::{state::CwIbcConnection, types::config::Config};
+
+    let mut deps = deps();
+
+    let mock_env = mock_env();
+    let mock_info = create_mock_info("alice", "umlg", 2000);
+
+    let mut contract = CwIbcConnection::default();
+
+    let src = IbcEndpoint {
+        port_id: "our-port".to_string(),
+        channel_id: "channel-1".to_string(),
+    };
+    let dst = IbcEndpoint {
+        port_id: "their-port".to_string(),
+        channel_id: "channel-3".to_string(),
+    };
+
+    contract
+        .store_config(
+            deps.as_mut().storage,
+            &Config {
+                port_id: "our-port".to_string(),
+                denom: "arch".to_string(),
+            },
+        )
+        .unwrap();
+
+    let connection_id = "newconnection".to_string();
+
+    let execute_msg = ExecuteMsg::IbcChannelOpen {
+        msg: OpenInit {
+            channel: IbcChannel::new(
+                src.clone(),
+                dst.clone(),
+                cosmwasm_std::IbcOrder::Unordered,
+                "ics20-1",
+                &connection_id,
+            ),
+        },
+    };
+
+    contract
+        .configure_connection(
+            deps.as_mut().storage,
+            connection_id,
+            dst.port_id.clone(),
+            NetId::from("nid".to_string()),
+            "client-id".to_string(),
+            100,
+        )
+        .unwrap();
+    contract
+        .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
+        .unwrap();
+
+    let result = contract.execute(deps.as_mut(), mock_env.clone(), mock_info, execute_msg);
+
+    assert!(result.is_ok());
+
+    let query = QueryMsg::GetIbcConfig {
+        nid: NetId::from("nid".to_string()),
+    };
+    let response = contract.query(deps.as_ref(), mock_env, query);
+    let config: ConfigResponse = from_binary(&response.unwrap()).unwrap();
+    assert_eq!(config.channel_id, src.channel_id);
+    assert_eq!(config.port, src.port_id);
+    assert_eq!(config.destination_channel_id, dst.channel_id);
+    assert_eq!(config.destination_port_id, dst.port_id);
+    assert_eq!(config.light_client_id, "client-id");
+    assert_eq!(config.timeout_height, 100);
+}
+
+#[test]
+#[cfg(not(feature = "native_ibc"))]
 #[should_panic(expected = " InvalidVersion { actual: \"xyz\", expected: \"ics20-1\" }")]
 fn fails_on_open_channel_open_try_invalid_version() {
     use cw_xcall_ibc_connection::state::CwIbcConnection;
