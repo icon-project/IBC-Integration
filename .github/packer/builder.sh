@@ -26,6 +26,11 @@ pull_archway_images() {
 
 configure_relayer() {
   mv /tmp/Dockerfile .
+  cat > build.sh <<EOF
+  #!/bin/sh
+  docker build -t relayer --build-args VERSION=$1 .
+EOF
+  chmod +x build.sh
 }
 
 build_services() {

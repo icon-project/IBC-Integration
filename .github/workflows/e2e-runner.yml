@@ -9,9 +9,11 @@ permissions:
   statuses: write
 jobs:
   start-runner:
-    if: github.event.issue.pull_request && contains(github.event.comment.body, '/run e2e')
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '/run e2e')
     uses: ./.github/workflows/runner-start.yml
     secrets: inherit
+    with:
+      relayer_version: ${{ vars.relayer_version == '' && '0.1.0-alpha.7' || vars.relayer_version }}
   e2e:
     name: E2E tests
     runs-on: self-hosted
