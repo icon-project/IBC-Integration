@@ -28,6 +28,7 @@ impl<'a> CwCallService<'a> {
         address: String,
     ) -> Result<Response, ContractError> {
         self.ensure_admin(deps.storage, info.sender.clone())?;
+        deps.api.addr_validate(&address)?;
         self.add_feehandler(deps.storage, &address)?;
         Ok(Response::new().add_attribute("method", "set_protocol_feehandler"))
     }
