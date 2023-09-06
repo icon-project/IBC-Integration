@@ -16,7 +16,6 @@ pub struct CSMessageRequest {
 }
 
 impl CSMessageRequest {
-    // TODO : Change to Option of Bytes
     pub fn new(
         from: NetworkAddress,
         to: Addr,
