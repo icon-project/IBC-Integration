@@ -34,8 +34,8 @@ pub enum ContractError {
     AdminAddressCannotBeNull {},
     #[error("InvalidAddress {address}")]
     InvalidAddress { address: String },
-    #[error("InsuffcientFunds")]
-    InsuffcientFunds,
+    #[error("InsufficientFunds")]
+    InsufficientFunds,
     #[error("ProtocolsMismatch")]
     ProtocolsMismatch,
     #[error("DataMismatch")]
