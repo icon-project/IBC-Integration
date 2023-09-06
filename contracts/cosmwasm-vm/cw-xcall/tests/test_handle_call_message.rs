@@ -7,7 +7,7 @@ use cosmwasm_std::{
 
 use cw_xcall::{
     state::{CwCallService, EXECUTE_CALL_ID},
-    types::{call_request::CallRequest, request::CallServiceMessageRequest},
+    types::{call_request::CallRequest, request::CSMessageRequest},
 };
 use cw_xcall_lib::network_address::NetworkAddress;
 mod account;
@@ -38,7 +38,7 @@ fn test_execute_call_with_wrong_data() {
     let cw_callservice = CwCallService::default();
     let data = vec![104, 101, 108, 108, 111];
     let request_id = 123456;
-    let proxy_requests = CallServiceMessageRequest::new(
+    let proxy_requests = CSMessageRequest::new(
         NetworkAddress::new("nid", "mockaddress"),
         Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7"),
         123,
@@ -63,7 +63,7 @@ fn test_execute_call_having_request_id_without_rollback() {
     let cw_callservice = CwCallService::default();
     let data = vec![104, 101, 108, 108, 111];
     let request_id = 123456;
-    let proxy_requests = CallServiceMessageRequest::new(
+    let proxy_requests = CSMessageRequest::new(
         NetworkAddress::new("nid", "mockaddress"),
         Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7"),
         123,
@@ -115,7 +115,7 @@ fn test_successful_reply_message() {
     let contract = CwCallService::default();
 
     let request_id = 123456;
-    let proxy_requests = CallServiceMessageRequest::new(
+    let proxy_requests = CSMessageRequest::new(
         NetworkAddress::new("nid", "mockaddress"),
         Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7"),
         123,
@@ -150,7 +150,7 @@ fn test_failed_reply_message() {
     let contract = CwCallService::default();
 
     let request_id = 123456;
-    let proxy_requests = CallServiceMessageRequest::new(
+    let proxy_requests = CSMessageRequest::new(
         NetworkAddress::new("nid", "mockaddress"),
         Addr::unchecked("88bd05442686be0a5df7da33b6f1089ebfea3769b19dbb2477fe0cd6e0f123t7"),
         123,
@@ -172,9 +172,7 @@ fn test_failed_reply_message() {
 }
 
 #[test]
-#[should_panic(
-    expected = "td(NotFound { kind: \"cw_xcall::types::request::CallServiceMessageRequest\" })"
-)]
+#[should_panic(expected = "td(NotFound { kind: \"cw_xcall::types::request::CSMessageRequest\" })")]
 fn test_invalid_sequence_no() {
     let deps = mock_dependencies();
     let contract = CwCallService::new();

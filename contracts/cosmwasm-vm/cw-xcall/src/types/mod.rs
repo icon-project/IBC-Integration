@@ -12,5 +12,5 @@ pub use common::rlp;
 use common::rlp::{Decodable, Encodable};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, Binary};
-use request::CallServiceMessageRequest;
-use response::CallServiceMessageResponse;
+use request::CSMessageRequest;
+use response::CSMessageResponse;

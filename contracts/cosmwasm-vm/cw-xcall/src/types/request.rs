@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub struct CallServiceMessageRequest {
+pub struct CSMessageRequest {
     from: NetworkAddress,
     to: Addr,
     sequence_no: u128,
@@ -15,7 +15,7 @@ pub struct CallServiceMessageRequest {
     data: Nullable<Vec<u8>>,
 }
 
-impl CallServiceMessageRequest {
+impl CSMessageRequest {
     // TODO : Change to Option of Bytes
     pub fn new(
         from: NetworkAddress,
@@ -69,7 +69,7 @@ impl CallServiceMessageRequest {
     }
 }
 
-impl Encodable for CallServiceMessageRequest {
+impl Encodable for CSMessageRequest {
     fn rlp_append(&self, stream: &mut rlp::RlpStream) {
         stream.begin_list(6);
         stream.append(&self.from.to_string());
@@ -84,7 +84,7 @@ impl Encodable for CallServiceMessageRequest {
     }
 }
 
-impl Decodable for CallServiceMessageRequest {
+impl Decodable for CSMessageRequest {
     fn decode(rlp: &rlp::Rlp) -> Result<Self, rlp::DecoderError> {
         let rlp_protocols = rlp.at(5)?;
         let list: Vec<String> = rlp_protocols.as_list()?;
@@ -102,7 +102,7 @@ impl Decodable for CallServiceMessageRequest {
     }
 }
 
-impl TryFrom<&Vec<u8>> for CallServiceMessageRequest {
+impl TryFrom<&Vec<u8>> for CSMessageRequest {
     type Error = ContractError;
     fn try_from(value: &Vec<u8>) -> Result<Self, Self::Error> {
         let rlp = rlp::Rlp::new(value as &[u8]);
@@ -112,7 +112,7 @@ impl TryFrom<&Vec<u8>> for CallServiceMessageRequest {
     }
 }
 
-impl TryFrom<&[u8]> for CallServiceMessageRequest {
+impl TryFrom<&[u8]> for CSMessageRequest {
     type Error = ContractError;
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         let rlp = rlp::Rlp::new(value);
@@ -162,12 +162,12 @@ mod tests {
     use cosmwasm_std::Addr;
     use cw_xcall_lib::network_address::NetworkAddress;
 
-    use super::CallServiceMessageRequest;
+    use super::CSMessageRequest;
 
     #[test]
     fn test_csmessage_request_encoding() {
         let data = hex::decode("74657374").unwrap();
-        let msg = CallServiceMessageRequest::new(
+        let msg = CSMessageRequest::new(
             NetworkAddress::from_str("0x1.ETH/0xa").unwrap(),
             Addr::unchecked("cx0000000000000000000000000000000000000102"),
             21,
@@ -179,7 +179,7 @@ mod tests {
         let encoded = rlp::encode(&msg);
         assert_eq!("f83f8b3078312e4554482f307861aa63783030303030303030303030303030303030303030303030303030303030303030303030303031303215008474657374c0",hex::encode(encoded));
 
-        let msg = CallServiceMessageRequest::new(
+        let msg = CSMessageRequest::new(
             NetworkAddress::from_str("0x1.ETH/0xa").unwrap(),
             Addr::unchecked("cx0000000000000000000000000000000000000102"),
             21,
@@ -191,7 +191,7 @@ mod tests {
         let encoded = rlp::encode(&msg);
         assert_eq!("f84b8b3078312e4554482f307861aa63783030303030303030303030303030303030303030303030303030303030303030303030303031303215008474657374cc836162638363646583656667",hex::encode(encoded));
 
-        let msg = CallServiceMessageRequest::new(
+        let msg = CSMessageRequest::new(
             NetworkAddress::from_str("0x1.ETH/0xa").unwrap(),
             Addr::unchecked("cx0000000000000000000000000000000000000102"),
             21,

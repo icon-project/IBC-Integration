@@ -1,4 +1,4 @@
-use crate::types::{message::CallServiceMessage, LOG_PREFIX};
+use crate::types::{message::CSMessage, LOG_PREFIX};
 use common::rlp;
 use cosmwasm_std::{
     to_binary, Addr, Coin, CosmosMsg, Deps, DepsMut, QueryRequest, SubMsg, WasmMsg,
@@ -19,7 +19,7 @@ impl<'a> CwCallService<'a> {
         fee: Vec<Coin>,
         to: NetId,
         sn: i64,
-        msg: &CallServiceMessage,
+        msg: &CSMessage,
     ) -> Result<SubMsg, ContractError> {
         let msg = rlp::encode(msg).to_vec();
         self.ensure_data_length(msg.len())?;

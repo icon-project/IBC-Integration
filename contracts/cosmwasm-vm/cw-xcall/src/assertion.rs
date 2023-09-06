@@ -3,7 +3,7 @@ use super::*;
 use crate::{
     error::ContractError,
     state::{CwCallService, MAX_DATA_SIZE, MAX_ROLLBACK_SIZE},
-    types::{call_request::CallRequest, request::CallServiceMessageRequest},
+    types::{call_request::CallRequest, request::CSMessageRequest},
 };
 
 impl<'a> CwCallService<'a> {
@@ -101,7 +101,7 @@ impl<'a> CwCallService<'a> {
     pub fn ensure_request_not_null(
         &self,
         req_id: u128,
-        message: &CallServiceMessageRequest,
+        message: &CSMessageRequest,
     ) -> Result<(), ContractError> {
         let data = to_binary(message).unwrap();
         ensure!(

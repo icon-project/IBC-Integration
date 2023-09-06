@@ -53,7 +53,7 @@ impl<'a> CwCallService<'a> {
             self.store_call_request(deps.storage, sequence_no, &request)?;
         }
 
-        let call_request = CallServiceMessageRequest::new(
+        let call_request = CSMessageRequest::new(
             from,
             to.account(),
             sequence_no,
@@ -62,7 +62,7 @@ impl<'a> CwCallService<'a> {
             destinations,
         );
 
-        let message: CallServiceMessage = call_request.into();
+        let message: CSMessage = call_request.into();
         let sn: i64 = if need_response { sequence_no as i64 } else { 0 };
 
         let submessages = confirmed_sources
