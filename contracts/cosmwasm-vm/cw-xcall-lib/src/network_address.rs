@@ -78,6 +78,9 @@ impl NetworkAddress {
 
     pub fn get_parts(&self) -> Vec<&str> {
         let parts = self.0.split('/').collect::<Vec<&str>>();
+        if parts.len() != 2 {
+            panic!("Invalid Network Address");
+        }
         parts
     }
 }
