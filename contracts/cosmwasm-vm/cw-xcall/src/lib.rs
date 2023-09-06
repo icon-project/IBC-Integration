@@ -10,7 +10,6 @@ pub mod execute_rollback;
 pub mod fee_handler;
 pub mod fees;
 pub mod handle_call_message;
-pub mod helpers;
 pub mod msg;
 pub mod requests;
 pub mod send_call_message;
