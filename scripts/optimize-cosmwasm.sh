@@ -9,7 +9,7 @@ RUSTC_VERS="1.69.0"
 
 MAX_WASM_SIZE=800 # 800 KB
 
-PROJECTS=("cw-xcall" "cw-mock-dapp" "cw-mock-dapp-multi" "cw-xcall-lib")
+PROJECTS=("cw-xcall" "cw-mock-dapp" "cw-mock-dapp-multi")
 
 # Install wasm-opt binary
 if ! which wasm-opt; then
@@ -33,7 +33,7 @@ cargo fmt --all
 cargo clean
 
 rustup target add wasm32-unknown-unknown
-cargo install cosmwasm-check
+cargo install cosmwasm-check --locked
 
 
 RUSTFLAGS='-C link-arg=-s' cargo build --workspace --exclude test-utils --release --lib --target wasm32-unknown-unknown

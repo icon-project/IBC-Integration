@@ -35,22 +35,7 @@ jobs:
         run: |
           rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
           rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu
-          make optimize-cosmwasm
-
-      - name: Check WASM Size
-        run: |
-          max_size=800 
-          echo "Check if size of wasm file exceeds $max_size kilobytes..."
-          for file in artifacts/*.wasm
-          do 
-          size=$(du -k "$file" | awk '{print $1}')
-          if [[ $size -gt $max_size ]]; then
-          echo "Error: $file : $size KB has exceeded maximum contract size limit of 800KB."
-          exit 1
-          fi
-          echo "$file : $size KB"
-          done
-          echo "The size of all contracts is well within the 800 KB limit."
+          bash ./scripts/optimize-cosmwasm.sh
 
       - name: Archive artifacts
         uses: actions/upload-artifact@v2
