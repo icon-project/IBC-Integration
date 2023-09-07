@@ -435,10 +435,6 @@ impl<'a> CwIbcConnection<'a> {
         check_order(&channel.order)?;
         cw_println!(deps, "[IbcConnection]: check order pass");
 
-        if let Some(counter_version) = msg.counterparty_version() {
-            check_version(counter_version)?;
-        }
-        cw_println!(deps, "[IbcConnection]: check version pass");
         self.setup_channel(deps, channel.clone())?;
 
         Ok(Response::new()
