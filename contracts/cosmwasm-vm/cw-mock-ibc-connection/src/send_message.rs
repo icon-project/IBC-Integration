@@ -19,58 +19,7 @@ impl<'a> CwIbcConnection<'a> {
         message: Vec<u8>,
     ) -> Result<Response, ContractError> {
         // self.ensure_xcall_handler(deps.as_ref().storage, info.sender.clone())?;
-
-        println!("{LOG_PREFIX} Packet Validated");
-        let ibc_config = self.get_ibc_config(deps.as_ref().storage, &nid)?;
-
-        if sn < 0 {
-            return self.write_acknowledgement(deps.storage, &ibc_config, message, -sn);
-        }
-
-        let sequence_number_host = self.query_host_sequence_no(deps.as_ref(), &ibc_config)?;
-        let network_fee = self.get_network_fees(deps.as_ref().storage, nid.clone());
-
-        if sn > 0 {
-            self.add_unclaimed_ack_fees(
-                deps.storage,
-                &nid,
-                sequence_number_host,
-                network_fee.ack_fee,
-            )?;
-        }
-
-        let timeout_height =
-            self.query_timeout_height(deps.as_ref(), &ibc_config.src_endpoint().channel_id)?;
-        let msg = Message {
-            sn: Nullable::new(Some(sn)),
-            fee: network_fee.send_packet_fee,
-            data: message,
-        };
-
-        #[cfg(feature = "native_ibc")]
-        {
-            let packet = self.create_request_packet(deps, env, timeout_height, msg.clone())?;
-
-            let submessage: SubMsg<Empty> =
-                SubMsg::reply_always(CosmosMsg::Ibc(packet), HOST_FORWARD_REPLY_ID);
-
-            Ok(Response::new()
-                .add_submessage(submessage)
-                .add_attribute("method", "send_message"))
-        }
-
-        #[cfg(not(feature = "native_ibc"))]
-        {
-            let packet_data =
-                self.create_packet(ibc_config, timeout_height, sequence_number_host, msg);
-
-            println!("{} Raw Packet Created {:?}", LOG_PREFIX, &packet_data);
-
-            let submessage = self.call_host_send_message(deps, info, packet_data)?;
-            Ok(Response::new()
-                .add_submessage(submessage)
-                .add_attribute("method", "send_message"))
-        }
+       Ok(Response::new())
     }
 
     fn write_acknowledgement(
