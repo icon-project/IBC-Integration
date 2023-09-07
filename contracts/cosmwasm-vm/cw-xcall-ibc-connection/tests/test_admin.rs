@@ -54,7 +54,7 @@ fn add_admin() {
 }
 
 #[test]
-#[should_panic(expected = "Unauthorized")]
+#[should_panic(expected = "OnlyAdmin")]
 fn update_admin_unauthorzied() {
     let mut mock_deps = deps();
 
@@ -113,6 +113,8 @@ fn update_admin() {
 
     assert_eq!(result, admin_one().to_string());
 
+    let mock_info = create_mock_info(&admin_one().to_string(), "umlg", 2000);
+
     contract
         .update_admin(
             mock_deps.as_mut().storage,
@@ -150,6 +152,8 @@ fn update_existing_admin() {
     let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
 
     assert_eq!(result, admin_one().to_string());
+
+    let mock_info = create_mock_info(&admin_one().to_string(), "umlg", 2000);
 
     contract
         .update_admin(
