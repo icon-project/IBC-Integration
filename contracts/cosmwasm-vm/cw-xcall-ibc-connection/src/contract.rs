@@ -117,7 +117,7 @@ impl<'a> CwIbcConnection<'a> {
                 client_id,
                 timeout_height,
             } => {
-                self.ensure_owner(deps.as_ref().storage, &info)?;
+                self.ensure_admin(deps.as_ref().storage, info.sender)?;
                 self.configure_connection(
                     deps.storage,
                     connection_id,
@@ -694,9 +694,10 @@ impl<'a> CwIbcConnection<'a> {
         client_id: String,
         timeout_height: u64,
     ) -> Result<(), ContractError> {
-        if self
-            .get_counterparty_nid(store, &connection_id, &counterparty_port_id)
-            .is_ok()
+        if self.get_connection_config(store, &connection_id).is_ok()
+            && self
+                .get_counterparty_nid(store, &connection_id, &counterparty_port_id)
+                .is_ok()
         {
             return Err(ContractError::ConnectionAlreadyConfigured {
                 connection_id,

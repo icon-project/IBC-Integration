@@ -817,7 +817,7 @@ fn success_on_setting_timeout_height() {
 }
 
 #[test]
-#[should_panic(expected = "Unauthorized")]
+#[should_panic(expected = "OnlyAdmin")]
 fn fails_on_configure_connection_unauthorized() {
     let mut deps = deps();
 
