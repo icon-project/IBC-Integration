@@ -105,7 +105,8 @@ impl<'a> CwIbcCoreContext<'a> {
         seq: u64,
         height: u64,
     ) -> Result<(), ContractError> {
-        self.ibc_store().write_acks()
+        self.ibc_store()
+            .write_acks()
             .save(store, (port_id, channel_id, seq), &height)
             .map_err(ContractError::Std)
     }

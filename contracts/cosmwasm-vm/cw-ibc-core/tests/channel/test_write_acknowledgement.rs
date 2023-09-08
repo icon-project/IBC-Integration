@@ -147,15 +147,23 @@ fn test_write_acknowledgement() {
     let ibc_packet = to_ibc_packet(packet.clone()).unwrap();
 
     let info = create_mock_info("moduleaddress", "umlg", 2000000000);
-    let ack_result = contract.write_acknowledgement(deps.as_mut(), info,&env, ibc_packet, vec![11, 22]);
+    let ack_result =
+        contract.write_acknowledgement(deps.as_mut(), info, &env, ibc_packet, vec![11, 22]);
     println!("{ack_result:?}");
     assert!(ack_result.is_ok());
-    let ack_height_saved= contract.ibc_store().get_ack_heights(deps.as_ref().storage, &to_ibc_port_id(&packet.destination_port).unwrap(), 
-    &to_ibc_channel_id(&packet.destination_channel).unwrap(), packet.sequence.into(), packet.sequence+1).unwrap();
-    let mut expected_result= HashMap::<u64,u64>::new();
+    let ack_height_saved = contract
+        .ibc_store()
+        .get_ack_heights(
+            deps.as_ref().storage,
+            &to_ibc_port_id(&packet.destination_port).unwrap(),
+            &to_ibc_channel_id(&packet.destination_channel).unwrap(),
+            packet.sequence,
+            packet.sequence + 1,
+        )
+        .unwrap();
+    let mut expected_result = HashMap::<u64, u64>::new();
     expected_result.insert(packet.sequence, env.block.height);
-    assert_eq!(expected_result,ack_height_saved);
-
+    assert_eq!(expected_result, ack_height_saved);
 }
 
 #[test]
@@ -180,7 +188,8 @@ pub fn test_write_acknowledgement_fails_unauthorized() {
     let ibc_packet = to_ibc_packet(packet).unwrap();
 
     let info = create_mock_info("invalidmoduleaddress", "umlg", 2000000000);
-    let ack_result = contract.write_acknowledgement(deps.as_mut(), info,&mock_env(), ibc_packet, vec![11, 22]);
+    let ack_result =
+        contract.write_acknowledgement(deps.as_mut(), info, &mock_env(), ibc_packet, vec![11, 22]);
     println!("{ack_result:?}");
     ack_result.unwrap();
 }
@@ -208,7 +217,8 @@ pub fn test_write_acknowledgement_fails_invalid_ack() {
     let ibc_packet = to_ibc_packet(packet).unwrap();
 
     let info = create_mock_info("moduleaddress", "umlg", 2000000000);
-    let ack_result = contract.write_acknowledgement(deps.as_mut(), info,&mock_env(), ibc_packet, vec![]);
+    let ack_result =
+        contract.write_acknowledgement(deps.as_mut(), info, &mock_env(), ibc_packet, vec![]);
     println!("{ack_result:?}");
     ack_result.unwrap();
 }
@@ -244,7 +254,8 @@ pub fn test_write_acknowledgement_fails_invalid_channel_state() {
     let ibc_packet = to_ibc_packet(packet).unwrap();
 
     let info = create_mock_info("moduleaddress", "umlg", 2000000000);
-    let ack_result = contract.write_acknowledgement(deps.as_mut(), info,&mock_env(), ibc_packet, vec![11, 22]);
+    let ack_result =
+        contract.write_acknowledgement(deps.as_mut(), info, &mock_env(), ibc_packet, vec![11, 22]);
     println!("{ack_result:?}");
     ack_result.unwrap();
 }

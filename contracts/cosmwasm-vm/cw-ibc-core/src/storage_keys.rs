@@ -30,7 +30,7 @@ pub enum StorageKey {
     LastProcessedOn,
     CallbackData,
     SentPackets,
-    WriteAcks
+    WriteAcks,
 }
 
 impl StorageKey {

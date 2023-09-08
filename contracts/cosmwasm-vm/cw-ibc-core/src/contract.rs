@@ -234,7 +234,7 @@ impl<'a> CwIbcCoreContext<'a> {
             } => {
                 cw_println!(deps, "[IBCCore] Write Acknowledgement Called");
                 let ack = acknowledgement.to_bytes()?;
-                self.write_acknowledgement(deps, info, &env,packet, ack)
+                self.write_acknowledgement(deps, info, &env, packet, ack)
             }
         }
         // Ok(Response::new())
@@ -474,7 +474,7 @@ impl<'a> CwIbcCoreContext<'a> {
                     )
                     .unwrap();
                 to_binary(&heights)
-            },
+            }
             QueryMsg::GetAckHeights {
                 port_id,
                 channel_id,
