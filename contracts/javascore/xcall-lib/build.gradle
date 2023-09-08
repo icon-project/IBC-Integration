@@ -1,0 +1,30 @@
+version = '0.1.0'
+apply plugin: 'maven-publish'
+apply plugin: 'java-library'
+
+optimizedJar.enabled = false
+
+group = 'foundation.icon'
+
+dependencies {
+
+}
+
+
+publishing {
+    publications {
+        myLib(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = "xcall-lib"
+            url = System.getenv("MAVEN_URL")
+            credentials {
+                username = System.getenv("MAVEN_USERNAME")
+                password = System.getenv("MAVEN_PASSWORD")
+            }
+        }
+    }
+}

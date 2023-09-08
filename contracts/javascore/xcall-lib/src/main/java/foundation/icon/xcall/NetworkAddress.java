@@ -7,9 +7,10 @@ import score.ObjectReader;
 import score.ObjectWriter;
 
 public class NetworkAddress {
-    private static final String DELIM_NET="/";
+    private static final String DELIM_NET = "/";
     String net;
     String account;
+
     public NetworkAddress(String net, String account) {
         this.net = net;
         this.account = account;
@@ -48,7 +49,7 @@ public class NetworkAddress {
     }
 
     public boolean isValid() {
-        return  (!(net == null || net.isEmpty())) &&
+        return (!(net == null || net.isEmpty())) &&
                 (!(account == null || account.isEmpty()));
     }
 
@@ -66,16 +67,17 @@ public class NetworkAddress {
             contract = str;
         }
 
-        return new NetworkAddress( net, contract);
+        return new NetworkAddress(net, contract);
     }
 
     public static NetworkAddress valueOf(String str) {
         NetworkAddress address = parse(str);
         if (address == null || !address.isValid()) {
-           Context.revert("failed to parse NetworkAddress");
+            Context.revert("failed to parse NetworkAddress");
         }
         return address;
     }
+
     // Accepts Native addresses as well
     public static NetworkAddress valueOf(String str, String nativeNid) {
         NetworkAddress address = parse(str);

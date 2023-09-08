@@ -84,7 +84,7 @@ public interface CallService {
      *
      * @param _sn The serial number of the previous request
      * @param _code The response code
-     *              (0: Success, -1: Unknown generic failure, >=1: User defined error code)
+     *            {@code (0: Success, -1: Unknown generic failure, >=1: User defined error code)}
      */
     @EventLog(indexed=1)
     void ResponseMessage(BigInteger _sn, int _code);
@@ -139,7 +139,7 @@ public interface CallService {
      *
      * @param _reqId The request id for the call message
      * @param _code The execution result code
-     *              (0: Success, -1: Unknown generic failure, >=1: User defined error code)
+     *              {@code (0: Success, -1: Unknown generic failure, >=1: User defined error code)}
      * @param _msg The result message if any
      */
     @EventLog(indexed=1)

@@ -1,10 +1,12 @@
 version = '0.1.0'
 
 dependencies {
-        implementation project(':xcall')
+        implementation project(':xcall-lib')
 }
 
 optimizedJar {
+    dependsOn(project(':xcall-lib').jar)
+
     mainClassName = 'xcall.sample.dapp.SimpleDapp'
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {
