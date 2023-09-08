@@ -123,7 +123,7 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
 
     @External(readonly = true)
     public boolean getPacketReceipt(String portId, String channelId, BigInteger sequence) {
-        return packetReceipts.at(portId).at(channelId).get(sequence);
+           return packetReceipts.at(portId).at(channelId).getOrDefault(sequence, false);
     }
 
     @External(readonly = true)
@@ -201,11 +201,6 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
     public byte[] getPacketAcknowledgementCommitment(String portId, String channelId, BigInteger sequence) {
         byte[] key = IBCCommitment.packetAcknowledgementCommitmentKey(portId, channelId, sequence);
         return commitments.get(key);
-    }
-
-    @External(readonly = true)
-    public boolean hasPacketReceipt(String portId, String channelId, BigInteger sequence) {
-        return packetReceipts.at(portId).at(channelId).getOrDefault(sequence, false);
     }
 
     @External(readonly = true)

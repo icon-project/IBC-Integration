@@ -78,7 +78,7 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
         let client_id = connection_end.client_id();
-        let client_state_of_b_on_a = self.client_state(deps.storage, client_id)?;
+        let client_state_of_b_on_a = self.client_state(deps.as_ref(), client_id)?;
 
         if client_state_of_b_on_a.is_frozen() {
             return Err(ContractError::IbcPacketError {
@@ -88,7 +88,7 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
         let consensus_state_of_b_on_a =
-            self.consensus_state(deps.storage, client_id, &proof_height)?;
+            self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
         let prefix_on_b = connection_end.counterparty().prefix();
         let conn_id_on_b =
             connection_end
@@ -158,7 +158,7 @@ impl<'a> CwIbcCoreContext<'a> {
             }
         };
 
-        let client = self.get_client(deps.as_ref().storage, client_id)?;
+        let client = self.get_light_client(deps.as_ref().storage, client_id)?;
         client.verify_timeout_on_close(
             deps.as_ref(),
             client_id,

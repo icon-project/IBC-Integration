@@ -14,7 +14,7 @@ use cosmwasm_std::{
     Storage, SubMsg,
 };
 use cw_common::client_response::{
-    CreateClientResponse, MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
+    MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,
 };
 use cw_common::commitment;
 use cw_common::ibc_types::*;

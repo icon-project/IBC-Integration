@@ -132,8 +132,8 @@ impl<'a> CwIbcCoreContext<'a> {
         cw_println!(deps, "packet seq matched");
 
         let client_id_on_a = conn_end_on_a.client_id();
-        let client_state_on_a = self.client_state(deps.storage, client_id_on_a)?;
-
+        let client_state_on_a = self.client_state(deps.as_ref(), client_id_on_a)?;
+        // The client must not be frozen.
         if client_state_on_a.is_frozen() {
             return Err(ContractError::IbcPacketError {
                 error: PacketError::FrozenClient {
@@ -141,7 +141,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
-        let consensus_state = self.consensus_state(deps.storage, client_id_on_a, &proof_height)?;
+        let consensus_state = self.consensus_state(deps.as_ref(), client_id_on_a, &proof_height)?;
         self.verify_connection_delay_passed(
             deps.storage,
             env,
@@ -160,7 +160,7 @@ impl<'a> CwIbcCoreContext<'a> {
             ack: msg.acknowledgement.clone(),
         };
 
-        let client = self.get_client(deps.as_ref().storage, client_id_on_a)?;
+        let client = self.get_light_client(deps.as_ref().storage, client_id_on_a)?;
 
         client.verify_packet_acknowledge(
             deps.as_ref(),

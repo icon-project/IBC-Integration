@@ -82,7 +82,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         // An IBC connection running on the local (host) chain should exist.
         let connection_end = self.connection_end(deps.storage, &connection_id)?;
         let client_id = connection_end.client_id();
-        let client_state = self.client_state(deps.as_ref().storage, client_id)?;
+        let client_state = self.client_state(deps.as_ref(), client_id)?;
 
         if client_state.is_frozen() {
             return Err(ClientError::ClientFrozen {
@@ -189,8 +189,8 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         let proof_height = to_ibc_height(message.proof_height.clone())?;
         let client_id = connection_end.client_id();
-        let client_state = self.client_state(deps.storage, client_id)?;
-        let consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
+        let client_state = self.client_state(deps.as_ref(), client_id)?;
+        let consensus_state = self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
         let prefix_on_a = connection_end.counterparty().prefix();
 
         let conn_id_on_a = connection_end.counterparty().connection_id().ok_or(
@@ -232,7 +232,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         };
         let client_id = connection_end.client_id().clone();
 
-        let client = self.get_client(deps.as_ref().storage, &client_id)?;
+        let client = self.get_light_client(deps.as_ref().storage, &client_id)?;
         client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
         let contract_address = self.lookup_modules(deps.storage, dest_port.as_bytes().to_vec())?;
@@ -318,11 +318,11 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         ensure_connection_state(&connection_id, &connection_end, &ConnectionState::Open)?;
         let client_id = connection_end.client_id();
 
-        let client_state = self.client_state(deps.storage, client_id)?;
+        let client_state = self.client_state(deps.as_ref(), client_id)?;
 
         let proof_height = to_ibc_height(message.proof_height.clone())?;
 
-        let consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
+        let consensus_state = self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
 
         let counterparty_prefix = connection_end.counterparty().prefix();
         let counterparty_connection_id = connection_end.counterparty().connection_id().ok_or(
@@ -362,7 +362,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             client_id: client_id.to_string(),
         };
 
-        let client = self.get_client(deps.as_ref().storage, client_id)?;
+        let client = self.get_light_client(deps.as_ref().storage, client_id)?;
         client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
         channel_end.set_version(version);
@@ -444,9 +444,9 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         ensure_connection_state(&connection_id, &connection_end, &ConnectionState::Open)?;
 
         let client_id = connection_end.client_id();
-        let client_state = self.client_state(deps.storage, client_id)?;
+        let client_state = self.client_state(deps.as_ref(), client_id)?;
         let proof_height = to_ibc_height(message.proof_height.clone())?;
-        let consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
+        let consensus_state = self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
         let counterparty_prefix = connection_end.counterparty().prefix();
 
         let counterparty_connection_id = connection_end.counterparty().connection_id().ok_or(
@@ -488,7 +488,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
 
         let client_id = connection_end.client_id().clone();
 
-        let client = self.get_client(deps.as_ref().storage, &client_id)?;
+        let client = self.get_light_client(deps.as_ref().storage, &client_id)?;
         client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
         channel_end.set_state(State::Open);
@@ -554,7 +554,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let connection_id = channel_end.connection_hops()[0].clone();
         let connection_end = self.connection_end(deps.storage, &connection_id)?;
         let client_id = connection_end.client_id();
-        let client_state = self.client_state(deps.as_ref().storage, client_id)?;
+        let client_state = self.client_state(deps.as_ref(), client_id)?;
 
         if client_state.is_frozen() {
             return Err(ClientError::ClientFrozen {
@@ -647,9 +647,9 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         )?;
 
         let client_id = connection_end.client_id();
-        let client_state = self.client_state(deps.storage, client_id)?;
+        let client_state = self.client_state(deps.as_ref(), client_id)?;
         let proof_height = to_ibc_height(message.proof_height.clone())?;
-        let consensus_state = self.consensus_state(deps.storage, client_id, &proof_height)?;
+        let consensus_state = self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
         let prefix_on_a = connection_end.counterparty().prefix();
 
         let conn_id_on_a = connection_end.counterparty().connection_id().ok_or(
@@ -689,7 +689,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         };
 
         let client_id = connection_end.client_id().clone();
-        let client = self.get_client(deps.as_ref().storage, &client_id)?;
+        let client = self.get_light_client(deps.as_ref().storage, &client_id)?;
         client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
         // Getting the module address for on channel open try call
