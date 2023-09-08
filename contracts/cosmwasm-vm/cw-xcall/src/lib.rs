@@ -71,7 +71,7 @@ use thiserror::Error;
 ///
 /// The `instantiate` function returns a `Result<Response, ContractError>` which represents either a
 /// successful response or an error.
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
