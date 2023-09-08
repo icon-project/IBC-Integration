@@ -4,8 +4,6 @@ on:
       relayer_version:
         description: "Relayer version"
         type: string
-        default: "0.1.0-alpha.7"
-        required: true
     outputs:
       label:
         description: "Label of the self-hosted runner"
@@ -36,6 +34,10 @@ jobs:
             --output text --max-items 1)
           echo "AMI_ID=$ami_id" >> $GITHUB_OUTPUT
       - uses: actions/checkout@v3
+      - id: relay
+        uses: pozetroninc/github-action-get-latest-release@master
+        with:
+          repository: icon-project/ibc-relay
       - name: Start EC2 instance
         id: start
         uses: machulav/ec2-github-runner@v2
@@ -46,11 +48,5 @@ jobs:
           ec2-instance-type: c5.2xlarge
           subnet-id: subnet-f1fcd4df
           security-group-id: sg-03cb8034e27e1caeb
-          aws-resource-tags: >
-            [
-              {"Key": "Name", "Value": "ec2-github-runner"},
-              {"Key": "Repository", "Value": "${{ github.repository }}"},
-              {"Key": "Project", "Value": "IBC"}
-            ]
           pre-runner-script: |
-            ./build.sh ${{ inputs.relayer_version }}
+            ./build.sh ${{ inputs.relayer_version == '' && steps.relay.outputs.release || inputs.relayer_version }}

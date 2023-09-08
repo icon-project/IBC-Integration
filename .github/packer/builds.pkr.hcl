@@ -4,11 +4,11 @@ build {
 
   provisioner "file" {
     source      = "${path.root}/relayer.Dockerfile"
-    destination = "/tmp/Dockerfile"
+    destination = "Dockerfile"
   }
 
   provisioner "shell" {
-    execute_command = "sudo -S bash -c '{{ .Path }}'"
+    execute_command = "sudo -S sh -c '{{ .Path }}'"
     script = "${path.root}/builder.sh"
   }
 }

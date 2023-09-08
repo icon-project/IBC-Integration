@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -euof
+set -euof pipefail
 
 install_deps() {
     sudo yum install -y git docker make tar perl-Digest-SHA libicu
@@ -13,11 +13,9 @@ configure_docker() {
 
 build_goloop_images() {
   git clone https://github.com/icon-project/goloop.git
-  cd goloop
-  make goloop-image
-  make goloop-icon-image
+  make goloop-image -C goloop
+  make goloop-icon-image -C goloop
   docker tag goloop iconloop/goloop-icon
-  rm -rf ../goloop
 }
 
 pull_archway_images() {
@@ -25,12 +23,11 @@ pull_archway_images() {
 }
 
 configure_relayer() {
-  mv /tmp/Dockerfile .
-  cat > build.sh <<EOF
+  cat <<EOT > ~/build.sh
   #!/bin/sh
-  docker build -t relayer --build-args VERSION=$1 .
-EOF
-  chmod +x build.sh
+  docker build -t relayer --build-arg VERSION=\$1 .
+EOT
+  chmod +x ~/build.sh
 }
 
 build_services() {
@@ -40,7 +37,9 @@ build_services() {
 }
 
 cleanup(){
-  sudo yum uninstall -y git make tar perl-Digest-SHA
+  rm -rf goloop
+  sudo yum remove -y tar perl-Digest-SHA
+  sudo yum clean all
 }
 
 install_deps
