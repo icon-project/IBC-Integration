@@ -104,6 +104,3 @@ task zipOutputOptimizedJars(type: Zip) {
     archiveFileName = "javascore-contracts.zip"
     destinationDirectory = file("$buildDir")
 }
-
-
-

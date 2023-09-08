@@ -1,4 +1,4 @@
-name: Deploy Contracts After PR Merge to main branch
+name: Deploy Contracts to uat node
 
 on:
   push:

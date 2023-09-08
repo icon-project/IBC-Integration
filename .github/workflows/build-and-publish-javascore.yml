@@ -1,4 +1,4 @@
-name: Build and Publish Javascore Contracts
+name: Build and Upload xcall-multi Contracts
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - "main"
 
 jobs:
-  deploy-contracts-uat:
+  build-and-upload-artifacts:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,12 +18,12 @@ jobs:
         run: |
           ./gradlew clean build 
           ./gradlew optimizedJar
-          ./gradlew zipOutputJars
+          ./gradlew zipOutputOptimizedJars
 
       - name: Archive artifacts
         uses: actions/upload-artifact@v2
         with:
           name: javascore-contracts
-          path: ./contracts/javascore/build/xcall-output-jars.zip
+          path: ./contracts/javascore/build/javascore-contracts.zip
           if-no-files-found: error
           
