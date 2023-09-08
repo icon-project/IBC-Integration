@@ -104,7 +104,7 @@ fn update_admin() {
     contract
         .add_admin(
             mock_deps.as_mut().storage,
-            mock_info.clone(),
+            mock_info,
             admin_one().to_string(),
         )
         .unwrap();
@@ -144,7 +144,7 @@ fn update_existing_admin() {
     contract
         .add_admin(
             mock_deps.as_mut().storage,
-            mock_info.clone(),
+            mock_info,
             admin_one().to_string(),
         )
         .unwrap();
