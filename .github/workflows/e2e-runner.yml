@@ -39,7 +39,7 @@ jobs:
           go-version: 1.21
 
       - name: Run e2e tests
-        run: make e2e
+        run: go test -v ./test/e2e -testify.m TestE2E_all
 
       - name: Set latest commit status as ${{ job.status }}
         uses: myrotvorets/set-commit-status-action@master

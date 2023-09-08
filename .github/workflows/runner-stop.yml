@@ -24,6 +24,6 @@ jobs:
         uses: machulav/ec2-github-runner@v2
         with:
           mode: stop
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_RUNNER_PAT }}
           label: ${{ inputs.label }}
           ec2-instance-id: ${{ inputs.ec2-instance-id }}

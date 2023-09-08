@@ -40,10 +40,10 @@ jobs:
           repository: icon-project/ibc-relay
       - name: Start EC2 instance
         id: start
-        uses: machulav/ec2-github-runner@v2
+        uses: machulav/ec2-github-runner
         with:
           mode: start
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_RUNNER_PAT }}
           ec2-image-id: ${{ steps.ami-id.outputs.AMI_ID }}
           ec2-instance-type: c5.2xlarge
           subnet-id: subnet-f1fcd4df
