@@ -15,6 +15,7 @@ impl<'a> CwIbcCoreContext<'a> {
         &self,
         deps: DepsMut,
         info: MessageInfo,
+        env:&Env,
         packet: CwPacket,
         ack: Vec<u8>,
     ) -> Result<Response, ContractError> {
@@ -47,6 +48,10 @@ impl<'a> CwIbcCoreContext<'a> {
             Sequence::from(seq),
             AcknowledgementCommitment::from(ack_commitment),
         )?;
+        let height = env.block.height;
+        self.store_write_ack(deps.storage,&ibc_port,&ibc_channel,seq,height)?;
+
+        
 
         let event = create_packet_event(
             IbcEventType::WriteAck,

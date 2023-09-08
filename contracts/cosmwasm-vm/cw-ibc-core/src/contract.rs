@@ -234,7 +234,7 @@ impl<'a> CwIbcCoreContext<'a> {
             } => {
                 cw_println!(deps, "[IBCCore] Write Acknowledgement Called");
                 let ack = acknowledgement.to_bytes()?;
-                self.write_acknowledgement(deps, info, packet, ack)
+                self.write_acknowledgement(deps, info, &env,packet, ack)
             }
         }
         // Ok(Response::new())
@@ -466,6 +466,26 @@ impl<'a> CwIbcCoreContext<'a> {
                 let heights = self
                     .ibc_store()
                     .get_packet_heights(
+                        deps.storage,
+                        &port_id,
+                        &channel_id,
+                        start_sequence,
+                        end_sequence,
+                    )
+                    .unwrap();
+                to_binary(&heights)
+            },
+            QueryMsg::GetAckHeights {
+                port_id,
+                channel_id,
+                start_sequence,
+                end_sequence,
+            } => {
+                let port_id = IbcPortId::from_str(&port_id).unwrap();
+                let channel_id = IbcChannelId::from_str(&channel_id).unwrap();
+                let heights = self
+                    .ibc_store()
+                    .get_ack_heights(
                         deps.storage,
                         &port_id,
                         &channel_id,

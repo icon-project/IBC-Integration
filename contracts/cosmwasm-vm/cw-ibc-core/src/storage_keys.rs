@@ -30,6 +30,7 @@ pub enum StorageKey {
     LastProcessedOn,
     CallbackData,
     SentPackets,
+    WriteAcks
 }
 
 impl StorageKey {
@@ -58,6 +59,7 @@ impl StorageKey {
             StorageKey::LastProcessedOn => "last_processed_on",
             StorageKey::CallbackData => "callback_data",
             StorageKey::SentPackets => "sent_packets",
+            StorageKey::WriteAcks => "write_acks",
         }
     }
 }

@@ -97,6 +97,19 @@ impl<'a> CwIbcCoreContext<'a> {
         return self.ibc_store().callback_data().remove(store, id);
     }
 
+    pub fn store_write_ack(
+        &self,
+        store: &mut dyn Storage,
+        port_id: &PortId,
+        channel_id: &ChannelId,
+        seq: u64,
+        height: u64,
+    ) -> Result<(), ContractError> {
+        self.ibc_store().write_acks()
+            .save(store, (port_id, channel_id, seq), &height)
+            .map_err(ContractError::Std)
+    }
+
     pub fn get_callback_data<T: DeserializeOwned>(
         &self,
         store: &dyn Storage,
