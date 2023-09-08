@@ -8,7 +8,9 @@ use crate::ibc::core::ics02_client::error::ClientError;
 use crate::ibc::core::ics02_client::client_type::ClientType as IbcClientType;
 use crate::ibc::Height as IbcHeight;
 
+use crate::traits::AnyTypes;
 use crate::{constants::ICON_CLIENT_STATE_TYPE_URL, icon::icon::lightclient::v1::ClientState};
+use dyn_clone::DynClone;
 use ibc_proto::{google::protobuf::Any, protobuf::Protobuf};
 use prost::Message;
 
@@ -72,12 +74,13 @@ impl From<ClientState> for Any {
     }
 }
 
-pub trait IClientState {
+pub trait IClientState: core::fmt::Debug + Send + Sync + DynClone + prost::Message {
     fn latest_height(&self) -> crate::ibc::Height;
     fn frozen_height(&self) -> Option<crate::ibc::Height>;
     fn expired(&self, elapsed: std::time::Duration) -> bool;
     fn is_frozen(&self) -> bool;
     fn client_type(&self) -> IbcClientType;
+    fn hash(&self) -> Vec<u8>;
 }
 
 impl IClientState for ClientState {
@@ -104,7 +107,12 @@ impl IClientState for ClientState {
     fn client_type(&self) -> IbcClientType {
         IbcClientType::new(ICON_CLIENT_TYPE.to_string())
     }
+
+    fn hash(&self) -> Vec<u8> {
+        self.get_keccak_hash().to_vec()
+    }
 }
+dyn_clone::clone_trait_object!(IClientState);
 
 pub fn get_default_icon_client_state() -> ClientState {
     ClientState {

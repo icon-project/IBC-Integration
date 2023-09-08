@@ -102,6 +102,7 @@ public class IBCConnection {
     @External
     public void configureConnection(String connectionId, String counterpartyPortId, String counterpartyNid, String clientId, BigInteger timeoutHeight) {
         onlyAdmin();
+        Context.require(configuredClients.get(connectionId) == null, "connection already configured");
         Context.require(configuredNetworkIds.at(connectionId).get(counterpartyPortId) == null, "connection and port already configured");
         Context.require(channels.get(counterpartyNid) == null, "networkId already configured");
         configuredNetworkIds.at(connectionId).set(counterpartyPortId, counterpartyNid);

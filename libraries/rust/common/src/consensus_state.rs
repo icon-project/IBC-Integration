@@ -1,8 +1,11 @@
 use std::time::Duration;
 
-use crate::ibc::{
-    core::{ics02_client::error::ClientError, ics23_commitment::commitment::CommitmentRoot},
-    timestamp::Timestamp,
+use crate::{
+    ibc::{
+        core::{ics02_client::error::ClientError, ics23_commitment::commitment::CommitmentRoot},
+        timestamp::Timestamp,
+    },
+    traits::AnyTypes,
 };
 use dyn_clone::DynClone;
 use ibc_proto::{google::protobuf::Any, protobuf::Protobuf};
@@ -67,6 +70,7 @@ pub trait IConsensusState: core::fmt::Debug + Send + Sync + DynClone + prost::Me
     fn timestamp(&self) -> Timestamp;
     fn into_box(self) -> Box<dyn IConsensusState>;
     fn as_bytes(&self) -> Vec<u8>;
+    fn hash(&self) -> Vec<u8>;
 }
 
 impl IConsensusState for ConsensusState {
@@ -90,6 +94,10 @@ impl IConsensusState for ConsensusState {
         Self: Sized,
     {
         Box::new(self)
+    }
+
+    fn hash(&self) -> Vec<u8> {
+        self.get_keccak_hash().to_vec()
     }
 }
 dyn_clone::clone_trait_object!(IConsensusState);

@@ -57,7 +57,7 @@ fn test_claim_capability() {
         .store_capability(&mut deps.storage, name.clone(), address)
         .unwrap();
     let result = contract.claim_capability(&mut deps.storage, name, address_to_claim);
-    // only one address to one port
+
     assert!(result.is_err());
 }
 

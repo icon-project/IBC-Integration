@@ -23,6 +23,8 @@ pub enum QueryMsg {
     #[returns(Vec<u8>)]
     GetConsensusState { client_id: String, height: u64 },
     #[returns(Vec<u8>)]
+    GetLatestConsensusState { client_id: String },
+    #[returns(Vec<u8>)]
     GetClientState { client_id: String },
     #[returns(bool)]
     VerifyMembership {
@@ -79,6 +81,8 @@ pub enum QueryMsg {
     VerifyConnectionOpenAck(VerifyConnectionPayload),
     #[returns(Vec<u64>)]
     GetPreviousConsensusState { client_id: String, height: u64 },
+    #[returns(u64)]
+    GetTimestampAtHeight { client_id: String, height: u64 },
 }
 
 #[cw_serde]
@@ -113,7 +117,6 @@ pub struct VerifyConnectionState {
     pub proof_height: String,
     pub counterparty_prefix: Vec<u8>,
     pub proof: Vec<u8>,
-    pub root: Vec<u8>,
     pub counterparty_conn_end_path: Vec<u8>,
     pub expected_counterparty_connection_end: Vec<u8>,
 }
@@ -122,7 +125,6 @@ impl VerifyConnectionState {
         proof_height: String,
         counterparty_prefix: Vec<u8>,
         proof: Vec<u8>,
-        root: Vec<u8>,
         counterparty_conn_end_path: Vec<u8>,
         expected_counterparty_connection_end: Vec<u8>,
     ) -> Self {
@@ -130,7 +132,6 @@ impl VerifyConnectionState {
             proof_height,
             counterparty_prefix,
             proof,
-            root,
             counterparty_conn_end_path,
             expected_counterparty_connection_end,
         }
@@ -142,7 +143,6 @@ pub struct VerifyClientFullState {
     pub proof_height: String,
     pub counterparty_prefix: Vec<u8>,
     pub client_state_proof: Vec<u8>,
-    pub root: Vec<u8>,
     pub client_state_path: Vec<u8>,
     pub expected_client_state: Vec<u8>,
 }
@@ -151,7 +151,6 @@ impl VerifyClientFullState {
         proof_height: String,
         counterparty_prefix: Vec<u8>,
         client_state_proof: Vec<u8>,
-        root: Vec<u8>,
         client_state_path: Vec<u8>,
         expected_client_state: Vec<u8>,
     ) -> Self {
@@ -159,7 +158,6 @@ impl VerifyClientFullState {
             proof_height,
             counterparty_prefix,
             client_state_proof,
-            root,
             client_state_path,
             expected_client_state,
         }
@@ -171,7 +169,6 @@ pub struct VerifyClientConsensusState {
     pub proof_height: String,
     pub counterparty_prefix: Vec<u8>,
     pub consensus_state_proof: Vec<u8>,
-    pub root: Vec<u8>,
     pub conesenus_state_path: Vec<u8>,
     pub expected_conesenus_state: Vec<u8>,
 }
@@ -181,7 +178,6 @@ impl VerifyClientConsensusState {
         proof_height: String,
         counterparty_prefix: Vec<u8>,
         consensus_state_proof: Vec<u8>,
-        root: Vec<u8>,
         conesenus_state_path: Vec<u8>,
         expected_conesenus_state: Vec<u8>,
     ) -> Self {
@@ -189,7 +185,6 @@ impl VerifyClientConsensusState {
             proof_height,
             counterparty_prefix,
             consensus_state_proof,
-            root,
             conesenus_state_path,
             expected_conesenus_state,
         }
