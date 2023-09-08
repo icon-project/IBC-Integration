@@ -142,7 +142,6 @@ impl<'a> CwIbcCoreContext<'a> {
         cw_println!(deps, "before packet already received ");
 
         let port_id = packet.destination_port.clone();
-        // Getting the module address for on packet timeout call
         let contract_address = self.lookup_modules(deps.storage, port_id.as_bytes().to_vec())?;
 
         let src = CwEndPoint {

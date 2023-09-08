@@ -14,7 +14,6 @@ pub use common::ibc::core::ics04_channel::channel::Counterparty;
 use common::ibc::core::ics04_channel::channel::Order;
 pub use common::ibc::core::ics04_channel::channel::State;
 use common::ibc::core::ics04_channel::error::{ChannelError, PacketError};
-//pub use common::ibc::core::ics04_channel::events::*;
 
 use common::ibc::events::IbcEventType;
 use cosmwasm_std::Event;

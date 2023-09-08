@@ -92,7 +92,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         }
         channel_open_init_msg_validate(&channel_end, connection_end)?;
         let counter = self.channel_counter(deps.storage)?;
-        let src_channel = ChannelId::new(counter); // creating new channel_id
+        let src_channel = ChannelId::new(counter);
         let contract_address =
             self.lookup_modules(deps.storage, message.port_id.clone().as_bytes().to_vec())?;
 
@@ -101,7 +101,6 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         channel_end.state = State::Init;
         self.store_channel_end(deps.storage, &src_port, &src_channel, &channel_end)?;
 
-        // Generate event for calling on channel open init in x-call
         let sub_message =
             on_chan_open_init_submessage(&channel_end, &src_port, &src_channel, &connection_id);
 
@@ -382,7 +381,6 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let module_contract_address =
             self.lookup_modules(deps.storage, src_port.as_bytes().to_vec())?;
 
-        // Generate event for calling on channel open try in x-call
         let sub_message =
             on_chan_open_ack_submessage(&channel_end, &src_port, &src_channel, &connection_id)?;
 
@@ -493,7 +491,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let client = self.get_light_client(deps.as_ref().storage, &client_id)?;
         client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
-        channel_end.set_state(State::Open); // State Change
+        channel_end.set_state(State::Open);
         self.store_channel_end(deps.storage, &dest_port, &dest_channel, &channel_end)?;
         self.store_channel_commitment(deps.storage, &dest_port, &dest_channel, &channel_end)?;
         let event = create_channel_event(
@@ -502,10 +500,9 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             dest_channel.as_str(),
             &channel_end,
         )?;
-        // Getting the module address for on channel open try call
+
         let contract_address = self.lookup_modules(deps.storage, dest_port.as_bytes().to_vec())?;
 
-        // Generate event for calling on channel open try in x-call
         let sub_message = on_chan_open_confirm_submessage(&channel_end, &dest_port, &dest_channel)?;
 
         let data =

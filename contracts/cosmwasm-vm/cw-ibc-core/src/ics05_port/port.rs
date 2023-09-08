@@ -64,64 +64,6 @@ impl<'a> CwIbcCoreContext<'a> {
             .save(store, port_id, &module_id)?)
     }
 
-    /// This function looks up a module ID based on a given channel message and port ID.
-    ///
-    /// Arguments:
-    ///
-    /// * `store`: `store` is a mutable reference to a trait object of type `Storage`. It is used to
-    /// interact with the storage of the smart contract.
-    /// * `msg`: A reference to a ChannelMsg enum, which represents different types of messages that can
-    /// be sent over a channel in the Cosmos SDK.
-    ///
-    /// Returns:
-    ///
-    /// a `Result` with either a `ModuleId` or a `ContractError`.
-    // pub fn lookup_module_channel(
-    //     &self,
-    //     store: &mut dyn Storage,
-    //     msg: &ChannelMsg,
-    // ) -> Result<ModuleId, ContractError> {
-    //     let port_id = match msg {
-    //         ChannelMsg::OpenInit(msg) => &msg.port_id_on_a,
-    //         ChannelMsg::OpenTry(msg) => &msg.port_id_on_b,
-    //         ChannelMsg::OpenAck(msg) => &msg.port_id_on_a,
-    //         ChannelMsg::OpenConfirm(msg) => &msg.port_id_on_b,
-    //         ChannelMsg::CloseInit(msg) => &msg.port_id_on_a,
-    //         ChannelMsg::CloseConfirm(msg) => &msg.port_id_on_b,
-    //     };
-    //     let module_id = self.lookup_module_by_port(store, port_id)?;
-    //     Ok(module_id)
-    // }
-
-    /// This function looks up a module ID based on a packet message and a storage object.
-    ///
-    /// Arguments:
-    ///
-    /// * `store`: A mutable reference to a trait object of type `Storage`. This is likely an interface
-    /// for interacting with some kind of storage system, such as a database or a key-value store.
-    /// * `msg`: `msg` is a reference to a `PacketMsg` enum, which represents different types of
-    /// messages that can be sent or received over a packet-based communication protocol. The function
-    /// uses this parameter to determine which port ID to use when looking up the corresponding module
-    /// ID.
-    ///
-    /// Returns:
-    ///
-    /// a `Result` containing either a `ModuleId` or a `ContractError`.
-    // pub fn lookup_module_packet(
-    //     &self,
-    //     store: &mut dyn Storage,
-    //     msg: &PacketMsg,
-    // ) -> Result<ModuleId, ContractError> {
-    //     let port_id = match msg {
-    //         PacketMsg::Recv(msg) => &msg.packet.port_id_on_b,
-    //         PacketMsg::Ack(msg) => &msg.packet.port_id_on_a,
-    //         PacketMsg::Timeout(msg) => &msg.packet.port_id_on_a,
-    //         PacketMsg::TimeoutOnClose(msg) => &msg.packet.port_id_on_a,
-    //     };
-    //     let module_id = self.lookup_module_by_port(store, &port_id.clone())?;
-    //     Ok(module_id)
-    // }
-
     /// This function binds a port to a given address and returns a response with relevant attributes.
     ///
     /// Arguments:
