@@ -131,10 +131,10 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context, relayer ibc.Relayer)
 
 			assert.NoErrorf(t, err, "Error on creating channel %v", err)
 
-			res, err := r.GetChannel(ctx, chainA, 0, portID)
+			res, err := r.GetChannel(ctx, chainA, seqA, portID)
 			assert.NoErrorf(t, err, "Error on getting channel %v", err)
 			t.Log(res)
-			res, err = r.GetChannel(ctx, chainB, 0, portID)
+			res, err = r.GetChannel(ctx, chainB, seqB, portID)
 			assert.NoErrorf(t, err, "Error on getting channel %v", err)
 			t.Log(res)
 
@@ -167,17 +167,31 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context, relayer ibc.Relayer)
 			r.RelayerCrashTest(ctx, chainB, chainA)
 		})
 		r.T.Run("unordered packet test chainA-chainB", func(t *testing.T) {
-			r.PacketFlowTest(ctx, chainA, chainB, ibc.Unordered)
+			r.PacketFlowTest(ctx, t, chainA, chainB, ibc.Unordered)
 		})
 
 		r.T.Run("unordered packet test chainB-chainA", func(t *testing.T) {
-			r.PacketFlowTest(ctx, chainB, chainA, ibc.Unordered)
+			r.PacketFlowTest(ctx, t, chainB, chainA, ibc.Unordered)
 		})
 	})
 
 	r.T.Run("Order packet flow", func(t *testing.T) {
 		ctx = context.WithValue(ctx, "testcase", "ordered")
 		portID := "transfer-ordered"
+		//reset latest height of each chain on relayer
+		callbackA := func() error {
+			return r.WriteBlockHeight(ctx, chainA.(ibc.Chain).Config().ChainID, 0)
+		}
+		callbackB := func() error {
+			return r.WriteBlockHeight(ctx, chainB.(ibc.Chain).Config().ChainID, 0)
+		}
+		err := r.CrashRelayer(ctx, callbackA, callbackB)
+		if err != nil {
+			return
+		}
+
+		err = r.Recover(ctx, time.Second*40)
+
 		err = r.SetupMockDApp(ctx, portID)
 		assert.NoErrorf(t, err, "Error on setting up mock dapp, %v", err)
 
@@ -188,10 +202,10 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context, relayer ibc.Relayer)
 
 			assert.NoErrorf(t, err, "Error on creating channel %v", err)
 
-			res, err := r.GetChannel(ctx, chainA, 0, portID)
+			res, err := r.GetChannel(ctx, chainA, seqA, portID)
 			assert.NoErrorf(t, err, "Error on getting channel %v", err)
 			t.Log(res)
-			res, err = r.GetChannel(ctx, chainB, 0, portID)
+			res, err = r.GetChannel(ctx, chainB, seqB, portID)
 			assert.NoErrorf(t, err, "Error on getting channel %v", err)
 			t.Log(res)
 
@@ -218,47 +232,50 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context, relayer ibc.Relayer)
 		})
 
 		r.T.Run("ordered packet test chainA-chainB", func(t *testing.T) {
-			r.PacketFlowTest(ctx, chainA, chainB, ibc.Ordered)
+			r.PacketFlowTest(ctx, t, chainA, chainB, ibc.Ordered)
 		})
 
 		r.T.Run("ordered packet test chainB-chainA", func(t *testing.T) {
-			r.PacketFlowTest(ctx, chainB, chainA, ibc.Ordered)
+			r.PacketFlowTest(ctx, t, chainB, chainA, ibc.Ordered)
 		})
 	})
 
 }
 
-func (r *RelayerTestSuite) PacketFlowTest(ctx context.Context, src, target chains.Chain, order ibc.Order) {
-	packet, crashHeight := r.handleCrashAndSendPacket(ctx, src, target)
+func (r *RelayerTestSuite) PacketFlowTest(ctx context.Context, t *testing.T, src, target chains.Chain, order ibc.Order) {
+	packet, crashHeight := r.handleCrashAndSendPacket(ctx, src, target) //10
 
 	height, err := src.(ibc.Chain).Height(ctx)
-	assert.NoErrorf(r.T, err, "Error while getting block height: %v", err)
+	assert.NoErrorf(t, err, "Error while getting block height: %v", err)
 
-	err = r.WriteBlockHeight(ctx, src.(ibc.Chain).Config().ChainID, height+1)
-	assert.NoErrorf(r.T, err, "Error on setting block height (%d): %v", height+1, err)
+	err = r.WriteBlockHeight(ctx, src.(ibc.Chain).Config().ChainID, height+1) //15
+	assert.NoErrorf(t, err, "Error on setting block height (%d): %v", height+1, err)
 
-	isPacketReceived := r.recoverRelayerAndCheckPacket(ctx, target, packet)
-
-	assert.Falsef(r.T, isPacketReceived, "The packet event has received on the target chain.\n%v\n", packet)
+	err = r.Recover(ctx, time.Second*30)
+	r.Require().NoErrorf(err, "Unable to recover relayer %v", err)
+	isPacketReceived := r.checkPacketReceipt(ctx, target, packet, order)
+	assert.Falsef(t, isPacketReceived, "The packet event has received on the target chain.\n%v\n", packet)
 
 	msg := "new-message"
-	response, err := r.SendPacket(ctx, src, target, msg, 1000)
+	response, err := r.SendPacket(ctx, src, target, msg, 1000) //new packet
 	if order == ibc.Ordered {
-		assert.Errorf(r.T, err, "Error on sending packet (%s): %v", msg, err)
-		assert.Falsef(r.T, response.IsPacketReceiptEventFound, "The packet event has been received on the target chain.")
+		assert.Errorf(t, err, "Error on sending packet (%s): %v", msg, err)
+		assert.Falsef(t, response.IsPacketReceiptEventFound, "The packet event has been received on the target chain.")
 	} else {
-		assert.NoErrorf(r.T, err, "Error on sending packet (%s) %v", msg, err)
-		assert.Truef(r.T, response.IsPacketReceiptEventFound, "The packet event has NOT been received on the target chain.")
+		assert.NoErrorf(t, err, "Error on sending packet (%s) %v", msg, err)
+		assert.Truef(t, response.IsPacketReceiptEventFound, "The packet event has NOT been received on the target chain.")
 	}
-	assert.Truef(r.T, response.IsPacketSent, "The packet has not been sent to the target chain.")
+	assert.Truef(t, response.IsPacketSent, "The packet has not been sent to the target chain.")
 
 	packetNew, _ := r.handleCrashAndSendPacket(ctx, src, target)
 
-	err = r.WriteBlockHeight(ctx, src.(ibc.Chain).Config().ChainID, crashHeight-1)
-	assert.NoErrorf(r.T, err, "Error on setting block height (%d): %v", crashHeight-1, err)
+	err = r.WriteBlockHeight(ctx, src.(ibc.Chain).Config().ChainID, crashHeight-1) //10
+	assert.NoErrorf(t, err, "Error on setting block height (%d): %v", crashHeight-1, err)
 
-	isPacketReceived = r.recoverRelayerAndCheckPacket(ctx, target, packet)
-	assert.Truef(r.T, isPacketReceived, "The packet event has NOT received on the target chain.\n%v\n", packet)
+	err = r.Recover(ctx, time.Second*30)
+	assert.NoErrorf(t, err, "Unable to recover relayer %v", err)
+	isPacketReceived = r.checkPacketReceipt(ctx, target, packet, order)
+	assert.Truef(t, isPacketReceived, "The packet event has NOT received on the target chain.\n%v\n", packet)
 
 	params := map[string]interface{}{
 		"sequence":   packetNew.Sequence,
@@ -266,11 +283,11 @@ func (r *RelayerTestSuite) PacketFlowTest(ctx context.Context, src, target chain
 		"channel_id": packetNew.SourceChannel,
 	}
 
-	isPacketReceived = findPacket(ctx, target, params)
+	isPacketReceived = findPacket(ctx, target, params, order)
 
-	assert.Truef(r.T, isPacketReceived, "The packet event has NOT received on the target chain.\n%v\n", packetNew)
+	assert.Truef(t, isPacketReceived, "The packet event has NOT received on the target chain.\n%v\n", packetNew)
 
-	r.T.Logf("relay recovered successfully")
+	t.Logf("relay recovered successfully")
 }
 
 func (r *RelayerTestSuite) RelayerCrashTest(ctx context.Context, chainA, chainB chains.Chain) {
@@ -278,7 +295,9 @@ func (r *RelayerTestSuite) RelayerCrashTest(ctx context.Context, chainA, chainB 
 	packet, _ := r.handleCrashAndSendPacket(ctx, chainA, chainB)
 
 	// recover relayer now
-	isPacketReceived := r.recoverRelayerAndCheckPacket(ctx, chainB, packet)
+	err := r.Recover(ctx, time.Second*30)
+	r.Require().NoErrorf(err, "Unable to recover relayer %v", err)
+	isPacketReceived := r.checkPacketReceipt(ctx, chainB, packet, ibc.Unordered)
 	assert.Truef(r.T, isPacketReceived, "The packet event has NOT received on the target chain.\n%v\n", packet)
 
 	// check if relay is working as expected with ping pong to cross chain
@@ -291,16 +310,13 @@ func (r *RelayerTestSuite) RelayerCrashTest(ctx context.Context, chainA, chainB 
 	r.T.Logf("relay recovered successfully")
 }
 
-func (r *RelayerTestSuite) recoverRelayerAndCheckPacket(ctx context.Context, targetChain chains.Chain, packet types.Packet) bool {
-	err := r.Recover(ctx, time.Second*30)
-	assert.NoErrorf(r.T, err, "Error on relayer recover %v", err)
-
+func (r *RelayerTestSuite) checkPacketReceipt(ctx context.Context, targetChain chains.Chain, packet types.Packet, order ibc.Order) bool {
 	params := map[string]interface{}{
 		"sequence":   packet.Sequence,
 		"port_id":    packet.SourcePort,
 		"channel_id": packet.SourceChannel,
 	}
-	isPacketReceived := findPacket(ctx, targetChain, params)
+	isPacketReceived := findPacket(ctx, targetChain, params, order)
 	return isPacketReceived
 }
 
@@ -322,7 +338,7 @@ func (r *RelayerTestSuite) handleCrashAndSendPacket(ctx context.Context, src cha
 	return packet, crashedHeight
 }
 
-func findPacket(ctx context.Context, chain chains.Chain, params map[string]interface{}) bool {
+func findPacket(ctx context.Context, chain chains.Chain, params map[string]interface{}, order ibc.Order) bool {
 	duration := 30 * time.Second
 	interval := 2 * time.Second
 
@@ -337,7 +353,7 @@ func findPacket(ctx context.Context, chain chains.Chain, params map[string]inter
 			fmt.Println("Loop finished")
 			return isPacketReceived
 		default:
-			isPacketReceived = chain.IsPacketReceived(ctx, params)
+			isPacketReceived = chain.IsPacketReceived(ctx, params, order)
 			if isPacketReceived {
 				return isPacketReceived
 			}

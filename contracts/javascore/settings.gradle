@@ -19,5 +19,3 @@ project(':mockclient').name = "mockclient"
 include(':mockapp')
 project(':mockapp').projectDir = file("modules/mockapp")
 project(':mockapp').name = "mockapp"
-
-includeBuild "../../xcall-multi/contracts/javascore/"
