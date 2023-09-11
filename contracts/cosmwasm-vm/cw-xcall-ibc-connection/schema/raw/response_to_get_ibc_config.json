@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ConfigResponse",
+  "type": "object",
+  "required": [
+    "channel_id",
+    "destination_channel_id",
+    "destination_port_id",
+    "light_client_id",
+    "port",
+    "timeout_height"
+  ],
+  "properties": {
+    "channel_id": {
+      "type": "string"
+    },
+    "destination_channel_id": {
+      "type": "string"
+    },
+    "destination_port_id": {
+      "type": "string"
+    },
+    "light_client_id": {
+      "type": "string"
+    },
+    "port": {
+      "type": "string"
+    },
+    "timeout_height": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0.0
+    }
+  },
+  "additionalProperties": false
+}
