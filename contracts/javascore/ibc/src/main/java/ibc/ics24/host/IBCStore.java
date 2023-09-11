@@ -25,7 +25,7 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
     private static final String NEXT_SEQUENCE_RECEIVES = "nextSequenceReceives";
     private static final String NEXT_SEQUENCE_ACKNOWLEDGEMENTS = "nextSequenceAcknowledgements";
     private static final String PACKET_RECEIPTS = "packetReceipts";
-    private static final String PACKET_HEIGHTS= "packetHeights";
+    private static final String PACKET_HEIGHTS = "packetHeights";
     private static final String CAPABILITIES = "capabilities";
     private static final String PORT_IDS = "portIds";
     private static final String EXPECTED_TIME_PER_BLOCK = "expectedTimePerBlock";
@@ -34,6 +34,7 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
     private static final String NEXT_CHANNEL_SEQUENCE = "nextChannelSequence";
     private static final String BTP_NETWORK_ID = "btpNetworkId";
     private static final String TIMEOUT_REQUESTS = "timeout_requests";
+    private static final String ACK_HEIGHTS = "ackHeights";
 
     // DB Variables
     // Commitments
@@ -61,17 +62,21 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
             .newBranchDB(PACKET_RECEIPTS, Boolean.class);
     public static final BranchDB<String, BranchDB<String, DictDB<BigInteger, Long>>> packetHeights = Context
             .newBranchDB(PACKET_HEIGHTS, Long.class);
+    public static final BranchDB<String, BranchDB<String, DictDB<BigInteger, Long>>> ackHeights = Context
+            .newBranchDB(ACK_HEIGHTS, Long.class);
 
-    public static final DictDB<byte[],Address> capabilities = Context.newDictDB(CAPABILITIES, Address.class);
+    public static final DictDB<byte[], Address> capabilities = Context.newDictDB(CAPABILITIES, Address.class);
     public static final ArrayDB<String> portIds = Context.newArrayDB(PORT_IDS, String.class);
     // Host Parameters
-    public static final VarDB<BigInteger> expectedTimePerBlock = Context.newVarDB(EXPECTED_TIME_PER_BLOCK, BigInteger.class);
+    public static final VarDB<BigInteger> expectedTimePerBlock = Context.newVarDB(EXPECTED_TIME_PER_BLOCK,
+            BigInteger.class);
 
     // Sequences for identifiers
     public static final VarDB<BigInteger> nextClientSequence = Context.newVarDB(NEXT_CLIENT_SEQUENCE, BigInteger.class);
     public static final VarDB<BigInteger> nextConnectionSequence = Context.newVarDB(NEXT_CONNECTION_SEQUENCE,
             BigInteger.class);
-    public static final VarDB<BigInteger> nextChannelSequence = Context.newVarDB(NEXT_CHANNEL_SEQUENCE, BigInteger.class);
+    public static final VarDB<BigInteger> nextChannelSequence = Context.newVarDB(NEXT_CHANNEL_SEQUENCE,
+            BigInteger.class);
 
     public static final DictDB<String, Integer> btpNetworkId = Context.newDictDB(BTP_NETWORK_ID, Integer.class);
     public static final DictDB<byte[], Boolean> timeoutRequests = Context.newDictDB(TIMEOUT_REQUESTS, Boolean.class);
@@ -123,7 +128,7 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
 
     @External(readonly = true)
     public boolean getPacketReceipt(String portId, String channelId, BigInteger sequence) {
-           return packetReceipts.at(portId).at(channelId).getOrDefault(sequence, false);
+        return packetReceipts.at(portId).at(channelId).getOrDefault(sequence, false);
     }
 
     @External(readonly = true)
@@ -189,7 +194,22 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
         for (int i = startSequence; i <= endSequence; i++) {
             BigInteger sequence = BigInteger.valueOf(i);
             Long height = packets.get(sequence);
-            if (height != null){
+            if (height != null) {
+                heights.put(sequence.toString(), height);
+            }
+        }
+
+        return heights;
+    }
+
+    @External(readonly = true)
+    public Map<String, Long> getAckHeights(String portId, String channelId, int startSequence, int endSequence) {
+        DictDB<BigInteger, Long> acks = ackHeights.at(portId).at(channelId);
+        Map<String, Long> heights = new HashMap<>();
+        for (int i = startSequence; i <= endSequence; i++) {
+            BigInteger sequence = BigInteger.valueOf(i);
+            Long height = acks.get(sequence);
+            if (height != null) {
                 heights.put(sequence.toString(), height);
             }
         }
