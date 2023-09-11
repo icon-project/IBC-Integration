@@ -873,8 +873,9 @@ mod tests {
         );
 
         let second = execute(deps.as_mut(), mock_env(), info, msg);
-        assert_eq!(second,Err(ContractError::HeightAlreadyUpdated { height: 82873 }));
-
-
+        assert_eq!(
+            second,
+            Err(ContractError::HeightAlreadyUpdated { height: 82873 })
+        );
     }
 }

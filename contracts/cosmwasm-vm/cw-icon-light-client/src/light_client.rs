@@ -144,9 +144,14 @@ impl ILightClient for IconClient<'_> {
     ) -> Result<ConsensusStateUpdate, Self::Error> {
         self.context.ensure_ibc_host(caller)?;
         let btp_header = signed_header.header.clone().unwrap();
-        if self.context.get_consensus_state(client_id, btp_header.main_height).is_ok(){
-            return Err(ContractError::HeightAlreadyUpdated {height:btp_header.main_height})
-
+        if self
+            .context
+            .get_consensus_state(client_id, btp_header.main_height)
+            .is_ok()
+        {
+            return Err(ContractError::HeightAlreadyUpdated {
+                height: btp_header.main_height,
+            });
         }
 
         let mut state = self.context.get_client_state(client_id)?;
