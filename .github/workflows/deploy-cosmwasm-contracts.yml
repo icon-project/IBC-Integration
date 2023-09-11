@@ -11,7 +11,7 @@ on:
       - scripts/archway/**
 jobs:
   Build:
-    name: Build & Deploy Cosmasm Contracts
+    name: Build & Deploy Cosmwasm Contracts
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -50,7 +50,7 @@ jobs:
       - name: Deploy WASM
         run: |
           container=$(docker ps --format '{{.Names}}')
-          sudo rm -rf artifacts/archway/cw_common.wasm
+          docker exec $container sh -c "rm /contracts/*_latest.wasm;rm /contracts/cw_common*.wasm"
           # cp -r {artifacts,scripts/deploy_cosmwasm.sh} contracts/cosmwasm-vm/archway/contracts
           docker ps -a
           docker exec $container chmod +x /opt/deploy_cosmwasm.sh
