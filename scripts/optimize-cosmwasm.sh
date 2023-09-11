@@ -9,7 +9,7 @@ RUSTC_VERS="1.69.0"
 
 MAX_WASM_SIZE=800 # 800 KB
 
-PROJECTS=("cw-xcall" "cw-mock-dapp" "cw-mock-dapp-multi")
+PROJECTS=("cw-xcall" "cw-xcall-lib")
 
 # Install wasm-opt binary
 if ! which wasm-opt; then
@@ -65,6 +65,7 @@ rename_wasm_with_version() {
     local wasm_file="artifacts/archway/${project_path//-/_}.wasm"
 
     if [[ -f "$wasm_file" ]]; then
+        cp "$wasm_file" "${wasm_file%.wasm}_latest.wasm"
         mv "$wasm_file" "${wasm_file%.wasm}_${version}.wasm"
         echo "Renamed: ${wasm_file} -> ${wasm_file%.wasm}_${version}.wasm"
     else

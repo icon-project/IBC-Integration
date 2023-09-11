@@ -23,7 +23,7 @@ use crate::{
         event_xcall_message_sent,
     },
     msg::{InstantiateMsg, QueryMsg},
-    state::{CwCallService, EXECUTE_CALL_ID, EXECUTE_ROLLBACK_ID, SEND_CALL_MESSAGE_REPLY_ID},
+    state::{CwCallService, EXECUTE_CALL_ID},
     types::{
         call_request::CallRequest,
         message::{CSMessage, CallServiceMessageType},
@@ -35,17 +35,15 @@ use crate::{
 
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
-    ensure, ensure_eq, entry_point, to_binary, Addr, Api, Binary, CosmosMsg, Deps, DepsMut, Env,
-    Event, MessageInfo, QuerierWrapper, Reply, Response, StdError, StdResult, Storage, SubMsg,
-    SubMsgResult, WasmMsg,
+    ensure, ensure_eq, entry_point, to_binary, Addr, Api, Binary, Deps, DepsMut, Env, Event,
+    MessageInfo, QuerierWrapper, Reply, Response, StdError, StdResult, Storage, SubMsg,
 };
 
 use cw2::set_contract_version;
 use cw_storage_plus::{Item, Map};
 use cw_xcall_lib::xcall_msg::ExecuteMsg;
-use schemars::JsonSchema;
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use thiserror::Error;
 
 /// This function instantiates a contract using the CwCallService.

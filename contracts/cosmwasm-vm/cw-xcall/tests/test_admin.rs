@@ -3,8 +3,7 @@ mod setup;
 use account::*;
 use cosmwasm_std::{testing::mock_env, Addr};
 
-use cw2::{get_contract_version, ContractVersion};
-use cw_xcall::{state::CwCallService, MigrateMsg};
+use cw_xcall::state::CwCallService;
 use cw_xcall_lib::xcall_msg::ExecuteMsg;
 use setup::test::*;
 

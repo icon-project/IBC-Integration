@@ -24,7 +24,7 @@ impl<'a> CwCallService<'a> {
             id: reply_id,
             msg: cosm_msg,
             gas_limit: None,
-            reply_on: cosmwasm_std::ReplyOn::Never,
+            reply_on: cosmwasm_std::ReplyOn::Always,
         };
 
         Ok(submessage)
