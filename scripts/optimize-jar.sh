@@ -7,7 +7,7 @@ cd contracts/javascore
 ./gradlew clean optimizedJar
 cd -
 
-cd xCall/contracts/javascore
+cd xcall-multi/contracts/javascore
 ./gradlew clean optimizedJar
 cd -
 for jar in $(find . -type f -name "*optimized.jar" | grep  /build/libs/); do
