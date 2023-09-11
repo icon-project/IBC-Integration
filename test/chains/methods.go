@@ -3,6 +3,7 @@ package chains
 const (
 	//read only method
 	HasPacketReceipt          = "has-packet-receipt"
+	GetNextSequenceReceive    = "get-next-sequence-receive"
 	GetClientState            = "get-client-state"
 	GetNextClientSequence     = "get-next-client-sequence"
 	GetConnection             = "get-connection"

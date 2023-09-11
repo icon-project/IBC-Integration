@@ -38,6 +38,7 @@ type Query struct {
 	GetProtocolFee            *GetProtocolFee         `json:"get_protocol_fee,omitempty"`
 	GetNextClientSequence     *map[string]interface{} `json:"get_next_client_sequence,omitempty"`
 	HasPacketReceipt          *map[string]interface{} `json:"has_packet_receipt,omitempty"`
+	GetNextSequenceReceive    *map[string]interface{} `json:"get_next_sequence_receive,omitempty"`
 	GetConnection             *map[string]interface{} `json:"get_connection,omitempty"`
 	GetChannel                *map[string]interface{} `json:"get_channel,omitempty"`
 	GetNextConnectionSequence *map[string]interface{} `json:"get_next_connection_sequence,omitempty"`
