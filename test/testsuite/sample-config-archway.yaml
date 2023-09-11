@@ -29,8 +29,8 @@ chains:
       name: archway
       chain_id: archway-1
       image:
-        repository: archwayd
-        version: latest
+        repository: archwaynetwork/archwayd
+        version: sha-8f53ac8
         uid_gid: ""
       bin: archwayd
       bech32_prefix: archway
@@ -51,5 +51,3 @@ chains:
 relayer:
   image: relayer
   tag: latest
-#  tag: 87a9477e55
-

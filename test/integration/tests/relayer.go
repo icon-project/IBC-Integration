@@ -243,12 +243,12 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context, relayer ibc.Relayer)
 }
 
 func (r *RelayerTestSuite) PacketFlowTest(ctx context.Context, t *testing.T, src, target chains.Chain, order ibc.Order) {
-	packet, crashHeight := r.handleCrashAndSendPacket(ctx, src, target) //10
+	packet, crashHeight := r.handleCrashAndSendPacket(ctx, src, target)
 
 	height, err := src.(ibc.Chain).Height(ctx)
 	assert.NoErrorf(t, err, "Error while getting block height: %v", err)
 
-	err = r.WriteBlockHeight(ctx, src.(ibc.Chain).Config().ChainID, height+1) //15
+	err = r.WriteBlockHeight(ctx, src.(ibc.Chain).Config().ChainID, height+1)
 	assert.NoErrorf(t, err, "Error on setting block height (%d): %v", height+1, err)
 
 	err = r.Recover(ctx, time.Second*30)
@@ -269,7 +269,7 @@ func (r *RelayerTestSuite) PacketFlowTest(ctx context.Context, t *testing.T, src
 
 	packetNew, _ := r.handleCrashAndSendPacket(ctx, src, target)
 
-	err = r.WriteBlockHeight(ctx, src.(ibc.Chain).Config().ChainID, crashHeight-1) //10
+	err = r.WriteBlockHeight(ctx, src.(ibc.Chain).Config().ChainID, crashHeight-1)
 	assert.NoErrorf(t, err, "Error on setting block height (%d): %v", crashHeight-1, err)
 
 	err = r.Recover(ctx, time.Second*30)

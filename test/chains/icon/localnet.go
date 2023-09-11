@@ -540,7 +540,7 @@ func (c *IconLocalnet) SendPacketXCall(ctx context.Context, keyName, _to string,
 // HasPacketReceipt returns the receipt of the packet sent to the target chain
 func (c *IconLocalnet) IsPacketReceived(ctx context.Context, params map[string]interface{}, order ibc.Order) bool {
 	if order == ibc.Ordered {
-		sequence := params["sequence"].(uint64)
+		sequence := params["sequence"].(uint64) //2
 		ctx, err := c.QueryContract(ctx, c.IBCAddresses["ibc"], chains.GetNextSequenceReceive, params)
 		if err != nil {
 			fmt.Printf("Error--%v\n", err)
