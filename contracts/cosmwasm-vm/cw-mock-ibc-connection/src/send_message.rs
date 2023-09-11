@@ -1,12 +1,7 @@
-
 use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw_xcall_lib::network_address::NetId;
 
-use crate::{
-    error::ContractError,
-    state::CwIbcConnection,
-    types::LOG_PREFIX,
-};
+use crate::{error::ContractError, state::CwIbcConnection, types::LOG_PREFIX};
 
 impl<'a> CwIbcConnection<'a> {
     pub fn send_message(
@@ -21,6 +16,6 @@ impl<'a> CwIbcConnection<'a> {
         self.ensure_xcall_handler(deps.as_ref().storage, info.sender.clone())?;
 
         println!("{LOG_PREFIX} Packet Validated");
-       Ok(Response::new())
+        Ok(Response::new())
     }
 }
