@@ -19,7 +19,7 @@ impl<'a> CwIbcConnection<'a> {
         message: Vec<u8>,
     ) -> Result<Response, ContractError> {
         // self.ensure_xcall_handler(deps.as_ref().storage, info.sender.clone())?;
-       Ok(Response::new())
+        Ok(Response::new())
     }
 
     fn write_acknowledgement(

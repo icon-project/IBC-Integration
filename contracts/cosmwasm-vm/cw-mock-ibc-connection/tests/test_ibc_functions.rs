@@ -14,11 +14,11 @@ use cw_mock_ibc_connection::ack::{on_ack_failure, on_ack_sucess};
 use cw_mock_ibc_connection::types::config::Config;
 use cw_xcall_lib::network_address::{NetId, NetworkAddress};
 
-use cw_xcall::types::response::CallServiceMessageResponse;
 use cw_mock_ibc_connection::msg::InstantiateMsg;
 use cw_mock_ibc_connection::types::channel_config::ChannelConfig;
 use cw_mock_ibc_connection::types::message::Message;
 use cw_mock_ibc_connection::{execute, instantiate, query};
+use cw_xcall::types::response::CallServiceMessageResponse;
 use setup::*;
 pub mod account;
 use account::admin_one;
@@ -27,9 +27,9 @@ use account::alice;
 use cosmwasm_std::from_binary;
 use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
 
+use cw_mock_ibc_connection::state::CwIbcConnection;
 use cw_xcall::types::message::CallServiceMessage;
 use cw_xcall::types::request::CallServiceMessageRequest;
-use cw_mock_ibc_connection::state::CwIbcConnection;
 
 #[test]
 #[cfg(not(feature = "native_ibc"))]

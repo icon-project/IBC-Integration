@@ -32,7 +32,6 @@ impl<'a> CwIbcConnection<'a> {
 
         // let submessage: cosmwasm_std::SubMsg =
         //     self.call_host_send_message(deps, info, packet_data)?;
-        Ok(Response::new()
-            .add_attribute("method", "send_message"))
+        Ok(Response::new().add_attribute("method", "send_message"))
     }
 }

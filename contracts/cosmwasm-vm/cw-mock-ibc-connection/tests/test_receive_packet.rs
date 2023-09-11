@@ -8,14 +8,14 @@ use cosmwasm_std::{
     Addr, Binary, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
 
+use cw_mock_ibc_connection::{
+    ibc::ibc_packet_receive, state::CwIbcConnection, types::message::Message,
+};
 use cw_xcall::types::{
     message::CallServiceMessage,
     request::CallServiceMessageRequest,
     response::CallServiceMessageResponse,
     rlp::{self},
-};
-use cw_mock_ibc_connection::{
-    ibc::ibc_packet_receive, state::CwIbcConnection, types::message::Message,
 };
 use cw_xcall_lib::network_address::NetworkAddress;
 use setup::*;
