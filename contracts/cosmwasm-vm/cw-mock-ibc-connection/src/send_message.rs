@@ -1,11 +1,11 @@
-use common::rlp::Nullable;
-use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, Storage};
+
+use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 use cw_xcall_lib::network_address::NetId;
 
 use crate::{
     error::ContractError,
-    state::{CwIbcConnection, IbcConfig},
-    types::{message::Message, LOG_PREFIX},
+    state::CwIbcConnection,
+    types::LOG_PREFIX,
 };
 
 impl<'a> CwIbcConnection<'a> {

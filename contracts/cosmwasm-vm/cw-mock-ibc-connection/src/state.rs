@@ -126,7 +126,6 @@ pub struct CwIbcConnection<'a> {
     unclaimed_packet_fees: Map<'a, (String, String), u128>,
     unclaimed_ack_fees: Map<'a, (String, u64), u128>,
     incoming_packets: Map<'a, (String, i64), CwPacket>,
-    outgoing_packets: Map<'a, (String, u64), i64>,
 }
 
 impl<'a> Default for CwIbcConnection<'a> {
@@ -151,7 +150,6 @@ impl<'a> CwIbcConnection<'a> {
             unclaimed_packet_fees: Map::new(StorageKey::UnclaimedPacketFees.as_str()),
             unclaimed_ack_fees: Map::new(StorageKey::UnClaimedAckFees.as_str()),
             incoming_packets: Map::new(StorageKey::IncomingPackets.as_str()),
-            outgoing_packets: Map::new(StorageKey::OutGoingPackets.as_str()),
         }
     }
 
