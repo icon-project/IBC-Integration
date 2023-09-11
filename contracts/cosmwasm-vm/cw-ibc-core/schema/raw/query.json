@@ -1,0 +1,630 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryMsg",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "get_commitment"
+      ],
+      "properties": {
+        "get_commitment": {
+          "type": "object",
+          "required": [
+            "key"
+          ],
+          "properties": {
+            "key": {
+              "$ref": "#/definitions/HexString"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_client_registry"
+      ],
+      "properties": {
+        "get_client_registry": {
+          "type": "object",
+          "required": [
+            "_type"
+          ],
+          "properties": {
+            "_type": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_client_type"
+      ],
+      "properties": {
+        "get_client_type": {
+          "type": "object",
+          "required": [
+            "client_id"
+          ],
+          "properties": {
+            "client_id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_client_implementation"
+      ],
+      "properties": {
+        "get_client_implementation": {
+          "type": "object",
+          "required": [
+            "client_id"
+          ],
+          "properties": {
+            "client_id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_connection"
+      ],
+      "properties": {
+        "get_connection": {
+          "type": "object",
+          "required": [
+            "connection_id"
+          ],
+          "properties": {
+            "connection_id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_channel"
+      ],
+      "properties": {
+        "get_channel": {
+          "type": "object",
+          "required": [
+            "channel_id",
+            "port_id"
+          ],
+          "properties": {
+            "channel_id": {
+              "type": "string"
+            },
+            "port_id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_next_sequence_send"
+      ],
+      "properties": {
+        "get_next_sequence_send": {
+          "type": "object",
+          "required": [
+            "channel_id",
+            "port_id"
+          ],
+          "properties": {
+            "channel_id": {
+              "type": "string"
+            },
+            "port_id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_next_sequence_receive"
+      ],
+      "properties": {
+        "get_next_sequence_receive": {
+          "type": "object",
+          "required": [
+            "channel_id",
+            "port_id"
+          ],
+          "properties": {
+            "channel_id": {
+              "type": "string"
+            },
+            "port_id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_next_sequence_acknowledgement"
+      ],
+      "properties": {
+        "get_next_sequence_acknowledgement": {
+          "type": "object",
+          "required": [
+            "channel_id",
+            "port_id"
+          ],
+          "properties": {
+            "channel_id": {
+              "type": "string"
+            },
+            "port_id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_capability"
+      ],
+      "properties": {
+        "get_capability": {
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_expected_time_per_block"
+      ],
+      "properties": {
+        "get_expected_time_per_block": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_next_client_sequence"
+      ],
+      "properties": {
+        "get_next_client_sequence": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_next_connection_sequence"
+      ],
+      "properties": {
+        "get_next_connection_sequence": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_next_channel_sequence"
+      ],
+      "properties": {
+        "get_next_channel_sequence": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_client_state"
+      ],
+      "properties": {
+        "get_client_state": {
+          "type": "object",
+          "required": [
+            "client_id"
+          ],
+          "properties": {
+            "client_id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_consensus_state"
+      ],
+      "properties": {
+        "get_consensus_state": {
+          "type": "object",
+          "required": [
+            "client_id"
+          ],
+          "properties": {
+            "client_id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_packet_receipt"
+      ],
+      "properties": {
+        "get_packet_receipt": {
+          "type": "object",
+          "required": [
+            "channel_id",
+            "port_id",
+            "sequence"
+          ],
+          "properties": {
+            "channel_id": {
+              "type": "string"
+            },
+            "port_id": {
+              "type": "string"
+            },
+            "sequence": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_packet_commitment"
+      ],
+      "properties": {
+        "get_packet_commitment": {
+          "type": "object",
+          "required": [
+            "channel_id",
+            "port_id",
+            "sequence"
+          ],
+          "properties": {
+            "channel_id": {
+              "type": "string"
+            },
+            "port_id": {
+              "type": "string"
+            },
+            "sequence": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_packet_acknowledgement_commitment"
+      ],
+      "properties": {
+        "get_packet_acknowledgement_commitment": {
+          "type": "object",
+          "required": [
+            "channel_id",
+            "port_id",
+            "sequence"
+          ],
+          "properties": {
+            "channel_id": {
+              "type": "string"
+            },
+            "port_id": {
+              "type": "string"
+            },
+            "sequence": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "has_packet_receipt"
+      ],
+      "properties": {
+        "has_packet_receipt": {
+          "type": "object",
+          "required": [
+            "channel_id",
+            "port_id",
+            "sequence"
+          ],
+          "properties": {
+            "channel_id": {
+              "type": "string"
+            },
+            "port_id": {
+              "type": "string"
+            },
+            "sequence": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_all_ports"
+      ],
+      "properties": {
+        "get_all_ports": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_commitment_prefix"
+      ],
+      "properties": {
+        "get_commitment_prefix": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_latest_height"
+      ],
+      "properties": {
+        "get_latest_height": {
+          "type": "object",
+          "required": [
+            "client_id"
+          ],
+          "properties": {
+            "client_id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_consensus_state_by_height"
+      ],
+      "properties": {
+        "get_consensus_state_by_height": {
+          "type": "object",
+          "required": [
+            "client_id",
+            "height"
+          ],
+          "properties": {
+            "client_id": {
+              "type": "string"
+            },
+            "height": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_packet_heights"
+      ],
+      "properties": {
+        "get_packet_heights": {
+          "type": "object",
+          "required": [
+            "channel_id",
+            "end_sequence",
+            "port_id",
+            "start_sequence"
+          ],
+          "properties": {
+            "channel_id": {
+              "type": "string"
+            },
+            "end_sequence": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "port_id": {
+              "type": "string"
+            },
+            "start_sequence": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_missing_packet_receipts"
+      ],
+      "properties": {
+        "get_missing_packet_receipts": {
+          "type": "object",
+          "required": [
+            "channel_id",
+            "end_sequence",
+            "port_id",
+            "start_sequence"
+          ],
+          "properties": {
+            "channel_id": {
+              "type": "string"
+            },
+            "end_sequence": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "port_id": {
+              "type": "string"
+            },
+            "start_sequence": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_previous_consensus_state_height"
+      ],
+      "properties": {
+        "get_previous_consensus_state_height": {
+          "type": "object",
+          "required": [
+            "client_id",
+            "height"
+          ],
+          "properties": {
+            "client_id": {
+              "type": "string"
+            },
+            "height": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "HexString": {
+      "type": "string"
+    }
+  }
+}
