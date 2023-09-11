@@ -1,20 +1,32 @@
-use super::*;
+use cosmwasm_schema::{cw_serde, QueryResponses};
+use cosmwasm_std::Addr;
+use cw_xcall_lib::network_address::NetId;
 
-/// This is a Rust struct representing a message to instantiate a contract with timeout height and IBC
-/// host address.
-///
-/// Properties:
-///
-/// * `timeout_height`: `timeout_height` is a field of type `u64` (unsigned 64-bit integer) in the
-/// `InstantiateMsg` struct. It represents the block height at which the transaction will timeout if it
-/// has not been included in a block by that height. This is used to prevent transactions from being
-/// * `ibc_host`: `ibc_host` is a field of type `Addr` in the `InstantiateMsg` struct. It likely
-/// represents the address of the IBC host that the message is being sent to. However, without more
-/// context it's difficult to say for sure.
 #[cw_serde]
 pub struct InstantiateMsg {
     pub ibc_host: Addr,
     pub port_id: String,
     pub xcall_address: Addr,
     pub denom: String,
+}
+
+#[cw_serde]
+pub enum ExecuteMsg {
+    SendMessage {
+        to: NetId,
+        sn: i64,
+        msg: Vec<u8>,
+    },
+    SetFees {
+        nid: NetId,
+        packet_fee: u128,
+        ack_fee: u128,
+    },
+}
+
+#[cw_serde]
+#[derive(QueryResponses)]
+pub enum QueryMsg {
+    #[returns(u64)]
+    GetFee { nid: NetId, response: bool },
 }
