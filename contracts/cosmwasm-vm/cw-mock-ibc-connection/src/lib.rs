@@ -10,7 +10,7 @@ pub mod types;
 
 use crate::{
     error::ContractError,
-    msg::{InstantiateMsg, ExecuteMsg, QueryMsg},
+    msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
     state::CwIbcConnection,
     types::storage_keys::StorageKey,
 };

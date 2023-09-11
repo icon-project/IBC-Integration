@@ -1,10 +1,7 @@
 use cw_storage_plus::Map;
 use cw_xcall_lib::network_address::NetId;
 
-use crate::types::{
-    config::Config,
-    network_fees::NetworkFees,
-};
+use crate::types::{config::Config, network_fees::NetworkFees};
 
 use super::*;
 

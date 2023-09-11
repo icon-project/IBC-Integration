@@ -1,10 +1,6 @@
-use cosmwasm_std::{Addr, Storage, ensure_eq};
+use cosmwasm_std::{ensure_eq, Addr, Storage};
 
-use crate::{
-    error::ContractError,
-    state::CwIbcConnection,
-    types::LOG_PREFIX,
-};
+use crate::{error::ContractError, state::CwIbcConnection, types::LOG_PREFIX};
 
 impl<'a> CwIbcConnection<'a> {
     pub fn ensure_xcall_handler(

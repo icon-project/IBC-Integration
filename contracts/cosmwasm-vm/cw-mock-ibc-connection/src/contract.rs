@@ -1,5 +1,5 @@
 use super::*;
-use crate::types::{LOG_PREFIX, config::Config};
+use crate::types::{config::Config, LOG_PREFIX};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-xcall-ibc-connection";
@@ -66,7 +66,7 @@ impl<'a> CwIbcConnection<'a> {
     }
 
     pub fn query(&self, deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-        match msg { 
+        match msg {
             QueryMsg::GetFee { nid, response } => {
                 let fees = self.get_network_fees(deps.storage, nid);
                 if response {
@@ -76,7 +76,7 @@ impl<'a> CwIbcConnection<'a> {
             }
         }
     }
-   
+
     pub fn migrate(
         &self,
         deps: DepsMut,

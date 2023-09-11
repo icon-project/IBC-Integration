@@ -34,7 +34,6 @@ impl<'a> CwIbcConnection<'a> {
     }
 }
 
-
 fn get_amount_for_denom(funds: &Vec<Coin>, target_denom: String) -> Uint128 {
     for coin in funds.iter() {
         if coin.denom == target_denom {

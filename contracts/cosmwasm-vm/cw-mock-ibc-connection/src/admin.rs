@@ -34,5 +34,4 @@ impl<'a> CwIbcConnection<'a> {
             .add_attribute("method", "add_admin")
             .add_attribute("admin", admin.to_string()))
     }
-
 }
