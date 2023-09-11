@@ -64,7 +64,7 @@ rename_wasm_with_version() {
     local wasm_file="artifacts/archway/${project_path//-/_}.wasm"
 
     if [[ -f "$wasm_file" ]]; then
-        mv "$wasm_file" "${wasm_file%.wasm}_${version}.wasm"
+        cp "$wasm_file" "${wasm_file%.wasm}_${version}.wasm"
         echo "Renamed: ${wasm_file} -> ${wasm_file%.wasm}_${version}.wasm"
     else
         echo "Error: Wasm file not found: $wasm_file"
