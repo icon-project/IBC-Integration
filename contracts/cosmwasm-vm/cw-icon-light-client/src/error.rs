@@ -80,6 +80,9 @@ pub enum ContractError {
 
     #[error("UpdateBlockTooOld")]
     UpdateBlockTooOld,
+
+    #[error("Height {height:?} already updated ")]
+    HeightAlreadyUpdated { height: u64 },
 }
 
 impl From<CwErrors> for ContractError {
