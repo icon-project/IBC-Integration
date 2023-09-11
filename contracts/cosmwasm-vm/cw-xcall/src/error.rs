@@ -40,4 +40,6 @@ pub enum ContractError {
     ProtocolsMismatch,
     #[error("DataMismatch")]
     DataMismatch,
+    #[error("CallAlreadyInProgress")]
+    CallAlreadyInProgress,
 }

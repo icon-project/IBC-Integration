@@ -1,4 +1,4 @@
-use cosmwasm_std::Order;
+use cosmwasm_std::{from_slice, to_vec, Order};
 use cw_storage_plus::{KeyDeserialize, PrimaryKey};
 use cw_xcall_lib::network_address::NetId;
 use serde::de::DeserializeOwned;
@@ -27,8 +27,7 @@ pub struct CwCallService<'a> {
     pending_requests: Map<'a, (Vec<u8>, String), bool>,
     pending_responses: Map<'a, (Vec<u8>, String), bool>,
     successful_responses: Map<'a, u128, bool>,
-    execute_request_id: Item<'a, u128>,
-    execute_rollback_id: Item<'a, u128>,
+    callback_data: Map<'a, u64, Vec<u8>>,
 }
 
 impl<'a> Default for CwCallService<'a> {
@@ -52,8 +51,7 @@ impl<'a> CwCallService<'a> {
             pending_responses: Map::new(StorageKey::PendingResponses.as_str()),
             successful_responses: Map::new(StorageKey::SuccessfulResponses.as_str()),
             config: Item::new(StorageKey::Config.as_str()),
-            execute_request_id: Item::new(StorageKey::ExecuteReqId.as_str()),
-            execute_rollback_id: Item::new(StorageKey::ExecuteRollbackId.as_str()),
+            callback_data: Map::new(StorageKey::Callbackdata.as_str()),
         }
     }
 
@@ -93,31 +91,14 @@ impl<'a> CwCallService<'a> {
         store: &mut dyn Storage,
         req_id: u128,
     ) -> Result<(), ContractError> {
-        self.execute_request_id
-            .save(store, &req_id)
-            .map_err(ContractError::Std)
+        self.store_callback_data(store, EXECUTE_CALL_ID, &req_id)
+    }
+    pub fn remove_execute_request_id(&self, store: &mut dyn Storage) {
+        self.clear_callback_data(store, EXECUTE_CALL_ID)
     }
 
     pub fn get_execute_request_id(&self, store: &dyn Storage) -> Result<u128, ContractError> {
-        self.execute_request_id
-            .load(store)
-            .map_err(ContractError::Std)
-    }
-
-    pub fn store_execute_rollback_id(
-        &self,
-        store: &mut dyn Storage,
-        req_id: u128,
-    ) -> Result<(), ContractError> {
-        self.execute_rollback_id
-            .save(store, &req_id)
-            .map_err(ContractError::Std)
-    }
-
-    pub fn get_execute_rollback_id(&self, store: &dyn Storage) -> Result<u128, ContractError> {
-        self.execute_rollback_id
-            .load(store)
-            .map_err(ContractError::Std)
+        self.get_callback_data(store, EXECUTE_CALL_ID)
     }
 
     pub fn admin(&self) -> &Item<'a, Addr> {
@@ -349,5 +330,45 @@ impl<'a> CwCallService<'a> {
         self.successful_responses
             .save(store, sn, &true)
             .map_err(ContractError::Std)
+    }
+
+    pub fn store_callback_data<T>(
+        &self,
+        store: &mut dyn Storage,
+        id: u64,
+        data: &T,
+    ) -> Result<(), ContractError>
+    where
+        T: DeserializeOwned + Serialize + ?Sized,
+    {
+        if self.has_callback_data(store, id) {
+            return Err(ContractError::CallAlreadyInProgress);
+        }
+
+        let bytes = to_vec(data).map_err(ContractError::Std)?;
+        self.callback_data
+            .save(store, id, &bytes)
+            .map_err(ContractError::Std)
+    }
+
+    pub fn has_callback_data(&self, store: &dyn Storage, id: u64) -> bool {
+        self.callback_data.load(store, id).is_ok()
+    }
+
+    pub fn clear_callback_data(&self, store: &mut dyn Storage, id: u64) {
+        self.callback_data.remove(store, id)
+    }
+
+    pub fn get_callback_data<T: DeserializeOwned>(
+        &self,
+        store: &dyn Storage,
+        id: u64,
+    ) -> Result<T, ContractError> {
+        let bytes = self
+            .callback_data
+            .load(store, id)
+            .map_err(ContractError::Std)?;
+        let data = from_slice::<T>(&bytes).map_err(ContractError::Std)?;
+        Ok(data)
     }
 }

@@ -16,8 +16,7 @@ pub enum StorageKey {
     PendingResponses,
     SuccessfulResponses,
     Config,
-    ExecuteReqId,
-    ExecuteRollbackId,
+    Callbackdata,
 }
 
 impl StorageKey {
@@ -37,8 +36,7 @@ impl StorageKey {
             StorageKey::PendingResponses => "pending_responses",
             StorageKey::SuccessfulResponses => "successful_responses",
             StorageKey::Config => "config",
-            StorageKey::ExecuteReqId => "execute_request_id",
-            StorageKey::ExecuteRollbackId => "execute_request_id",
+            StorageKey::Callbackdata => "callback_data",
         }
     }
 }

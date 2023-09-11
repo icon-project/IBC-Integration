@@ -73,6 +73,7 @@ impl<'a> CwCallService<'a> {
         msg: Reply,
     ) -> Result<Response, ContractError> {
         let req_id = self.get_execute_request_id(deps.storage)?;
+        self.remove_execute_request_id(deps.storage);
 
         let request = self.get_proxy_request(deps.storage, req_id)?;
         self.remove_proxy_request(deps.storage, req_id);

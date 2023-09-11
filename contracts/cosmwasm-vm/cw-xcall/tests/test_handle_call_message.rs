@@ -216,10 +216,6 @@ fn execute_rollback_success() {
         .store_call_request(mock_deps.as_mut().storage, seq_id, &request)
         .unwrap();
 
-    contract
-        .store_execute_rollback_id(mock_deps.as_mut().storage, seq_id)
-        .unwrap();
-
     let response = contract
         .execute_rollback(mock_deps.as_mut(), mock_env(), mock_info, seq_id)
         .unwrap();
@@ -262,10 +258,6 @@ fn execute_rollback_failure() {
 
     contract
         .store_call_request(mock_deps.as_mut().storage, seq_id, &request)
-        .unwrap();
-
-    contract
-        .store_execute_rollback_id(mock_deps.as_mut().storage, seq_id)
         .unwrap();
 
     let response = contract
