@@ -46,7 +46,10 @@ fn add_admin() {
 
     assert_eq!(response.attributes[0].value, "add_admin");
 
-    assert_eq!(response.attributes[1].value, Addr::unchecked(admin_one().to_string()));
+    assert_eq!(
+        response.attributes[1].value,
+        Addr::unchecked(admin_one().to_string())
+    );
 
     let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
 
@@ -105,7 +108,7 @@ fn update_admin() {
         .add_admin(
             mock_deps.as_mut().storage,
             mock_info,
-            admin_one().to_string(),
+            Addr::unchecked(admin_one().to_string()),
         )
         .unwrap();
 
@@ -145,7 +148,7 @@ fn update_existing_admin() {
         .add_admin(
             mock_deps.as_mut().storage,
             mock_info,
-            admin_one().to_string(),
+            Addr::unchecked(admin_one().to_string()),
         )
         .unwrap();
 
@@ -190,7 +193,10 @@ fn remove_existing_admin_and_add_admin() {
 
     assert_eq!(response.attributes[0].value, "add_admin");
 
-    assert_eq!(response.attributes[1].value, Addr::unchecked(admin_one().to_string()));
+    assert_eq!(
+        response.attributes[1].value,
+        Addr::unchecked(admin_one().to_string())
+    );
 
     let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
 

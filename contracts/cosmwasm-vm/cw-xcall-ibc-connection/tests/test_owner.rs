@@ -39,7 +39,11 @@ fn update_owner() {
     assert_eq!(result, mock_info.sender.to_string());
 
     contract
-        .update_owner(mock_deps.as_mut().storage, mock_info, Addr::unchecked(bob().to_string()))
+        .update_owner(
+            mock_deps.as_mut().storage,
+            mock_info,
+            Addr::unchecked(bob().to_string()),
+        )
         .unwrap();
 
     let result = contract.query_owner(mock_deps.as_ref().storage).unwrap();
@@ -89,6 +93,10 @@ fn update_owner_unauthorized() {
     let mock_info = create_mock_info(&bob().to_string(), "umlg", 2000);
 
     contract
-        .update_owner(mock_deps.as_mut().storage, mock_info, Addr::unchecked(bob().to_string()))
+        .update_owner(
+            mock_deps.as_mut().storage,
+            mock_info,
+            Addr::unchecked(bob().to_string()),
+        )
         .unwrap();
 }

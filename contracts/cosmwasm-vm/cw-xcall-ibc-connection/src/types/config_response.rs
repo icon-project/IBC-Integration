@@ -1,7 +1,7 @@
 use cw_common::xcall_connection_msg::ConfigResponse;
 
-use crate::types::channel_config::ChannelConfig;
 use crate::state::IbcConfig;
+use crate::types::channel_config::ChannelConfig;
 
 pub fn to_config_response(ibc_config: IbcConfig, channel_config: ChannelConfig) -> ConfigResponse {
     ConfigResponse {
