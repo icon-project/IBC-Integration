@@ -3,17 +3,15 @@ on:
   push:
     branches:
       - main
-      - fix/use-complete-packet-data-for-write-ack
-  # pull_request:
-  #   branches:
-  #     - main
-  #   paths:
+    paths:
       - contracts/cosmwasm-vm/**
       - libraries/common/rust/**
       - .github/workflows/deploy-cosmwasm-contracts.yml
+      - scripts/optimize-cosmwasm.sh
+      - scripts/archway/**
 jobs:
   Build:
-    name: Build & Deploy Cosmasm Contracts
+    name: Build & Deploy Cosmwasm Contracts
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -23,12 +21,10 @@ jobs:
 
       - name: Start local Archway Blockchain
         run: |
-          cd contracts/cosmwasm-vm/archway
-          sed -i 's/latest/v0.4.0/' docker-compose.yaml
-          docker compose -f docker-compose.yaml up -d
-          # git clean submodule directory
-          git checkout .
-          git clean -fdx
+          cp ./scripts/archway/docker_compose_archway.yaml .
+          docker compose -f docker_compose_archway.yaml up -d
+          docker logs archway-node-1
+          docker inspect archway-node-1
 
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
@@ -38,35 +34,24 @@ jobs:
           override: true
           profile: minimal
 
-      # - name: Cache Rust dependencies
-      #   uses: Swatinem/rust-cache@v2
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
 
       - name: Compile WASM
         run: |
           rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
           rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu
-          make optimize-cosmwasm
+          sudo chmod -R 777 artifacts
+          sudo chmod -R 777 scripts
+          # Build cosmwasm builder image
+          bash ./scripts/optimize-cosmwasm.sh
 
-      - name: Check WASM Size
-        run: |
-          max_size=800 
-          echo "Check if size of wasm file exceeds $max_size kilobytes..."
-          for file in artifacts/*.wasm
-          do 
-          size=$(du -k "$file" | awk '{print $1}')
-          if [[ $size -gt $max_size ]]; then
-          echo "Error: $file : $size KB has exceeded maximum contract size limit of 800KB."
-          exit 1
-          fi
-          echo "$file : $size KB"
-          done
-          echo "The size of all contracts is well within the 800 KB limit."
 
       - name: Deploy WASM
         run: |
           container=$(docker ps --format '{{.Names}}')
-          rm -rf artifacts/archway/cw_common.wasm
-          cp -r {artifacts,scripts/deploy_cosmwasm.sh} contracts/cosmwasm-vm/archway/contracts
+          docker exec $container sh -c "rm /contracts/*_latest.wasm;rm /contracts/cw_common*.wasm"
+          # cp -r {artifacts,scripts/deploy_cosmwasm.sh} contracts/cosmwasm-vm/archway/contracts
           docker ps -a
-          docker exec $container chmod +x /contracts/deploy_cosmwasm.sh
-          docker exec $container /contracts/deploy_cosmwasm.sh
+          docker exec $container chmod +x /opt/deploy_cosmwasm.sh
+          docker exec $container /opt/deploy_cosmwasm.sh

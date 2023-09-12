@@ -37,6 +37,21 @@ impl QueryHandler {
         Ok(state)
     }
 
+    pub fn get_latest_consensus_state(
+        storage: &dyn Storage,
+        client_id: &str,
+    ) -> Result<ConsensusState, ContractError> {
+        let state = CLIENT_STATES
+            .load(storage, client_id.to_string())
+            .map_err(ContractError::Std)?;
+        let client_state =
+            ClientState::decode(state.as_slice()).map_err(ContractError::DecodeError)?;
+
+        let consensus_state =
+            QueryHandler::get_consensus_state(storage, client_id, client_state.latest_height)?;
+        Ok(consensus_state)
+    }
+
     pub fn get_timestamp_at_height(
         storage: &dyn Storage,
         client_id: &str,

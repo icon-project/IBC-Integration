@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryMsg",
+  "description": "This is a Rust enum representing different types of queries that can be made to the contract. Each variant of the enum corresponds to a specific query and has a return type specified using the `#[returns]` attribute.",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "get_admin"
+      ],
+      "properties": {
+        "get_admin": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_timeout_height"
+      ],
+      "properties": {
+        "get_timeout_height": {
+          "type": "object",
+          "required": [
+            "channel_id"
+          ],
+          "properties": {
+            "channel_id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_fee"
+      ],
+      "properties": {
+        "get_fee": {
+          "type": "object",
+          "required": [
+            "nid",
+            "response"
+          ],
+          "properties": {
+            "nid": {
+              "$ref": "#/definitions/NetId"
+            },
+            "response": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_unclaimed_fee"
+      ],
+      "properties": {
+        "get_unclaimed_fee": {
+          "type": "object",
+          "required": [
+            "nid",
+            "relayer"
+          ],
+          "properties": {
+            "nid": {
+              "$ref": "#/definitions/NetId"
+            },
+            "relayer": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "get_ibc_config"
+      ],
+      "properties": {
+        "get_ibc_config": {
+          "type": "object",
+          "required": [
+            "nid"
+          ],
+          "properties": {
+            "nid": {
+              "$ref": "#/definitions/NetId"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "NetId": {
+      "type": "string"
+    }
+  }
+}

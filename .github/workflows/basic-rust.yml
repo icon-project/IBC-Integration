@@ -67,7 +67,7 @@ jobs:
 
       - name: Generate schema
         run: |
-          ../../scripts/run_in_subprojects.sh cw-xcall cw-icon-light-client
+          ../../scripts/run_in_subprojects.sh cw-ibc-core cw-icon-light-client cw-xcall-ibc-connection
 
       - name: Verify schema
         uses: tj-actions/verify-changed-files@v14

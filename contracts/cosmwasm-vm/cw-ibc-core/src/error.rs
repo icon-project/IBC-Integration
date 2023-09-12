@@ -78,6 +78,8 @@ pub enum ContractError {
     #[error("InvalidHeight")]
     InvalidHeight,
 
+    #[error("PacketNotExpired")]
+    PacketNotExpired,
     #[error("CallAlreadyInProgress")]
     CallAlreadyInProgress,
 }

@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use common::{
     ibc::Height,
     rlp::{self},
@@ -107,7 +105,7 @@ impl<'a> CwIbcConnection<'a> {
                 self.send_message(deps, info, env, to, sn, msg)
             }
             ExecuteMsg::SetXCallHost { address } => {
-                self.ensure_owner(deps.as_ref().storage, &info)?;
+                self.ensure_admin(deps.as_ref().storage, info.sender)?;
                 let validated_address =
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
                 self.set_xcall_host(deps.storage, validated_address)?;
@@ -120,7 +118,7 @@ impl<'a> CwIbcConnection<'a> {
                 client_id,
                 timeout_height,
             } => {
-                self.ensure_owner(deps.as_ref().storage, &info)?;
+                self.ensure_admin(deps.as_ref().storage, info.sender)?;
                 self.configure_connection(
                     deps.storage,
                     connection_id,
@@ -139,7 +137,10 @@ impl<'a> CwIbcConnection<'a> {
                 nid,
                 packet_fee,
                 ack_fee,
-            } => self.set_fee(deps.storage, nid, packet_fee, ack_fee),
+            } => {
+                self.ensure_admin(deps.as_ref().storage, info.sender)?;
+                self.set_fee(deps.storage, nid, packet_fee, ack_fee)
+            }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelOpen { msg } => {
                 self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
@@ -152,7 +153,7 @@ impl<'a> CwIbcConnection<'a> {
             }
             #[cfg(not(feature = "native_ibc"))]
             ExecuteMsg::IbcChannelClose { msg } => {
-                self.ensure_ibc_handler(deps.as_ref().storage, info.sender)?;
+                self.ensure_admin(deps.as_ref().storage, info.sender)?;
                 Ok(self.on_channel_close(msg)?)
             }
             #[cfg(not(feature = "native_ibc"))]
@@ -435,10 +436,6 @@ impl<'a> CwIbcConnection<'a> {
         check_order(&channel.order)?;
         cw_println!(deps, "[IbcConnection]: check order pass");
 
-        if let Some(counter_version) = msg.counterparty_version() {
-            check_version(counter_version)?;
-        }
-        cw_println!(deps, "[IbcConnection]: check version pass");
         self.setup_channel(deps, channel.clone())?;
 
         Ok(Response::new()
@@ -694,9 +691,10 @@ impl<'a> CwIbcConnection<'a> {
         client_id: String,
         timeout_height: u64,
     ) -> Result<(), ContractError> {
-        if self
-            .get_counterparty_nid(store, &connection_id, &counterparty_port_id)
-            .is_ok()
+        if self.get_connection_config(store, &connection_id).is_ok()
+            && self
+                .get_counterparty_nid(store, &connection_id, &counterparty_port_id)
+                .is_ok()
         {
             return Err(ContractError::ConnectionAlreadyConfigured {
                 connection_id,
