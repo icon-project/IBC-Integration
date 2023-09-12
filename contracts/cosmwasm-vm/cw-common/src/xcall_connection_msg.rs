@@ -64,6 +64,7 @@ pub enum ExecuteMsg {
     },
 }
 
+
 #[cw_serde]
 pub struct ConfigResponse {
     pub channel_id: String,
