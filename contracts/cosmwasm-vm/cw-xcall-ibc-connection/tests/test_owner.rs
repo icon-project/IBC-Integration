@@ -2,6 +2,7 @@ mod account;
 mod setup;
 use account::*;
 
+use cosmwasm_std::Addr;
 use cw_xcall_ibc_connection::state::CwIbcConnection;
 use setup::*;
 #[test]
@@ -13,7 +14,7 @@ fn add_owner() {
     let contract = CwIbcConnection::default();
 
     contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
+        .add_owner(mock_deps.as_mut().storage, mock_info.clone().sender)
         .unwrap();
 
     let result = contract.query_owner(mock_deps.as_ref().storage).unwrap();
@@ -31,7 +32,7 @@ fn add_existing_owner() {
     let contract = CwIbcConnection::default();
 
     contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
+        .add_owner(mock_deps.as_mut().storage, mock_info.clone().sender)
         .unwrap();
 
     let result = contract.query_owner(mock_deps.as_ref().storage).unwrap();
@@ -39,6 +40,6 @@ fn add_existing_owner() {
     assert_eq!(result, mock_info.sender.to_string());
 
     contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
+        .add_owner(mock_deps.as_mut().storage, mock_info.clone().sender)
         .unwrap();
 }

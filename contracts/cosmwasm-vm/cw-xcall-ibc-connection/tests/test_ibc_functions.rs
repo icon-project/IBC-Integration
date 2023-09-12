@@ -445,7 +445,7 @@ fn sucess_receive_packet_for_call_message_request() {
     let mut contract = CwIbcConnection::default();
 
     contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
+        .add_owner(mock_deps.as_mut().storage, mock_info.clone().sender)
         .unwrap();
 
     let data = CallServiceMessageRequest::new(
@@ -648,7 +648,7 @@ fn fails_receive_packet_for_call_message_request() {
     let mut contract = CwIbcConnection::default();
 
     contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
+        .add_owner(mock_deps.as_mut().storage, mock_info.clone().sender)
         .unwrap();
 
     let data = CallServiceMessageRequest::new(
@@ -971,7 +971,7 @@ fn test_handle_response() {
         .unwrap();
 
     contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
+        .add_owner(mock_deps.as_mut().storage, mock_info.clone().sender)
         .unwrap();
 
     let data = CallServiceMessageResponse::new(

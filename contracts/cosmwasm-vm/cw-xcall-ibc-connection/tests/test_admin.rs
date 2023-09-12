@@ -1,10 +1,28 @@
 mod account;
 mod setup;
 use account::*;
-use cosmwasm_std::testing::mock_env;
+use cosmwasm_std::{testing::mock_env, Addr};
 use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
 use cw_xcall_ibc_connection::{execute, state::CwIbcConnection};
 use setup::*;
+
+#[test]
+#[should_panic(expected = "Unauthorized")]
+fn add_admin_unauthorized() {
+    let mut mock_deps = deps();
+
+    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+
+    let contract = CwIbcConnection::default();
+
+    contract
+        .add_admin(
+            mock_deps.as_mut().storage,
+            mock_info,
+            Addr::unchecked(Addr::unchecked(admin_one().to_string())),
+        )
+        .unwrap();
+}
 
 #[test]
 fn add_admin() {
@@ -15,24 +33,27 @@ fn add_admin() {
     let contract = CwIbcConnection::default();
 
     contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
+        .add_owner(mock_deps.as_mut().storage, mock_info.clone().sender)
         .unwrap();
 
     let response = contract
         .add_admin(
             mock_deps.as_mut().storage,
             mock_info,
-            admin_one().to_string(),
+            Addr::unchecked(Addr::unchecked(admin_one().to_string())),
         )
         .unwrap();
 
     assert_eq!(response.attributes[0].value, "add_admin");
 
-    assert_eq!(response.attributes[1].value, admin_one().to_string());
+    assert_eq!(
+        response.attributes[1].value,
+        Addr::unchecked(admin_one().to_string())
+    );
 
     let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
 
-    assert_eq!(result, admin_one().to_string())
+    assert_eq!(result, Addr::unchecked(admin_one().to_string()))
 }
 
 #[test]
@@ -45,20 +66,20 @@ fn update_admin_unauthorzied() {
     let contract = CwIbcConnection::default();
 
     contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
+        .add_owner(mock_deps.as_mut().storage, mock_info.clone().sender)
         .unwrap();
 
     contract
         .add_admin(
             mock_deps.as_mut().storage,
             mock_info,
-            admin_one().to_string(),
+            Addr::unchecked(Addr::unchecked(admin_one().to_string())),
         )
         .unwrap();
 
     let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
 
-    assert_eq!(result, admin_one().to_string());
+    assert_eq!(result, Addr::unchecked(admin_one().to_string()));
 
     let mock_info = create_mock_info(&bob().to_string(), "umlg", 2000);
 
@@ -78,20 +99,20 @@ fn update_admin() {
     let contract = CwIbcConnection::default();
 
     contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
+        .add_owner(mock_deps.as_mut().storage, mock_info.clone().sender)
         .unwrap();
 
     contract
         .add_admin(
             mock_deps.as_mut().storage,
             mock_info,
-            admin_one().to_string(),
+            Addr::unchecked(admin_one().to_string()),
         )
         .unwrap();
 
     let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
 
-    assert_eq!(result, admin_one().to_string());
+    assert_eq!(result, Addr::unchecked(admin_one().to_string()));
 
     let mock_info = create_mock_info(&admin_one().to_string(), "umlg", 2000);
 
@@ -130,7 +151,7 @@ fn add_invalid_char_as_admin() {
     let mut contract = CwIbcConnection::default();
 
     contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
+        .add_owner(mock_deps.as_mut().storage, mock_info.clone().sender)
         .unwrap();
 
     contract
@@ -158,7 +179,7 @@ fn validate_address_add_admin_size_lessthan_3() {
     let mut contract = CwIbcConnection::default();
 
     contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
+        .add_owner(mock_deps.as_mut().storage, mock_info.clone().sender)
         .unwrap();
 
     contract
@@ -186,7 +207,7 @@ fn validate_address_add_admin_size_more_than_45() {
     let mut contract = CwIbcConnection::default();
 
     contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
+        .add_owner(mock_deps.as_mut().storage, mock_info.clone().sender)
         .unwrap();
 
     contract
@@ -211,20 +232,20 @@ fn update_admin_fails() {
     let contract = CwIbcConnection::default();
 
     contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
+        .add_owner(mock_deps.as_mut().storage, mock_info.clone().sender)
         .unwrap();
 
     contract
         .add_admin(
             mock_deps.as_mut().storage,
             mock_info.clone(),
-            admin_one().to_string(),
+            Addr::unchecked(admin_one().to_string()),
         )
         .unwrap();
 
     let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
 
-    assert_eq!(result, admin_one().to_string());
+    assert_eq!(result, Addr::unchecked(admin_one().to_string()));
 
     let execute_msg = ExecuteMsg::SetAdmin {
         address: "new_addmin!@234".into(),

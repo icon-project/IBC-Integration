@@ -13,7 +13,7 @@ impl<'a> CwIbcConnection<'a> {
     ///
     /// A `Result` containing either a `String` representing the owner of the contract or a `StdError`
     /// if an error occurred while loading the owner from the storage.
-    pub fn query_owner(&self, store: &dyn Storage) -> Result<String, StdError> {
+    pub fn query_owner(&self, store: &dyn Storage) -> Result<Addr, StdError> {
         let owner = self.owner().load(store)?;
 
         Ok(owner)
@@ -37,7 +37,7 @@ impl<'a> CwIbcConnection<'a> {
     pub fn add_owner(
         &self,
         store: &mut dyn Storage,
-        owner: String,
+        owner: Addr,
     ) -> Result<Response, ContractError> {
         match self.owner().may_load(store)? {
             Some(address) => {
