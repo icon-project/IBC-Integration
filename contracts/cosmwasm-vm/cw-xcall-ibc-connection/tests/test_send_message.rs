@@ -69,8 +69,8 @@ fn send_message_setup() -> (
     let xcall_address = Addr::unchecked("xcalladdress");
 
     contract
-    .set_xcall_host(deps.as_mut().storage, xcall_address.clone())
-    .unwrap();
+        .set_xcall_host(deps.as_mut().storage, xcall_address.clone())
+        .unwrap();
 
     contract
         .store_channel_config(deps.as_mut().storage, &src.channel_id, &channel_config)
