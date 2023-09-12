@@ -14,20 +14,11 @@ impl<'a> CwIbcConnection<'a> {
     pub fn add_admin(
         &self,
         store: &mut dyn Storage,
-        info: MessageInfo,
+        _info: MessageInfo,
         admin: String,
     ) -> Result<Response, ContractError> {
         if admin.is_empty() {
             return Err(ContractError::AdminAddressCannotBeNull {});
-        }
-
-        let owner = self
-            .owner()
-            .load(store)
-            .map_err(|_| ContractError::Unauthorized {})?;
-
-        if info.sender != owner {
-            return Err(ContractError::Unauthorized {});
         }
         self.admin().save(store, &admin)?;
         Ok(Response::new()
