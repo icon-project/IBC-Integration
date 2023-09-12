@@ -376,7 +376,18 @@ func (c *CosmosLocalnet) findSn(tx *TxResul, eType string) string {
 }
 
 // IsPacketReceived returns the receipt of the packet sent to the target chain
-func (c *CosmosLocalnet) IsPacketReceived(ctx context.Context, params map[string]interface{}) bool {
+func (c *CosmosLocalnet) IsPacketReceived(ctx context.Context, params map[string]interface{}, order ibc.Order) bool {
+	if order == ibc.Ordered {
+		sequence := params["sequence"].(uint64)
+		ctx, err := c.QueryContract(ctx, c.IBCAddresses["ibc"], chains.GetNextSequenceReceive, params)
+		if err != nil {
+			fmt.Printf("Error--%v\n", err)
+			return false
+		}
+		response := ctx.Value("query-result").(map[string]interface{})
+		fmt.Printf("response[\"data\"]----%v", response["data"])
+		return sequence < uint64(response["data"].(float64))
+	}
 	ctx, err := c.QueryContract(ctx, c.IBCAddresses["ibc"], chains.HasPacketReceipt, params)
 	if err != nil {
 		fmt.Printf("Error--%v\n", err)
@@ -512,11 +523,11 @@ func (c *CosmosLocalnet) executeContract(ctx context.Context, contractAddress, k
 	txHash, err := c.getFullNode().ExecTx(ctx, keyName,
 		"wasm", "execute", contractAddress, `{"`+methodName+`":`+param+`}`, "--gas", "auto")
 	if err != nil || txHash == "" {
-		return nil, err
+		return ctx, err
 	}
 	tx, err := c.getTransaction(txHash)
 	if err != nil {
-		return nil, err
+		return ctx, err
 	}
 	return context.WithValue(ctx, "txResult", tx), nil
 }

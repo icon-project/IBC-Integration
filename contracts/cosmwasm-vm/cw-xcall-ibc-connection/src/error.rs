@@ -51,4 +51,6 @@ pub enum ContractError {
     NoFeesAccrued,
     #[error("InvalidPortId")]
     InvalidPortId,
+    #[error("InsufficientFunds")]
+    InsufficientFunds,
 }

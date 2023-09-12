@@ -121,7 +121,7 @@ func (x *XCallTestSuite) testRollback(ctx context.Context, t *testing.T, chainA,
 	res, err := chainA.XCall(ctx, chainB, interchaintest.UserAccount, dst, []byte(msg), []byte(rollback))
 	assert.NoErrorf(t, err, "error on sending packet- %w", err)
 	height, err := chainA.(ibc.Chain).Height(ctx)
-	ctx, err = chainB.ExecuteCall(ctx, res.RequestID, res.Data)
+	_, err = chainB.ExecuteCall(ctx, res.RequestID, res.Data)
 	code, err := chainA.FindCallResponse(ctx, height, res.SerialNo)
 	assert.NoErrorf(t, err, "no call response found %w", err)
 	assert.Equal(t, "0", code)
