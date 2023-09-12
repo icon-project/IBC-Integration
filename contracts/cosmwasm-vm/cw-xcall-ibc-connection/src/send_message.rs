@@ -18,7 +18,7 @@ impl<'a> CwIbcConnection<'a> {
         sn: i64,
         message: Vec<u8>,
     ) -> Result<Response, ContractError> {
-        // self.ensure_xcall_handler(deps.as_ref().storage, info.sender.clone())?;
+        self.ensure_xcall_handler(deps.as_ref().storage, info.sender.clone())?;
 
         println!("{LOG_PREFIX} Packet Validated");
         let ibc_config = self.get_ibc_config(deps.as_ref().storage, &nid)?;

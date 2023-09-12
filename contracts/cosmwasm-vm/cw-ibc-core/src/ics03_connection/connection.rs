@@ -305,14 +305,11 @@ impl<'a> CwIbcCoreContext<'a> {
     }
 }
 
-//TODO : Implement Methods
-#[allow(dead_code)]
-#[allow(unused_variables)]
 impl<'a> CwIbcCoreContext<'a> {
     pub fn commitment_prefix(&self, deps: Deps, env: &Env) -> CommitmentPrefix {
         let address = self.get_self_address(deps, env);
         let prefix = get_address_storage_prefix(&address, StorageKey::Commitments.as_str());
-        CommitmentPrefix::try_from(prefix).unwrap_or_default() //TODO
+        CommitmentPrefix::try_from(prefix).unwrap_or_default()
     }
 
     fn get_self_address(&self, deps: Deps, env: &Env) -> String {
