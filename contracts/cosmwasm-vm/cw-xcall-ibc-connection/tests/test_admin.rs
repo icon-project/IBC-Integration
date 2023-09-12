@@ -1,9 +1,9 @@
 mod account;
 mod setup;
 use account::*;
-use cosmwasm_std::{testing::mock_env, Addr};
+use cosmwasm_std::testing::mock_env;
 use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
-use cw_xcall_ibc_connection::{execute, msg::InstantiateMsg, state::CwIbcConnection};
+use cw_xcall_ibc_connection::{execute, state::CwIbcConnection};
 use setup::*;
 
 #[test]
@@ -95,53 +95,11 @@ fn update_admin() {
 
     let mock_info = create_mock_info(&admin_one().to_string(), "umlg", 2000);
 
-    contract
-        .update_admin(
-            mock_deps.as_mut().storage,
-            mock_info,
-            admin_two().to_string(),
-        )
-        .unwrap();
+    let execute_msg = ExecuteMsg::SetAdmin {
+        address: admin_two().to_string(),
+    };
 
-    let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
-
-    assert_eq!(result, admin_two().to_string());
-}
-
-#[test]
-#[should_panic(expected = "AdminAlreadyExist")]
-fn update_existing_admin() {
-    let mut mock_deps = deps();
-
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
-
-    let contract = CwIbcConnection::default();
-
-    contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
-        .unwrap();
-
-    contract
-        .add_admin(
-            mock_deps.as_mut().storage,
-            mock_info,
-            admin_one().to_string(),
-        )
-        .unwrap();
-
-    let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
-
-    assert_eq!(result, admin_one().to_string());
-
-    let mock_info = create_mock_info(&admin_one().to_string(), "umlg", 2000);
-
-    contract
-        .update_admin(
-            mock_deps.as_mut().storage,
-            mock_info,
-            admin_one().to_string(),
-        )
-        .unwrap();
+    execute(mock_deps.as_mut(), mock_env(), mock_info, execute_msg).unwrap();
 
     let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
 
