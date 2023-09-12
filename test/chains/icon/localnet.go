@@ -11,6 +11,7 @@ import (
 	"io"
 	"log"
 	"math/big"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -511,7 +512,7 @@ func (c *IconLocalnet) ConfigureBaseConnection(ctx context.Context, connection c
 	if err != nil {
 		return nil, err
 	}
-	params = []byte(`{"nid":"` + connection.CounterpartyNid + `","connection":"` + connectionAddress + `"}`)
+	params = []byte(`{"_nid":"` + connection.CounterpartyNid + `","_connection":"` + connectionAddress + `"}`)
 	ctx, err = c.executeContract(context.Background(), c.IBCAddresses[fmt.Sprintf("xcall-%s", testcase)], connection.KeyName, "setDefaultConnection", string(params))
 	if err != nil {
 		return nil, err
@@ -537,9 +538,47 @@ func (c *IconLocalnet) SendPacketXCall(ctx context.Context, keyName, _to string,
 }
 
 // HasPacketReceipt returns the receipt of the packet sent to the target chain
-func (c *IconLocalnet) IsPacketReceived(ctx context.Context, params map[string]interface{}) bool {
+func (c *IconLocalnet) IsPacketReceived(ctx context.Context, params map[string]interface{}, order ibc.Order) bool {
+	if order == ibc.Ordered {
+		sequence := params["sequence"].(uint64) //2
+		ctx, err := c.QueryContract(ctx, c.IBCAddresses["ibc"], chains.GetNextSequenceReceive, params)
+		if err != nil {
+			fmt.Printf("Error--%v\n", err)
+			return false
+		}
+		response, err := formatHexNumberFromResponse(ctx.Value("query-result").([]byte))
+
+		if err != nil {
+			fmt.Printf("Error--%v\n", err)
+			return false
+		}
+		fmt.Printf("response[\"data\"]----%v", response)
+		return sequence < response
+	}
 	ctx, _ = c.QueryContract(ctx, c.IBCAddresses["ibc"], chains.HasPacketReceipt, params)
-	return string(ctx.Value("query-result").([]byte)) == "0x1"
+
+	response, err := formatHexNumberFromResponse(ctx.Value("query-result").([]byte))
+	if err != nil {
+		fmt.Printf("Error--%v\n", err)
+		return false
+	}
+	return response == 1
+}
+
+func formatHexNumberFromResponse(value []byte) (uint64, error) {
+	pattern := `0x[0-9a-fA-F]+`
+	regex := regexp.MustCompile(pattern)
+	result := regex.FindString(string(value))
+	if result == "" {
+		return 0, fmt.Errorf("number not found")
+
+	}
+
+	response, err := strconv.ParseInt(result, 0, 64)
+	if err != nil {
+		return 0, err
+	}
+	return uint64(response), nil
 }
 
 // FindTargetXCallMessage returns the request id and the data of the message sent to the target chain
