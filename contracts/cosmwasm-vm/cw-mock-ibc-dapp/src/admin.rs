@@ -118,31 +118,6 @@ impl<'a> CwIbcConnection<'a> {
             .add_attribute("admin", new_admin.to_string()))
     }
 
-    /// The code defines a function to remove an admin and another function to validate an address.
-    ///
-    /// Arguments:
-    ///
-    /// * `store`: `store` is a mutable reference to a trait object of type `Storage`. It is used to
-    /// interact with the contract's storage and modify its state.
-    /// * `info`: `info` is a parameter of type `MessageInfo` which contains information about the message
-    /// being executed, such as the sender's address, the amount of coins being sent, and the gas limit. It
-    /// is used in the `remove_admin` function to ensure that the sender is the owner of the
-    ///
-    /// Returns:
-    ///
-    /// The `remove_admin` function returns a `Result<Response, ContractError>` and the `validate_address`
-    /// function returns a `Result<String, ContractError>`.
-    pub fn remove_admin(
-        &self,
-        store: &mut dyn Storage,
-        info: MessageInfo,
-    ) -> Result<Response, ContractError> {
-        self.ensure_owner(store, &info)?;
-
-        self.admin().remove(store);
-        Ok(Response::new().add_attribute("method", "remove_admin"))
-    }
-
     pub fn validate_address(api: &dyn Api, address: &str) -> Result<Addr, ContractError> {
         if !address.chars().all(|x| x.is_alphanumeric()) {
             return Err(ContractError::InvalidAddress {
