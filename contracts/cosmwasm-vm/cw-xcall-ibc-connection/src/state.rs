@@ -113,9 +113,9 @@ impl IbcConfig {
 ///
 
 pub struct CwIbcConnection<'a> {
-    owner: Item<'a, String>,
+    owner: Item<'a, Addr>,
     config: Item<'a, Config>,
-    admin: Item<'a, String>,
+    admin: Item<'a, Addr>,
     ibc_config: Map<'a, NetId, IbcConfig>,
     ibc_host: Item<'a, Addr>,
     xcall_host: Item<'a, Addr>,
@@ -155,11 +155,11 @@ impl<'a> CwIbcConnection<'a> {
         }
     }
 
-    pub fn owner(&self) -> &Item<'a, String> {
+    pub fn owner(&self) -> &Item<'a, Addr> {
         &self.owner
     }
 
-    pub fn admin(&self) -> &Item<'a, String> {
+    pub fn admin(&self) -> &Item<'a, Addr> {
         &self.admin
     }
 

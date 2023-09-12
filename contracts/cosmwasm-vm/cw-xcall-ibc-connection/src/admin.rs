@@ -16,7 +16,7 @@ impl<'a> CwIbcConnection<'a> {
     ///
     /// The function `query_admin` returns a `Result` containing either a `String` representing the admin
     /// address if it exists in the storage or a `ContractError` if it does not exist.
-    pub fn query_admin(&self, store: &dyn Storage) -> Result<String, ContractError> {
+    pub fn query_admin(&self, store: &dyn Storage) -> Result<Addr, ContractError> {
         let admin = self
             .admin()
             .load(store)
@@ -47,9 +47,9 @@ impl<'a> CwIbcConnection<'a> {
         &self,
         store: &mut dyn Storage,
         info: MessageInfo,
-        admin: String,
+        admin: Addr,
     ) -> Result<Response, ContractError> {
-        if admin.is_empty() {
+        if admin.to_string().is_empty() {
             return Err(ContractError::AdminAddressCannotBeNull {});
         }
 
@@ -89,9 +89,9 @@ impl<'a> CwIbcConnection<'a> {
         &self,
         store: &mut dyn Storage,
         info: MessageInfo,
-        new_admin: String,
+        new_admin: Addr,
     ) -> Result<Response, ContractError> {
-        if new_admin.is_empty() {
+        if new_admin.to_string().is_empty() {
             return Err(ContractError::AdminAddressCannotBeNull {});
         }
 
