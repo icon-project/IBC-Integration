@@ -89,11 +89,14 @@ impl<'a> IContext for CwContext<'a> {
         let mut rs = [0u8; 64];
         rs[..].copy_from_slice(&signature[..64]);
         let v = signature[64];
-        let address = self.api.secp256k1_recover_pubkey(msg, &rs, v).ok().map(|v|{
-            let pubkey_hash = keccak256(&v[1..]);
-            return pubkey_hash.as_slice()[12..].try_into().ok();
-        }).flatten();
-        address
+
+        self.api
+            .secp256k1_recover_pubkey(msg, &rs, v)
+            .ok()
+            .and_then(|v| {
+                let pubkey_hash = keccak256(&v[1..]);
+                return pubkey_hash.as_slice()[12..].try_into().ok();
+            })
     }
 
     fn recover_icon_signer(&self, msg: &[u8], signature: &[u8]) -> Option<Vec<u8>> {
