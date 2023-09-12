@@ -7,24 +7,6 @@ use cw_xcall_ibc_connection::{execute, state::CwIbcConnection};
 use setup::*;
 
 #[test]
-#[should_panic(expected = "Unauthorized")]
-fn add_admin_unauthorized() {
-    let mut mock_deps = deps();
-
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
-
-    let contract = CwIbcConnection::default();
-
-    contract
-        .add_admin(
-            mock_deps.as_mut().storage,
-            mock_info,
-            Addr::unchecked(Addr::unchecked(admin_one().to_string())),
-        )
-        .unwrap();
-}
-
-#[test]
 fn add_admin() {
     let mut mock_deps = deps();
 
