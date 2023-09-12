@@ -66,6 +66,12 @@ fn send_message_setup() -> (
         .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
         .unwrap();
 
+    let xcall_address = Addr::unchecked("xcalladdress");
+
+    contract
+    .set_xcall_host(deps.as_mut().storage, xcall_address.clone())
+    .unwrap();
+
     contract
         .store_channel_config(deps.as_mut().storage, &src.channel_id, &channel_config)
         .unwrap();
@@ -110,7 +116,7 @@ fn send_message_success_case() {
         msg: vec![],
     };
 
-    let mock_info = create_mock_info("alice", "abcd", 20);
+    let mock_info = create_mock_info("xcalladdress", "abcd", 20);
 
     contract
         .execute(deps.as_mut(), mock_env, mock_info, execute_msg)
@@ -127,7 +133,7 @@ fn send_message_with_less_fund() {
         msg: vec![],
     };
 
-    let mock_info = create_mock_info("alice", "abcd", 10);
+    let mock_info = create_mock_info("xcalladdress", "abcd", 10);
 
     contract
         .execute(deps.as_mut(), mock_env, mock_info, execute_msg)
@@ -163,7 +169,7 @@ fn send_message_with_negative_sn() {
         .store_incoming_packet(deps.as_mut().storage, &src.channel_id, 1, packet)
         .unwrap();
 
-    let mock_info = create_mock_info("alice", "abcd", 20);
+    let mock_info = create_mock_info("xcalladdress", "abcd", 0);
 
     contract
         .execute(deps.as_mut(), mock_env, mock_info, execute_msg)
