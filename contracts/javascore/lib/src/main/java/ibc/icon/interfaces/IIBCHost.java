@@ -74,9 +74,6 @@ public interface IIBCHost {
     byte[] getPacketAcknowledgementCommitment(String portId, String channelId, BigInteger sequence);
 
     @External(readonly = true)
-    boolean hasPacketReceipt(String portId, String channelId, BigInteger sequence);
-
-    @External(readonly = true)
     List<Integer> getMissingPacketReceipts(String portId, String channelId, int startSequence, int endSequence);
 
     @External(readonly = true)

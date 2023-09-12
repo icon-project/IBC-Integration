@@ -24,7 +24,11 @@ deploy_wasm() {
 }
 
 # This wasm directory is inside the docker container
-for CONTRACT_WASM in /contracts/artifacts/archway/*.wasm; do
+for CONTRACT_WASM in /contracts/*.wasm; do
+  if [[ $CONTRACT_WASM == *"_lib"* || $CONTRACT_WASM == *"cw_common"* ]]; then
+    echo "Skipping library: $CONTRACT_WASM"
+    continue
+  fi
   echo "=> Deploying $CONTRACT_WASM"
   deploy_wasm "$CONTRACT_WASM"
 done

@@ -10,6 +10,6 @@ pub fn to_config_response(ibc_config: IbcConfig, channel_config: ChannelConfig) 
         destination_channel_id: ibc_config.dst_endpoint().channel_id.clone(),
         destination_port_id: ibc_config.dst_endpoint().port_id.clone(),
         light_client_id: channel_config.client_id,
-        timeout_height: channel_config.timeout_height.clone(),
+        timeout_height: channel_config.timeout_height,
     }
 }

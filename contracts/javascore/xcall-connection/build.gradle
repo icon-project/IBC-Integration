@@ -1,9 +1,9 @@
 version = '0.1.0'
 
 dependencies {
+    implementation group: 'xyz.venture23', name: 'xcall-lib', version: '0.1.1'
     implementation project(':lib')
     implementation project(':score-util')
-    implementation 'xcall:xcall'
     testImplementation project(':test-lib')
 }
 
@@ -30,6 +30,7 @@ optimizedJar {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
+
 deployJar {
     endpoints {
         berlin {
