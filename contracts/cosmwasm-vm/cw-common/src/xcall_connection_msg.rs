@@ -11,9 +11,6 @@ pub enum ExecuteMsg {
     SetAdmin {
         address: String,
     },
-    TransferAdmin {
-        address: String,
-    },
     SetXCallHost {
         address: String,
     },

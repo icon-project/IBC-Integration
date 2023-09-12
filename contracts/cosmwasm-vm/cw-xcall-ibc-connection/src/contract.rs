@@ -62,7 +62,7 @@ impl<'a> CwIbcConnection<'a> {
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
         set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
+        CwIbcConnection::validate_address(deps.api, info.sender.as_str())?;
         self.init(deps.storage, info, msg)
     }
 
@@ -98,12 +98,8 @@ impl<'a> CwIbcConnection<'a> {
             ExecuteMsg::SetAdmin { address } => {
                 let validated_address =
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
+                self.ensure_admin(deps.storage, info.clone().sender)?;
                 self.add_admin(deps.storage, info, validated_address.to_string())
-            }
-            ExecuteMsg::TransferAdmin { address } => {
-                let validated_address =
-                    CwIbcConnection::validate_address(deps.api, address.as_str())?;
-                self.update_admin(deps.storage, info, validated_address.to_string())
             }
             ExecuteMsg::SendMessage { to, sn, msg } => {
                 println!("{LOG_PREFIX} Received Payload From XCall App");
