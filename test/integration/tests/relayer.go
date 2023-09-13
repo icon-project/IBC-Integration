@@ -385,9 +385,8 @@ func (r *RelayerTestSuite) multiplePacketsOnSameHeight(src, dst chains.Chain, he
 	if !res.IsPacketSent {
 		return fmt.Errorf("packet not sent")
 	}
-	numPackets -= 1
 	if numPackets == 0 {
 		return nil
 	}
-	return r.multiplePacketsOnSameHeight(src, dst, height, numPackets)
+	return r.multiplePacketsOnSameHeight(src, dst, height, numPackets-1)
 }
