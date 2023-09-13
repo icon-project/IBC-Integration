@@ -33,6 +33,12 @@ func (c *CosmosLocalnet) GetQueryParam(method string, params map[string]interfac
 	case chains.HasPacketReceipt:
 		query = Query{HasPacketReceipt: &params}
 		break
+	case chains.GetNextSequenceReceive:
+		query = Query{GetNextSequenceReceive: &map[string]interface{}{
+			"channel_id": params["channel_id"],
+			"port_id":    params["port_id"],
+		}}
+		break
 	case chains.GetClientState:
 		query = Query{GetClientState: &params}
 		break

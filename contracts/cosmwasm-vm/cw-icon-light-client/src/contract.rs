@@ -836,4 +836,46 @@ mod tests {
             ))
         );
     }
+
+    #[test]
+    fn test_execute_same_update_client() {
+        let start_header = &get_test_headers()[0];
+        let client_id = "test_client".to_string();
+        let mut deps = init_client(&client_id, start_header, None);
+
+        let signed_header: &SignedHeader = &get_test_signed_headers()[1].clone();
+        let header_any: Any = signed_header.to_any();
+        let block_height = signed_header.header.clone().unwrap().main_height;
+        let info = mock_info(SENDER, &[]);
+        let msg = InstantiateMsg {
+            ibc_host: Addr::unchecked(SENDER),
+        };
+        let _result: Response = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
+        let msg = ExecuteMsg::UpdateClient {
+            client_id: client_id.clone(),
+            signed_header: header_any.encode_to_vec(),
+        };
+        let _result = execute(deps.as_mut(), mock_env(), info.clone(), msg.clone()).unwrap();
+
+        let updated_client_state =
+            QueryHandler::get_client_state(deps.as_ref().storage, &client_id).unwrap();
+
+        let consensus_state =
+            QueryHandler::get_consensus_state(deps.as_ref().storage, &client_id, block_height)
+                .unwrap();
+
+        assert_eq!(updated_client_state.latest_height, block_height);
+
+        assert_eq!(
+            consensus_state.message_root,
+            signed_header.header.clone().unwrap().message_root
+        );
+
+        let second = execute(deps.as_mut(), mock_env(), info, msg);
+        assert_eq!(
+            second,
+            Err(ContractError::HeightAlreadyUpdated { height: 82873 })
+        );
+    }
 }

@@ -45,6 +45,15 @@ func (c *IconLocalnet) GetQueryParam(method string, params map[string]interface{
 			}},
 		}
 		break
+	case chains.GetNextSequenceReceive:
+		query = Query{
+			"getNextSequenceReceive",
+			Value{map[string]interface{}{
+				"portId":    params["port_id"],
+				"channelId": params["channel_id"],
+			}},
+		}
+		break
 	case chains.GetClientState:
 		query = Query{
 			"getClientState",

@@ -5,3 +5,5 @@
 [submodule "xcall-multi"]
 	path = xcall-multi
 	url = https://github.com/icon-project/xcall-multi.git
+	branch = main
+
