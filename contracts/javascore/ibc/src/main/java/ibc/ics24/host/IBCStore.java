@@ -1,7 +1,7 @@
 package ibc.ics24.host;
 
-import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.IIBCHost;
+import ibc.icon.interfaces.ILightClient;
 import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.score.util.NullChecker;
 import ibc.ics05.port.ModuleManager;
