@@ -1,0 +1,40 @@
+name: Changed-files
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  changed_files:
+    runs-on: ubuntu-latest
+    name: Test changed-files
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get javascore files that have changed
+        id: changed-files-javascore
+        uses: tj-actions/changed-files@v39
+        working-directory: contracts/javascore
+        with:
+          files_yaml: |
+            ibc:
+              - 'ibc/**'
+            lightclients:
+              - lightclients/**
+            xcall-connection:
+              - xcall-connection/**
+
+      - name: Run step if test file(s) change
+        if: steps.changed-files-javascore.outputs.ibc_any_changed == 'true'  
+        run: |
+          echo "One or more test file(s) has changed."
+          echo "List all the files that have changed: ${{ steps.changed-files-javascore.outputs.ibc_all_changed_files }}"
+      
+      - name: Run step if doc file(s) change
+        if: steps.changed-files-javascore.outputs.lightclients_any_changed == 'true'
+        run: |
+          echo "One or more doc file(s) has changed."
+          echo "List all the files that have changed: ${{ steps.changed-files-javascore.outputs.lightclients_all_changed_files }}"
