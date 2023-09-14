@@ -46,7 +46,7 @@ impl<'a> CwIbcConnection<'a> {
     pub fn add_admin(
         &self,
         store: &mut dyn Storage,
-        info: MessageInfo,
+        _info: MessageInfo,
         admin: Addr,
     ) -> Result<Response, ContractError> {
         self.admin().save(store, &admin)?;

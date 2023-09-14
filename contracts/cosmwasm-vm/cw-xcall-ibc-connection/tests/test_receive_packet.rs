@@ -84,7 +84,7 @@ fn test_receive_packet_for_call_message_response() {
     let contract = CwIbcConnection::default();
 
     contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.clone().sender)
+        .add_owner(mock_deps.as_mut().storage, mock_info.sender)
         .unwrap();
 
     contract

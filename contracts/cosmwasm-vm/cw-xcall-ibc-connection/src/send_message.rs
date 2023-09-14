@@ -32,7 +32,7 @@ impl<'a> CwIbcConnection<'a> {
         let mut total_fee = network_fee.send_packet_fee;
 
         if sn > 0 {
-            total_fee = total_fee + network_fee.ack_fee;
+            total_fee += network_fee.ack_fee;
             self.add_unclaimed_ack_fees(
                 deps.storage,
                 &nid,
