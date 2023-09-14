@@ -54,5 +54,5 @@ jobs:
           labels: "semver:patch, semver:minor, semver:major"
           exit_type: success
       - name: check value
-        run: echo "{{steps.check-labels.outputs.labels}}"
+        run: echo "${{steps.check-labels.outputs.labels}}"
 
