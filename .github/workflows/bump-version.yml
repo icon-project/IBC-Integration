@@ -15,9 +15,9 @@ jobs:
           fetch-depth: 0
 
       - name: Get javascore files that have changed
+        working-directory: contracts/javascore
         id: changed-files-javascore
         uses: tj-actions/changed-files@v39
-        working-directory: contracts/javascore
         with:
           files_yaml: |
             ibc:
