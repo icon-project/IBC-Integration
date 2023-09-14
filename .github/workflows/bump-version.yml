@@ -27,8 +27,9 @@ jobs:
               - contracts/javascore/xcall-connection/**
 
       - name: Run step if test file(s) change
-        if: steps.changed-files-javascore.outputs.ibc_any_changed == 'true'  
+        # if: steps.changed-files-javascore.outputs.ibc_any_changed == 'true'  
         run: |
+          echo "$steps.changed-files-javascore.outputs.ibc_any_changed"
           echo "One or more test file(s) has changed."
           echo "List all the files that have changed: ${{ steps.changed-files-javascore.outputs.ibc_all_changed_files }}"
       
