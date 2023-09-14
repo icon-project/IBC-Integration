@@ -34,10 +34,10 @@ jobs:
 
       - name: Run step if test file(s) change
         if: steps.changed-files-javascore.outputs.ibc_any_changed == 'true'  
-        # run: |
-        #   echo "$steps.changed-files-javascore.outputs.ibc_any_changed"
-        #   echo "One or more test file(s) has changed."
-        #   echo "List all the files that have changed: ${{ steps.changed-files-javascore.outputs.ibc_all_changed_files }}"
+        run: |
+          echo "$steps.changed-files-javascore.outputs.ibc_any_changed"
+          echo "One or more test file(s) has changed."
+          echo "List all the files that have changed: ${{ steps.changed-files-javascore.outputs.ibc_all_changed_files }}"
       
       - name: Run step if doc file(s) change
         if: steps.changed-files-javascore.outputs.lightclients_any_changed == 'true'
