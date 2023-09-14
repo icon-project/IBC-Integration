@@ -56,3 +56,15 @@ jobs:
       - name: check value
         run: echo "${{steps.check-labels.outputs.labels}}"
 
+      - name: Offer PR Label Guidance
+        uses: fountainhead/action-pr-label-assistant@v1.0.0
+        id: labels
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          id: default
+          whitelist: cicd,semver:minor
+      - name: Create/Update Preview Instance
+        if: steps.labels.outputs.preview-instance == 'present'
+        run: echo "PR Label present"
+
+
