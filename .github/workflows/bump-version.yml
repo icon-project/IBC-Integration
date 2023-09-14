@@ -6,35 +6,16 @@ on:
       - '**'
 
 jobs:
-  changed_files:
+  test:
     runs-on: ubuntu-latest
-    name: Test changed-files
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get javascore files that have changed
-        id: changed-files-javascore
-        uses: tj-actions/changed-files@v39
-        with:
-          files_yaml: |
-            test:
-              - 'contracts/javascore/ibc/**'
-            lightclients:
-              - contracts/javascore/lightclients/**
-            xcall-connection:
-              - contracts/javascore/xcall-connection/**
-
-      - name: Run step if test file(s) change
-        if: steps.changed-files-javascore.outputs.test_any_changed == 'true'  
-        run: |
-          echo "$steps.changed-files-javascore.outputs.test_any_changed"
-          echo "One or more test file(s) has changed."
-          echo "List all the files that have changed: ${{ steps.changed-files-javascore.outputs.test_all_changed_files }}"
-      
-      - name: Run step if doc file(s) change
-        if: steps.changed-files-javascore.outputs.lightclients_any_changed == 'true'
-        run: |
-          echo "One or more doc file(s) has changed."
-          echo "List all the files that have changed: ${{ steps.changed-files-javascore.outputs.lightclients_all_changed_files }}"
+    - uses: actions/checkout@v2
+    - uses: tony84727/changed-file-filter@v0.2.0
+      id: filter
+      with:
+        filters: |
+          ibc:
+            - 'contracts/javascore/ibc/**/*'
+    - name: Print changed ibc files
+      if: steps.filter.outputs.ibc == 'true'
+      run: echo "Changed doc files: ${{ step.filter.outputs.ibc_files }}"
