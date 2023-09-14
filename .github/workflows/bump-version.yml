@@ -19,4 +19,4 @@ jobs:
     - name: Print changed ibc files
       if: steps.filter.outputs.ibc == 'true'
       run: |
-        echo "Changed doc files: ${{ step.filter.outputs.ibc_files }}"
+        echo "Changed doc files: ${{ steps.filter.outputs.ibc_files }}"
