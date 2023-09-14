@@ -19,7 +19,7 @@ jobs:
         uses: tj-actions/changed-files@v39
         with:
           files_yaml: |
-            ibc:
+            test:
               - 'contracts/javascore/ibc/**'
             lightclients:
               - contracts/javascore/lightclients/**
@@ -27,11 +27,11 @@ jobs:
               - contracts/javascore/xcall-connection/**
 
       - name: Run step if test file(s) change
-        # if: steps.changed-files-javascore.outputs.ibc_any_changed == 'true'  
+        if: steps.changed-files-javascore.outputs.test_any_changed == 'true'  
         run: |
-          echo "$steps.changed-files-javascore.outputs.ibc_any_changed"
+          echo "$steps.changed-files-javascore.outputs.test_any_changed"
           echo "One or more test file(s) has changed."
-          echo "List all the files that have changed: ${{ steps.changed-files-javascore.outputs.ibc_all_changed_files }}"
+          echo "List all the files that have changed: ${{ steps.changed-files-javascore.outputs.test_all_changed_files }}"
       
       - name: Run step if doc file(s) change
         if: steps.changed-files-javascore.outputs.lightclients_any_changed == 'true'
