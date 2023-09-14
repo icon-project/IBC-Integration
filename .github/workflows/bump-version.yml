@@ -45,7 +45,8 @@ jobs:
           echo "One or more doc file(s) has changed."
           echo "List all the files that have changed: ${{ steps.changed-files-javascore.outputs.lightclients_all_changed_files }}"
 
-      - id: check-labels
+      - name: Check Label
+        id: check-labels
         uses: mheap/github-action-required-labels@v5
         with:
           mode: exactly
