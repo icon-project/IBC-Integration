@@ -51,7 +51,7 @@ jobs:
         with:
           mode: exactly
           count: 1
-          labels: "semver:patch, semver:minor, semver:major"
+          labels: "semver:patch, semver:minor, semver:major, cicd"
           exit_type: success
       - name: check value
         run: echo "${{steps.check-labels.outputs.labels}}"
