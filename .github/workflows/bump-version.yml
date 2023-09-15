@@ -13,37 +13,62 @@ jobs:
       pull-requests: write
     outputs:
       status: ${{ steps.check-labels.outputs.status }}
+    strategy:
+      matrix:
+        javascore_subproject: ${{ steps.find-projects.outputs.projects }}
+
 
     name: Test changed-files
     steps:
+      - name: Find projects
+        id: find-projects
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const projects = [];
+            const files = await github.actions.getInputs({
+              token: github.token,
+              path: '/',
+              recursive: true
+            });
+            for (const file of files) {
+              if (file.path.endsWith('Cargo.toml')) {
+                projects.push(file.path.substring(0, file.path.length - 'Cargo.toml'.length));
+              }
+            }
+            return projects;
+      - name: List subprojects
+        run: echo ${{ matrix.javascore_subproject }}
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Get javascore files that have changed
-        id: changed-files-javascore
+        working-directory: contracts/javascore
+        id: javascore
         uses: tj-actions/changed-files@v39
         with:
           files_yaml: |
             ibc:
-              - 'contracts/javascore/ibc/**'
+              - 'ibc/**'
             lightclients:
-              - contracts/javascore/lightclients/**
+              - 'lightclients/**'
             xcall-connection:
-              - contracts/javascore/xcall-connection/**
+              - 'xcall-connection/**'
 
       - name: Run step if test file(s) change
-        if: steps.changed-files-javascore.outputs.ibc_any_changed == 'true'  
+        if: steps.javascore.outputs.ibc_any_changed == 'true'  
         run: |
-          echo "$steps.changed-files-javascore.outputs.ibc_any_changed"
+          echo "$steps.javascore.outputs.ibc_any_changed"
           echo "One or more test file(s) has changed."
-          echo "List all the files that have changed: ${{ steps.changed-files-javascore.outputs.ibc_all_changed_files }}"
+          echo "List all the files that have changed: ${{ steps.javascore.outputs.ibc_all_changed_files }}"
       
       - name: Run step if doc file(s) change
-        if: steps.changed-files-javascore.outputs.lightclients_any_changed == 'true'
+        if: steps.javascore.outputs.lightclients_any_changed == 'true'
         run: |
           echo "One or more doc file(s) has changed."
-          echo "List all the files that have changed: ${{ steps.changed-files-javascore.outputs.lightclients_all_changed_files }}"
+          echo "List all the files that have changed: ${{ steps.javascore.outputs.lightclients_all_changed_files }}"
 
       - name: Check Label
         id: check-labels
@@ -51,34 +76,6 @@ jobs:
         with:
           mode: exactly
           count: 1
-          labels: "semver:patch, semver:minor, semver:major, cicd"
+          labels: "semver:patch, semver:minor, semver:major"
           exit_type: success
-      - name: check value
-        if: steps.check-labels.outputs.labels == 'semver'
-        run: echo "${{steps.check-labels.outputs.labels}}"
-
-      - name: Offer PR Label Guidance
-        uses: fountainhead/action-pr-label-assistant@v1.0.0
-        id: labels
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          id: default
-          whitelist: cicd,semver:minor
-      - name: Create/Update Preview Instance
-        if: steps.labels.outputs.preview-instance == 'present'
-        run: echo "PR Label present"
-
-      - uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          base: ${{ github.ref }}
-          working-directory: 'contracts/javascore'
-          filters: |
-            ibc:
-              - 'ibc/**/*'
-            lightclients:
-              - 'lightclients/**/*'
-
-      - name: backend tests
-        if: steps.filter.outputs.ibc == 'true'
-        run: echo "There is changes"
+      
