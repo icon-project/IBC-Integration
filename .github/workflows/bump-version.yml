@@ -74,9 +74,9 @@ jobs:
           working-directory: 'contracts/javascore'
           filters: |
             ibc:
-              - 'ibc/**'
+              - 'ibc/**/*'
             lightclients:
-              - 'lightclients/**'
+              - 'lightclients/**/*'
 
       - name: backend tests
         if: steps.filter.outputs.ibc == 'true'
