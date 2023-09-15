@@ -292,6 +292,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 let res = client
                     .get_consensus_state_any(deps, &client_val, height)
                     .unwrap();
+
                 to_binary(&hex::encode(res.encode_to_vec()))
             }
             QueryMsg::GetClientState { client_id } => {
