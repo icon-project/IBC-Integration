@@ -54,6 +54,7 @@ jobs:
           labels: "semver:patch, semver:minor, semver:major, cicd"
           exit_type: success
       - name: check value
+        if: steps.check-labels.outputs.labels == 'semver'
         run: echo "${{steps.check-labels.outputs.labels}}"
 
       - name: Offer PR Label Guidance
@@ -67,4 +68,16 @@ jobs:
         if: steps.labels.outputs.preview-instance == 'present'
         run: echo "PR Label present"
 
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          working-directory: contracts/javascore
+          filters: |
+            ibc:
+              - 'ibc/**'
+            lightclients:
+              - 'lightclients/**'
 
+      - name: backend tests
+        if: steps.filter.outputs.ibc == 'true'
+        run: echo "There is changes"
