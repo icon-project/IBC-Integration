@@ -106,7 +106,8 @@ jobs:
           for dir in $(find . -type f -name 'Cargo.toml' -exec dirname {} \;); do
             subprojects+=("$dir")
           done
-          echo "::set-output name=subprojects::${subprojects[*]}"
+          echo "subprojects=${subprojects[*]}" >> $GITHUB_ENV
+
 
   update-version:
     needs: discover-subprojects
@@ -114,7 +115,7 @@ jobs:
 
     strategy:
       matrix:
-        subproject: ${{fromJson(needs.discover-subprojects.outputs.subprojects)}}
+        subproject: ${{ steps.discover-subprojects.outputs.subprojects }}
 
     steps:
       - name: Check out code
