@@ -71,7 +71,7 @@ jobs:
       - uses: dorny/paths-filter@v2
         id: filter
         with:
-          working-directory: contracts/javascore
+          working-directory: 'contracts/javascore'
           filters: |
             ibc:
               - 'ibc/**'
