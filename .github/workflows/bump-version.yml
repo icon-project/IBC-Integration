@@ -92,16 +92,21 @@ jobs:
   discover-subprojects:
     runs-on: ubuntu-latest
 
+    outputs:
+      subprojects: ${{ steps.set-matrix.outputs.subprojects }}
+
     steps:
       - name: Check out code
         uses: actions/checkout@v2
 
       - name: Discover Subprojects
-        id: discover
+        id: set-matrix
         run: |
-          # Use a script to discover subprojects (folders with Cargo.toml)
-          subprojects=($(find . -type f -name 'Cargo.toml' -exec dirname {} \;))
-          echo "::set-output name=subprojects::${subprojects[@]}"
+          subprojects=()
+          for dir in $(find . -type f -name 'Cargo.toml' -exec dirname {} \;); do
+            subprojects+=("$dir")
+          done
+          echo "::set-output name=subprojects::${subprojects[*]}"
 
   update-version:
     needs: discover-subprojects
@@ -109,7 +114,7 @@ jobs:
 
     strategy:
       matrix:
-        subproject: ${{ steps.discover.outputs.subprojects }}
+        subproject: ${{fromJson(needs.discover-subprojects.outputs.subprojects)}}
 
     steps:
       - name: Check out code
@@ -119,8 +124,5 @@ jobs:
         run: |
           subproject="$INPUT_SUBPROJECT"
           echo $subproject
-          
-        
         env:
           INPUT_SUBPROJECT: ${{ matrix.subproject }}
-
