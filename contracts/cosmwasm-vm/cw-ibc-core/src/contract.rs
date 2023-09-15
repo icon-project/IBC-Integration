@@ -290,10 +290,9 @@ impl<'a> CwIbcCoreContext<'a> {
                 let client_val = IbcClientId::from_str(&client_id).unwrap();
                 let client = self.get_light_client(deps.storage, &client_val).unwrap();
                 let res = client
-                    .get_consensus_state(deps, &client_val, height)
+                    .get_consensus_state_any(deps, &client_val, height)
                     .unwrap();
-                let state = res.as_bytes();
-                to_binary(&hex::encode(state))
+                to_binary(&hex::encode(res.encode_to_vec()))
             }
             QueryMsg::GetClientState { client_id } => {
                 let res = self
