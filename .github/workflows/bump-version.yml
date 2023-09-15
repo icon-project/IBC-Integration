@@ -5,77 +5,122 @@ on:
     branches:
       - main
 
+# jobs:
+#   changed_files:
+#     runs-on: ubuntu-latest
+#     permissions:
+#       issues: write
+#       pull-requests: write
+#     outputs:
+#       status: ${{ steps.check-labels.outputs.status }}
+#     strategy:
+#       matrix:
+#         project: ${{ steps.find-projects.outputs.projects }}
+
+
+#     name: Test changed-files
+#     steps:
+#       - name: Find projects
+#         id: find-projects
+#         uses: actions/github-script@v6
+#         with:
+#           script: |
+#             const projects = [];
+#             const files = await github.actions.getInputs({
+#               token: github.token,
+#               path: '/',
+#               recursive: true
+#             });
+#             for (const file of files) {
+#               if (file.path.endsWith('Cargo.toml')) {
+#                 projects.push(file.path.substring(0, file.path.length - 'Cargo.toml'.length));
+#               }
+#             }
+#             return projects;
+#       - name: List subprojects
+#         run: echo ${{ matrix.javascore_subproject }}
+
+#       - uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
+
+#       - name: Get javascore files that have changed
+#         working-directory: contracts/javascore
+#         id: javascore
+#         uses: tj-actions/changed-files@v39
+#         with:
+#           files_yaml: |
+#             ibc:
+#               - 'ibc/**'
+#             lightclients:
+#               - 'lightclients/**'
+#             xcall-connection:
+#               - 'xcall-connection/**'
+
+#       - name: Run step if test file(s) change
+#         if: steps.javascore.outputs.ibc_any_changed == 'true'  
+#         run: |
+#           echo "$steps.javascore.outputs.ibc_any_changed"
+#           echo "One or more test file(s) has changed."
+#           echo "List all the files that have changed: ${{ steps.javascore.outputs.ibc_all_changed_files }}"
+      
+#       - name: Run step if doc file(s) change
+#         if: steps.javascore.outputs.lightclients_any_changed == 'true'
+#         run: |
+#           echo "One or more doc file(s) has changed."
+#           echo "List all the files that have changed: ${{ steps.javascore.outputs.lightclients_all_changed_files }}"
+
+#       - name: Check Label
+#         id: check-labels
+#         uses: mheap/github-action-required-labels@v5
+#         with:
+#           mode: exactly
+#           count: 1
+#           labels: "semver:patch, semver:minor, semver:major"
+#           exit_type: success
+#       
+
+
+# name: Update Version in Cargo.toml
+
+# on:
+#   push:
+#     paths:
+#       - '**/Cargo.toml' # Trigger on changes to Cargo.toml files
+
 jobs:
-  changed_files:
+  discover-subprojects:
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: write
-    outputs:
-      status: ${{ steps.check-labels.outputs.status }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Discover Subprojects
+        id: discover
+        run: |
+          # Use a script to discover subprojects (folders with Cargo.toml)
+          subprojects=($(find . -type f -name 'Cargo.toml' -exec dirname {} \;))
+          echo "::set-output name=subprojects::${subprojects[@]}"
+
+  update-version:
+    needs: discover-subprojects
+    runs-on: ubuntu-latest
+
     strategy:
       matrix:
-        javascore_subproject: ${{ steps.find-projects.outputs.projects }}
+        subproject: ${{ steps.discover.outputs.subprojects }}
 
-
-    name: Test changed-files
     steps:
-      - name: Find projects
-        id: find-projects
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const projects = [];
-            const files = await github.actions.getInputs({
-              token: github.token,
-              path: '/',
-              recursive: true
-            });
-            for (const file of files) {
-              if (file.path.endsWith('Cargo.toml')) {
-                projects.push(file.path.substring(0, file.path.length - 'Cargo.toml'.length));
-              }
-            }
-            return projects;
-      - name: List subprojects
-        run: echo ${{ matrix.javascore_subproject }}
+      - name: Check out code
+        uses: actions/checkout@v2
 
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get javascore files that have changed
-        working-directory: contracts/javascore
-        id: javascore
-        uses: tj-actions/changed-files@v39
-        with:
-          files_yaml: |
-            ibc:
-              - 'ibc/**'
-            lightclients:
-              - 'lightclients/**'
-            xcall-connection:
-              - 'xcall-connection/**'
-
-      - name: Run step if test file(s) change
-        if: steps.javascore.outputs.ibc_any_changed == 'true'  
+      - name: Update Version in Cargo.toml
         run: |
-          echo "$steps.javascore.outputs.ibc_any_changed"
-          echo "One or more test file(s) has changed."
-          echo "List all the files that have changed: ${{ steps.javascore.outputs.ibc_all_changed_files }}"
-      
-      - name: Run step if doc file(s) change
-        if: steps.javascore.outputs.lightclients_any_changed == 'true'
-        run: |
-          echo "One or more doc file(s) has changed."
-          echo "List all the files that have changed: ${{ steps.javascore.outputs.lightclients_all_changed_files }}"
+          subproject="$INPUT_SUBPROJECT"
+          echo $subproject
+          
+        
+        env:
+          INPUT_SUBPROJECT: ${{ matrix.subproject }}
 
-      - name: Check Label
-        id: check-labels
-        uses: mheap/github-action-required-labels@v5
-        with:
-          mode: exactly
-          count: 1
-          labels: "semver:patch, semver:minor, semver:major"
-          exit_type: success
-      
