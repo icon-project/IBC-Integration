@@ -2,7 +2,7 @@
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf:1.9.0
 PROJECT_NAME = $(shell git remote get-url origin | xargs basename -s .git)
-
+BRANCH ?= "main"
 export GO111MODULE = on
 
 
@@ -44,20 +44,20 @@ build-builder-img:
 
 optimize-jar:
 	@echo "Generating optimized jar for ICON contracts"
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}-icon$$"; then docker start -a "${containerBuilder}-icon" ; else docker run  --name "${containerBuilder}-icon"   -v $(CURDIR):/workspace --workdir /workspace $(builderImage) sh ./scripts/optimize-jar.sh; fi
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}-icon$$"; then docker start -a "${containerBuilder}-icon" ; else docker run  --name "${containerBuilder}-icon"   -v $(CURDIR):/workspace --workdir /workspace $(builderImage) bash ./scripts/optimize-jar.sh; fi
 
 optimize-cosmwasm:
 	@echo "Generating optimized cosmwasm for Archway contracts"
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}-cosmwasm$$"; then docker start -a "${containerBuilder}-cosmwasm" ; else docker run  --name "${containerBuilder}-cosmwasm"  -v $(CURDIR):/workspace --workdir /workspace $(builderImage) sh ./scripts/optimize-cosmwasm.sh; fi
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}-cosmwasm$$"; then docker start -a "${containerBuilder}-cosmwasm" ; else docker run  --name "${containerBuilder}-cosmwasm"  -v $(CURDIR):/workspace --workdir /workspace $(builderImage) bash ./scripts/optimize-cosmwasm.sh; fi
 
 optimize-xcall:
-	@echo "Generating optimized xcall cosmwasm for Archway contracts"
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}-xcall$$"; then docker start -a "${containerBuilder}-xcall" ; else docker run  --name "${containerBuilder}-xcall" -v $(CURDIR):/workspace --workdir /workspace $(builderImage) sh ./scripts/build-xcall.sh; fi
+	@echo "Generating optimized xcall contracts ..."
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}-xcall$$"; then docker start -a "${containerBuilder}-xcall" ; else docker run  --name "${containerBuilder}-xcall" -v $(CURDIR):/workspace --workdir /workspace $(builderImage) bash ./scripts/optimize-xcall-build.sh build $(BRANCH); fi
 
 
 optimize-build:
 	@echo "Generating optimized contracts..."
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}$$"; then docker start -a ${containerBuilder}; else docker run --name $(containerBuilder) -v $(CURDIR):/workspace --workdir /workspace $(builderImage) sh ./scripts/optimize-build.sh; fi
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerBuilder}$$"; then docker start -a ${containerBuilder}; else docker run --name $(containerBuilder) -v $(CURDIR):/workspace --workdir /workspace $(builderImage) bash ./scripts/optimize-build.sh build; fi
 
 gobuild:
 	go build .
@@ -75,4 +75,4 @@ e2e-demo-clean:
 	go test -v ./test/e2e-demo -testify.m TestCleanup
 
 
-.PHONY: proto-all proto-gen proto-gen-any proto-swagger-gen proto-format proto-lint proto-check-breaking proto-update-deps gobuild
+.PHONY: proto-all proto-gen proto-gen-any proto-swagger-gen proto-format proto-lint proto-check-breaking proto-update-deps gobuild optimize-build optimize-xcall e2e-demo-setup e2e-demo-clean
