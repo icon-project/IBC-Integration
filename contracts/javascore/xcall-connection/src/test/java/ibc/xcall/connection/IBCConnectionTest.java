@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import com.iconloop.score.test.Account;
 import com.iconloop.score.test.ServiceManager;
 
+import ibc.icon.score.util.StringUtil;
 import icon.proto.core.channel.Packet;
 import icon.proto.core.client.Height;
 
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import score.Address;
 
 public class IBCConnectionTest extends IBCConnectionTestBase {
 
@@ -326,7 +328,7 @@ public class IBCConnectionTest extends IBCConnectionTestBase {
 
         Packet pct = new Packet();
         pct.setSequence(seq);
-        pct.setData(new Message(null, fee, relayer.getAddress().toByteArray()).toBytes());
+        pct.setData(new Message(null, fee, relayer.getAddress().toString().getBytes()).toBytes());
         pct.setSourcePort(defaultCounterpartyPort);
         pct.setSourceChannel(defaultCounterpartyChannel);
         pct.setDestinationPort(IBCConnection.PORT);
@@ -423,5 +425,15 @@ public class IBCConnectionTest extends IBCConnectionTestBase {
         e = assertThrows(AssertionError.class,
             () -> connection.invoke(nonAuthorized, "configureConnection", "", "", "", "", BigInteger.ZERO));
         assertEquals(expectedErrorMessage, e.getMessage());
+    }
+
+    @Test
+    public void decodeAddress() {
+        String str = "f6f800883782dace9d900000aa687862366235373931626530623565663637303633623363313062383430666238313531346462326664";
+        byte[] val = StringUtil.hexToBytes(str);
+        Message m = Message.fromBytes(val);
+
+        assertNull(m.getSn());
+        assertEquals(Address.fromString("hxb6b5791be0b5ef67063b3c10b840fb81514db2fd"), Address.fromString(new String(m.getData())));
     }
 }
