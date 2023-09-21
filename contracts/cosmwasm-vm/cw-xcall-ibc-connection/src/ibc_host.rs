@@ -107,14 +107,13 @@ impl<'a> CwIbcConnection<'a> {
 
 #[cfg(test)]
 mod tests {
+    use crate::state::{CwIbcConnection, HOST_SEND_MESSAGE_REPLY_ID};
     use cosmwasm_std::{
         coin,
         testing::{mock_dependencies_with_balance, mock_env},
         to_binary, Addr, CosmosMsg, SubMsg, WasmMsg,
     };
     use cw_common::{hex_string::HexString, raw_types::channel::RawPacket, ProstMessage};
-
-    use crate::state::{CwIbcConnection, HOST_SEND_MESSAGE_REPLY_ID};
 
     #[test]
     fn test_call_host_send_message() {
