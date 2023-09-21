@@ -67,13 +67,8 @@ jobs:
         run: |
           echo «::set-output name=date::$(date +'%Y-%m-%d')»
           echo «::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)»
-      - name: Download Javascore Artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: javascore-contracts
-          path: javascore-contracts
 
-      - name: Download Cosmwasm Artifacts
+      - name: Download Artifacts
         uses: actions/download-artifact@v2
         with:
           name: artifacts
