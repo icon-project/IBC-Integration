@@ -1,4 +1,4 @@
-## Description:
+## Description
 
 ### Commit Message
 
@@ -14,7 +14,7 @@ see the [guidelines](https://github.com/icon-project/community/blob/main/guideli
 version: <log entry>
 ```
 
-## Checklist:
+## Checklist
 
 - [ ] I have performed a self-review of my own code
 - [ ] I have documented my code in accordance with the [documentation guidelines](https://github.com/icon-project/community/blob/main/guidelines/technical/software-development-guidelines.md#documentation)

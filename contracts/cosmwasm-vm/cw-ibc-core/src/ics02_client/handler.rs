@@ -194,7 +194,6 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 error: ClientError::MissingRawConsensusState,
             })?;
 
-        //Check Client Frozen
         if old_client_state.is_frozen() {
             return Err(ClientError::ClientFrozen {
                 client_id: client_id.clone(),
@@ -213,7 +212,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                 time2: now,
             })
             .map_err(Into::<ContractError>::into)?;
-        // Check if the latest consensus state is within the trust period.
+
         if old_client_state.expired(duration) {
             return Err(ClientError::HeaderNotWithinTrustPeriod {
                 latest_time: old_consensus_state.timestamp(),
@@ -221,8 +220,6 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into);
         };
-
-        // Validate the upgraded client state and consensus state and verify proofs against the root
 
         let wasm_exec_message = LightClientMessage::UpgradeClient {
             upgraded_client_state: new_client_state.value,

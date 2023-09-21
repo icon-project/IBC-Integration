@@ -14,11 +14,12 @@ chains:
         version: latest
         uid_gid: ''
     contracts:
-      ibc: "$BASE_PATH/artifacts/icon/ibc-0.1.0-optimized.jar"
-      client: "$BASE_PATH/artifacts/icon/tendermint-0.1.0-optimized.jar"
-      xcall: "$BASE_PATH/artifacts/icon/xcall-0.1.0-optimized.jar"
-      connection: "$BASE_PATH/artifacts/icon/xcall-connection-0.1.0-optimized.jar"
-      dapp: "$BASE_PATH/artifacts/icon/dapp-multi-protocol-0.1.0-optimized.jar"
+      ibc: "$BASE_PATH/artifacts/icon/ibc-latest.jar"
+      client: "$BASE_PATH/artifacts/icon/tendermint-latest.jar"
+      xcall: "$BASE_PATH/artifacts/icon/xcall-latest.jar"
+      connection: "$BASE_PATH/artifacts/icon/xcall-connection-latest.jar"
+      dapp: "$BASE_PATH/artifacts/icon/dapp-multi-protocol-latest.jar"
+      mockdapp: "$BASE_PATH/artifacts/icon/mockapp-latest.jar"
 
   - name: neutron
     version: '3'
@@ -42,11 +43,12 @@ chains:
       no_host_mount: false
     nid: '3'
     contracts:
-      ibc: "$BASE_PATH/artifacts/archway/cw_ibc_core.wasm"
-      client: "$BASE_PATH/artifacts/archway/cw_icon_light_client.wasm"
-      xcall: "$BASE_PATH/artifacts/archway/cw_xcall.wasm"
-      connection: "$BASE_PATH/artifacts/archway/cw_xcall_ibc_connection.wasm"
+      ibc: "$BASE_PATH/artifacts/archway/cw_ibc_core_latest.wasm"
+      client: "$BASE_PATH/artifacts/archway/cw_icon_light_client_latest.wasm"
+      xcall: "$BASE_PATH/artifacts/archway/cw_xcall_latest.wasm"
+      connection: "$BASE_PATH/artifacts/archway/cw_xcall_ibc_connection_latest.wasm"
       dapp: "$BASE_PATH/artifacts/archway/cw_mock_dapp_multi.wasm"
+      mockdapp: "$BASE_PATH/artifacts/archway/cw_mock_ibc_dapp.wasm"
 relayer:
   image: relayer
   tag: latest

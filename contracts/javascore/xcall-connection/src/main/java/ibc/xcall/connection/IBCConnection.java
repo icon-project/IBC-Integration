@@ -102,6 +102,7 @@ public class IBCConnection {
     @External
     public void configureConnection(String connectionId, String counterpartyPortId, String counterpartyNid, String clientId, BigInteger timeoutHeight) {
         onlyAdmin();
+        Context.require(configuredClients.get(connectionId) == null, "connection already configured");
         Context.require(configuredNetworkIds.at(connectionId).get(counterpartyPortId) == null, "connection and port already configured");
         Context.require(channels.get(counterpartyNid) == null, "networkId already configured");
         configuredNetworkIds.at(connectionId).set(counterpartyPortId, counterpartyNid);
@@ -167,8 +168,9 @@ public class IBCConnection {
         String nid = networkIds.get(packet.getDestinationChannel());
         Context.require(nid != null, "Channel is not configured");
 
-        if (msg.getSn() == null)  {
-            Context.transfer(new Address(msg.getData()), msg.getFee());
+        if (msg.getSn() == null) {
+            String to = new String(msg.getData());
+            Context.transfer(Address.fromString(to), msg.getFee());
             return new byte[0];
         }
 

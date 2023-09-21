@@ -1,7 +1,3 @@
 [submodule "contracts/javascore/gochain-btp"]
 	path = contracts/javascore/gochain-btp
 	url = https://github.com/izyak/gochain-btp.git
-
-[submodule "xcall-multi"]
-	path = xcall-multi
-	url = https://github.com/icon-project/xcall-multi.git

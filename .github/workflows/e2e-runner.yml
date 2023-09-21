@@ -1,0 +1,59 @@
+name: Trigger on Comment
+on:
+  issue_comment:
+    types: [created]
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  statuses: write
+jobs:
+  start-runner:
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '/run e2e')
+    uses: ./.github/workflows/runner-start.yml
+    secrets: inherit
+    with:
+      relayer_version: ${{ vars.relayer_version == '' && '0.1.0-alpha.7' || vars.relayer_version }}
+  e2e:
+    name: E2E tests
+    runs-on: self-hosted
+    needs: start-runner
+    steps:
+      - name: Get PR branch
+        uses: xt0rted/pull-request-comment-branch@v2
+        id: comment-branch
+      - name: Set latest commit status as pending
+        uses: myrotvorets/set-commit-status-action@master
+        with:
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: pending
+      - name: Checkout PR branch
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ steps.comment-branch.outputs.head_ref }}
+
+      - name: Set up Go 1.21
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.21
+
+      - name: Run e2e tests
+        run: make e2e
+
+      - name: Set latest commit status as ${{ job.status }}
+        uses: myrotvorets/set-commit-status-action@master
+        if: always()
+        with:
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
+  stop-runner:
+    uses: ./.github/workflows/runner-stop.yml
+    secrets: inherit
+    with:
+      label: ${{ needs.start-runner.outputs.label }}
+      ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
+    needs:
+      - start-runner
+      - e2e

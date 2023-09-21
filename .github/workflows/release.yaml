@@ -24,11 +24,7 @@ jobs:
           ./gradlew clean build
           ./gradlew optimizedJar
           ./gradlew zipOutputOptimizedJars
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: javascore-contracts
-          path: ./contracts/javascore/build/javascore-contracts.zip
+ 
   build_wasm:
     name: Build Cosmwasm Contracts
     runs-on: ubuntu-latest
@@ -50,14 +46,15 @@ jobs:
         run: |
           rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
           rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu     
-          bash ./scripts/optimize-cosmwasm.sh
-          cd artifacts/archway && zip -r ../../cosmwasm-contracts.zip . -j
+          bash ./scripts/optimize-cosmwasm.sh "release"
           
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: cosmwasm-contracts
-          path: cosmwasm-contracts.zip
+          name: artifacts
+          path: |
+            ./contracts/javascore/build/javascore-contracts.zip
+            ./artifacts/archway/cosmwasm-contracts.zip
   release:
     name: Release and Publish
     runs-on: ubuntu-latest
@@ -79,15 +76,13 @@ jobs:
       - name: Download Cosmwasm Artifacts
         uses: actions/download-artifact@v2
         with:
-          name: cosmwasm-contracts
-          path: cosmwasm-contracts
+          name: artifacts
+          path: release-artifacts
 
-      - name: Unzip Javascore Artifacts
-        run: unzip javascore-contracts/javascore-contracts.zip -d javascore-contracts && rm -rf javascore-contracts/javascore-contracts.zip
-
-      - name: Unzip Cosmwasm Artifacts
-        run: unzip cosmwasm-contracts/cosmwasm-contracts.zip -d cosmwasm-contracts && rm -rf cosmwasm-contracts/cosmwasm-contracts.zip
-
+      - name: Generate Checksum
+        run: |
+            cd release-artifacts; unzip javascore-contracts.zip; unzip cosmwasm-contracts.zip; rm -rf *.zip; sha256sum * > sha256sum.txt
+            
       - name: Changelog
         uses: scottbrenner/generate-changelog-action@master
         id: Changelog
@@ -111,16 +106,8 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./javascore-contracts/*
+          file: ./release-artifacts/*
           tag: ${{ github.ref }}
           overwrite: true
           file_glob: true
-
-      - name: Upload Cosmwasm contracts to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./cosmwasm-contracts/*
-          tag: ${{ github.ref }}
-          overwrite: true
-          file_glob: true
+      

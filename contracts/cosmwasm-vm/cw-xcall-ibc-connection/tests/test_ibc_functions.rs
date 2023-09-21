@@ -14,7 +14,7 @@ use cw_xcall_ibc_connection::ack::{on_ack_failure, on_ack_sucess};
 use cw_xcall_ibc_connection::types::config::Config;
 use cw_xcall_lib::network_address::{NetId, NetworkAddress};
 
-use cw_xcall::types::response::CallServiceMessageResponse;
+use cw_xcall::types::response::CSMessageResponse;
 use cw_xcall_ibc_connection::msg::InstantiateMsg;
 use cw_xcall_ibc_connection::types::channel_config::ChannelConfig;
 use cw_xcall_ibc_connection::types::message::Message;
@@ -26,8 +26,8 @@ use account::alice;
 
 use cosmwasm_std::from_binary;
 use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
-use cw_xcall::types::message::CallServiceMessage;
-use cw_xcall::types::request::CallServiceMessageRequest;
+use cw_xcall::types::message::CSMessage;
+use cw_xcall::types::request::CSMessageRequest;
 use cw_xcall_ibc_connection::state::CwIbcConnection;
 
 #[test]
@@ -210,49 +210,6 @@ fn get_ibc_config_after_setup() {
     assert_eq!(config.destination_port_id, dst.port_id);
     assert_eq!(config.light_client_id, "client-id");
     assert_eq!(config.timeout_height, 100);
-}
-
-#[test]
-#[cfg(not(feature = "native_ibc"))]
-#[should_panic(expected = " InvalidVersion { actual: \"xyz\", expected: \"ics20-1\" }")]
-fn fails_on_open_channel_open_try_invalid_version() {
-    use cw_xcall_ibc_connection::state::CwIbcConnection;
-
-    let mut deps = deps();
-
-    let mock_env = mock_env();
-    let mock_info = create_mock_info("alice", "umlg", 2000);
-
-    let mut contract = CwIbcConnection::default();
-
-    let src = IbcEndpoint {
-        port_id: "our-port".to_string(),
-        channel_id: "channel-1".to_string(),
-    };
-    let dst = IbcEndpoint {
-        port_id: "their-port".to_string(),
-        channel_id: "channel-3".to_string(),
-    };
-
-    let execute_msg = ExecuteMsg::IbcChannelOpen {
-        msg: OpenTry {
-            channel: IbcChannel::new(
-                src,
-                dst,
-                cosmwasm_std::IbcOrder::Unordered,
-                "xcall-1",
-                "newconnection",
-            ),
-            counterparty_version: "xyz".to_owned(),
-        },
-    };
-    contract
-        .set_ibc_host(deps.as_mut().storage, Addr::unchecked(alice().as_str()))
-        .unwrap();
-
-    contract
-        .execute(deps.as_mut(), mock_env, mock_info, execute_msg)
-        .unwrap();
 }
 
 #[test]
@@ -491,7 +448,7 @@ fn sucess_receive_packet_for_call_message_request() {
         .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
-    let data = CallServiceMessageRequest::new(
+    let data = CSMessageRequest::new(
         NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
@@ -500,7 +457,7 @@ fn sucess_receive_packet_for_call_message_request() {
         vec![],
     );
 
-    let message: CallServiceMessage = data.try_into().unwrap();
+    let message: CSMessage = data.try_into().unwrap();
     let message: Message = Message {
         sn: Nullable::new(Some(1)),
         fee: 0,
@@ -607,7 +564,7 @@ fn sucess_on_ack_packet() {
         channel_id: "channel-3".to_string(),
     };
 
-    let data = CallServiceMessageRequest::new(
+    let data = CSMessageRequest::new(
         NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
@@ -634,7 +591,7 @@ fn sucess_on_ack_packet() {
     contract
         .store_channel_config(mock_deps.as_mut().storage, &channel, &channel_config)
         .unwrap();
-    let message: CallServiceMessage = data.try_into().unwrap();
+    let message: CSMessage = data.try_into().unwrap();
 
     let packet = IbcPacket::new(to_binary(&message).unwrap(), src, dst, 0, timeout);
 
@@ -694,7 +651,7 @@ fn fails_receive_packet_for_call_message_request() {
         .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
-    let data = CallServiceMessageRequest::new(
+    let data = CSMessageRequest::new(
         NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
@@ -703,7 +660,7 @@ fn fails_receive_packet_for_call_message_request() {
         vec![],
     );
 
-    let message: CallServiceMessage = data.try_into().unwrap();
+    let message: CSMessage = data.try_into().unwrap();
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
@@ -817,7 +774,7 @@ fn success_on_setting_timeout_height() {
 }
 
 #[test]
-#[should_panic(expected = "Unauthorized")]
+#[should_panic(expected = "OnlyAdmin")]
 fn fails_on_configure_connection_unauthorized() {
     let mut deps = deps();
 
@@ -856,7 +813,7 @@ fn fails_on_configure_connection_unauthorized() {
 fn test_ack_success_on_call_request() {
     let mock_info = create_mock_info("alice", "umlg", 2000);
 
-    let data = CallServiceMessageRequest::new(
+    let data = CSMessageRequest::new(
         NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
@@ -865,7 +822,7 @@ fn test_ack_success_on_call_request() {
         vec![],
     );
 
-    let message: CallServiceMessage = data.try_into().unwrap();
+    let message: CSMessage = data.try_into().unwrap();
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
@@ -893,12 +850,12 @@ fn test_ack_success_on_call_request() {
 
 #[test]
 fn test_ack_success_on_call_response() {
-    let data = cw_xcall::types::response::CallServiceMessageResponse::new(
+    let data = cw_xcall::types::response::CSMessageResponse::new(
         0,
         cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
     );
 
-    let message: CallServiceMessage = data.try_into().unwrap();
+    let message: CSMessage = data.try_into().unwrap();
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
@@ -928,7 +885,7 @@ fn test_ack_success_on_call_response() {
 fn test_ack_failure_on_call_request() {
     let mock_info = create_mock_info("alice", "umlg", 2000);
 
-    let data = CallServiceMessageRequest::new(
+    let data = CSMessageRequest::new(
         NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked("alice"),
         1,
@@ -937,7 +894,7 @@ fn test_ack_failure_on_call_request() {
         vec![],
     );
 
-    let message: CallServiceMessage = data.try_into().unwrap();
+    let message: CSMessage = data.try_into().unwrap();
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
@@ -965,12 +922,12 @@ fn test_ack_failure_on_call_request() {
 
 #[test]
 fn test_ack_failure_on_call_response() {
-    let data = CallServiceMessageResponse::new(
+    let data = CSMessageResponse::new(
         0,
         cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
     );
 
-    let message: CallServiceMessage = data.try_into().unwrap();
+    let message: CSMessage = data.try_into().unwrap();
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
@@ -1017,12 +974,12 @@ fn test_handle_response() {
         .add_owner(mock_deps.as_mut().storage, mock_info.sender.to_string())
         .unwrap();
 
-    let data = CallServiceMessageResponse::new(
+    let data = CSMessageResponse::new(
         0,
         cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
     );
 
-    let message: CallServiceMessage = data.try_into().unwrap();
+    let message: CSMessage = data.try_into().unwrap();
     let message = Message {
         sn: Nullable::new(Some(0)),
         fee: 0,
@@ -1085,9 +1042,9 @@ fn test_handle_response() {
 fn test_for_call_service_request_from_rlp_bytes() {
     let hex_decode_rlp_data = hex::decode("f1976e69642f736f6d65636f6e74726163746164647265737393736f6d65636f6e7472616374616464726573730100f800c0").unwrap();
 
-    let cs_message_request = CallServiceMessageRequest::try_from(&hex_decode_rlp_data).unwrap();
+    let cs_message_request = CSMessageRequest::try_from(&hex_decode_rlp_data).unwrap();
 
-    let expected_data = CallServiceMessageRequest::new(
+    let expected_data = CSMessageRequest::new(
         NetworkAddress::new("nid", "somecontractaddress"),
         Addr::unchecked("somecontractaddress"),
         1,
@@ -1102,9 +1059,9 @@ fn test_for_call_service_request_from_rlp_bytes() {
 #[test]
 fn test_for_call_service_response_from_rlp_bytes() {
     let hex_decode_rlp_data = hex::decode("c20100").unwrap();
-    let cs_response_message = CallServiceMessageResponse::try_from(&hex_decode_rlp_data).unwrap();
+    let cs_response_message = CSMessageResponse::try_from(&hex_decode_rlp_data).unwrap();
 
-    let expected_data = CallServiceMessageResponse::new(
+    let expected_data = CSMessageResponse::new(
         1,
         cw_xcall::types::response::CallServiceResponseType::CallServiceResponseFailure,
     );
@@ -1115,11 +1072,11 @@ fn test_for_call_service_response_from_rlp_bytes() {
 fn test_for_call_message_data_from_rlp_bytes() {
     let hex_decode = hex::decode("f401b2f1976e69642f736f6d65636f6e74726163746164647265737393736f6d65636f6e7472616374616464726573730100f800c0").unwrap();
 
-    let cs_message = CallServiceMessage::try_from(hex_decode).unwrap();
+    let cs_message = CSMessage::try_from(hex_decode).unwrap();
 
-    let cs_message_request = CallServiceMessageRequest::try_from(cs_message.payload()).unwrap();
+    let cs_message_request = CSMessageRequest::try_from(cs_message.payload()).unwrap();
 
-    let expected_data = CallServiceMessageRequest::new(
+    let expected_data = CSMessageRequest::new(
         NetworkAddress::new("nid", "somecontractaddress"),
         Addr::unchecked("somecontractaddress"),
         1,
@@ -1135,11 +1092,11 @@ fn test_for_call_message_data_from_rlp_bytes() {
 fn test_call_message_from_raw_message() {
     let data=hex::decode("f401b2f1976e69642f736f6d65636f6e74726163746164647265737393736f6d65636f6e7472616374616464726573730100f800c0").unwrap();
 
-    let cs_message = CallServiceMessage::try_from(data).unwrap();
+    let cs_message = CSMessage::try_from(data).unwrap();
 
-    let cs_message_request = CallServiceMessageRequest::try_from(cs_message.payload()).unwrap();
+    let cs_message_request = CSMessageRequest::try_from(cs_message.payload()).unwrap();
 
-    let expected_data = CallServiceMessageRequest::new(
+    let expected_data = CSMessageRequest::new(
         NetworkAddress::new("nid", "somecontractaddress"),
         Addr::unchecked("somecontractaddress"),
         1,

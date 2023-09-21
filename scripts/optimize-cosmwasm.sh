@@ -54,7 +54,13 @@ cosmwasm-check artifacts/archway/cw_xcall_ibc_connection.wasm
 # Update version
 get_version() {
     local cargo_toml="contracts/cosmwasm-vm/$1/Cargo.toml"
-    grep -m 1 "version" "$cargo_toml" | awk -F '"' '{print $2}'
+    version=$(grep -m 1 "version" "$cargo_toml" | awk -F '"' '{print $2}')
+    if [ ! -z "$version" ];then
+        echo $version
+    else
+        # Echo version from root workspace Cargo.toml
+        echo $(grep -m 1 "version" Cargo.toml | awk -F '"' '{print $2}')
+    fi
 }
 
 # Rename filename with version in it
@@ -64,6 +70,7 @@ rename_wasm_with_version() {
     local wasm_file="artifacts/archway/${project_path//-/_}.wasm"
 
     if [[ -f "$wasm_file" ]]; then
+        cp "$wasm_file" "${wasm_file%.wasm}_latest.wasm"
         mv "$wasm_file" "${wasm_file%.wasm}_${version}.wasm"
         echo "Renamed: ${wasm_file} -> ${wasm_file%.wasm}_${version}.wasm"
     else
@@ -89,3 +96,13 @@ fi
 echo "$file : $size KB"
 done
 echo "The size of all contracts is well within the $MAX_WASM_SIZE KB limit."
+
+# if release build, remove unnecessary artifacts and make zip
+if [ "$1" == "release" ]; then
+     ls artifacts/archway/*.wasm \
+     | egrep -v '(cw_ibc_core_[0-9]+\.[0-9]+\.[0-9]+\.wasm$|cw_icon_light_client_[0-9]+\.[0-9]+\.[0-9]+\.wasm$|cw_xcall_ibc_connection_[0-9]+\.[0-9]+\.[0-9]+\.wasm$)' \
+     | xargs rm
+     zip -r artifacts/archway/cosmwasm-contracts.zip artifacts/archway/*.wasm -j
+
+fi
+

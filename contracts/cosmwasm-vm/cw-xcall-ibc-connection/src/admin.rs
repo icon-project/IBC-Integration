@@ -101,7 +101,7 @@ impl<'a> CwIbcConnection<'a> {
             });
         }
 
-        self.ensure_owner(store, &info)?;
+        self.ensure_admin(store, info.sender)?;
 
         self.admin()
             .update(store, |mut current_admin| -> Result<_, ContractError> {

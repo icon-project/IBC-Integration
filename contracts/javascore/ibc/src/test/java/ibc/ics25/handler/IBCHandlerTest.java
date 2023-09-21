@@ -10,6 +10,7 @@ import test.proto.core.channel.ChannelOuterClass.Packet;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -98,6 +99,23 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
 
         sendPacket();
         acknowledgePacket();
+    }
+
+    @Test  
+    @SuppressWarnings("unchecked")
+    void ackResponse_checkAckHeightSaved() throws Exception{
+
+        establishCommunication();
+
+        receivePacket();
+        Map<String, Long> ackHeights = (Map<String, Long>) handler.call("getAckHeights", portId, channelId, 0,10);        
+        assertEquals( ackHeights.keySet().size(), 0);
+
+
+        writeAcknowledgement();
+        ackHeights = (Map<String, Long>) handler.call("getAckHeights", portId, channelId, 0, 10);
+        assertEquals( ackHeights.keySet().size(), 1);
+        assertTrue(ackHeights.get("1") !=null, "ack height is not saved properly" );
     }
 
     @Test

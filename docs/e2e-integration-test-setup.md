@@ -95,9 +95,27 @@ export GOLOOP_IMAGE_ENV=goloop-icon
 export GOLOOP_IMAGE_TAG_ENV=latest
 ```
 
-#### 2. Execute the Test Suite
+#### 2. Run the Test Script
+
+Use the appropriate command to run the test suite. Depending on your specific testing requirements, you can use the following command:
+
+```bash
+./scripts/execute-test.sh [options]
+```
+
+Replace `[options]` with any command-line options or arguments that the test script supports. To view more details about available options and usage, run the following command:
+
+```bash
+./scripts/execute-test.sh --help
+```
+
+This will display the available options, explain how to use them, and provide additional information about running the tests.
+
+
+#### 3. Execute the Test Suite
 
 Depending on your specific testing requirements, employ the appropriate commands to run the test suite:
+
 
 - To execute the end-to-end tests:
 ```bash
