@@ -1,10 +1,8 @@
 name: Pre-release
 on:
   push:
-    branches:
-      - "**"
-    # tags:
-    #   - 'v*.*.*-alpha.*'
+    tags:
+      - 'v*.*.*-alpha.*'
 permissions:
   contents: write
   packages: write
@@ -26,7 +24,11 @@ jobs:
           ./gradlew clean build
           ./gradlew optimizedJar
           ./gradlew zipOutputOptimizedJars
- 
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: javascore-contracts
+          path: ./contracts/javascore/build/javascore-contracts.zip
   build_wasm:
     name: Build Cosmwasm Contracts
     runs-on: ubuntu-latest
@@ -35,30 +37,27 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: true
-      # - name: Install stable toolchain
-      #   uses: actions-rs/toolchain@v1
-      #   with:
-      #     toolchain: 1.69.0
-      #     target: wasm32-unknown-unknown
-      #     override: true
-      #     profile: minimal
-      # - name: Cache Rust dependencies
-      #   uses: Swatinem/rust-cache@v2
-      # - name: Compile WASM
-      #   run: |
-      #     rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
-      #     rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu     
-      #     bash ./scripts/optimize-cosmwasm.sh "release"
-      - run:
-          find ./ -type f -name '*.zip'
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.69.0
+          target: wasm32-unknown-unknown
+          override: true
+          profile: minimal
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+      - name: Compile WASM
+        run: |
+          rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
+          rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu     
+          bash ./scripts/optimize-cosmwasm.sh
+          cd artifacts/archway && zip -r ../../cosmwasm-contracts.zip . -j
           
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: artifacts
-          path: |
-            ./contracts/javascore/build/javascore-contracts.zip
-            ./artifacts/archway/cosmwasm-contracts.zip
+          name: cosmwasm-contracts
+          path: cosmwasm-contracts.zip
   release:
     name: Release and Publish
     runs-on: ubuntu-latest
@@ -71,44 +70,57 @@ jobs:
         run: |
           echo «::set-output name=date::$(date +'%Y-%m-%d')»
           echo «::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)»
-
-      - name: Download Artifacts
+      - name: Download Javascore Artifacts
         uses: actions/download-artifact@v2
         with:
-          name: artifacts
-          path: release-artifacts
+          name: javascore-contracts
+          path: javascore-contracts
 
-      - name: Generate Checksum
-        run: |
-            cd release-artifacts
-            find ./ -type f
-            unzip javascore-contracts.zip; unzip cosmwasm-contracts.zip; rm -rf *.zip; sha256sum * > sha256sum.txt
-            
+      - name: Download Cosmwasm Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: cosmwasm-contracts
+          path: cosmwasm-contracts
+
+      - name: Unzip Javascore Artifacts
+        run: unzip javascore-contracts/javascore-contracts.zip -d javascore-contracts && rm -rf javascore-contracts/javascore-contracts.zip
+
+      - name: Unzip Cosmwasm Artifacts
+        run: unzip cosmwasm-contracts/cosmwasm-contracts.zip -d cosmwasm-contracts && rm -rf cosmwasm-contracts/cosmwasm-contracts.zip
+
       - name: Changelog
         uses: scottbrenner/generate-changelog-action@master
         id: Changelog
         env:
           REPO: ${{ github.repository }}
 
-      # - name: Create Release
-      #   id: create_release
-      #   uses: actions/create-release@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-      #   with:
-      #     tag_name: ${{ github.ref }}
-      #     release_name: Prerelease ${{ github.ref }}
-      #     body: |
-      #       ${{ steps.Changelog.outputs.changelog }}
-      #     draft: false
-      #     prerelease: true
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Prerelease ${{ github.ref }}
+          body: |
+            ${{ steps.Changelog.outputs.changelog }}
+          draft: false
+          prerelease: true
 
-      # - name: Upload Javascore contracts to release
-      #   uses: svenstaro/upload-release-action@v2
-      #   with:
-      #     repo_token: ${{ secrets.GITHUB_TOKEN }}
-      #     file: ./release-artifacts/*
-      #     tag: ${{ github.ref }}
-      #     overwrite: true
-      #     file_glob: true
-      
+      - name: Upload Javascore contracts to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./javascore-contracts/*
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
+
+      - name: Upload Cosmwasm contracts to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./cosmwasm-contracts/*
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
