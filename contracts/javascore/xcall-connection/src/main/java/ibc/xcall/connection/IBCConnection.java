@@ -168,8 +168,9 @@ public class IBCConnection {
         String nid = networkIds.get(packet.getDestinationChannel());
         Context.require(nid != null, "Channel is not configured");
 
-        if (msg.getSn() == null)  {
-            Context.transfer(new Address(msg.getData()), msg.getFee());
+        if (msg.getSn() == null) {
+            String to = new String(msg.getData());
+            Context.transfer(Address.fromString(to), msg.getFee());
             return new byte[0];
         }
 
