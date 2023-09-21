@@ -147,7 +147,7 @@ mod tests {
             msg: CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: expected_ibc_host,
                 msg: to_binary(&expected_message).unwrap(),
-                funds: vec![coin(100, "ATOM")],
+                funds: vec![],
             }),
             gas_limit: None,
             reply_on: cosmwasm_std::ReplyOn::Always,
