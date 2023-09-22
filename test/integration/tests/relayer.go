@@ -3,6 +3,7 @@ package tests
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -148,13 +149,13 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context, relayer ibc.Relayer)
 		})
 
 		r.T.Run("single relay packet flow chainA-chainB", func(t *testing.T) {
-			response, err := r.SendPacket(ctx, chainA, chainB, "data", 1000, false)
+			response, err := r.SendPacket(ctx, chainA, chainB, "data", 1000)
 			assert.NoErrorf(t, err, "Error while sending package from chainA-chainB")
 			assert.Truef(t, response.IsPacketSent, "The packet has not been sent to the target chain.")
 			assert.Truef(t, response.IsPacketReceiptEventFound, "The packet event has not received on the target chain.")
 		})
 		r.T.Run("single relay packet flow chainB-chainA", func(t *testing.T) {
-			response, err := r.SendPacket(ctx, chainB, chainA, "data", 1000, false)
+			response, err := r.SendPacket(ctx, chainB, chainA, "data", 1000)
 			assert.NoErrorf(t, err, "Error while sending package from chainB-chainA")
 			assert.Truef(t, response.IsPacketSent, "The packet has not been sent to the target chain.")
 			assert.Truef(t, response.IsPacketReceiptEventFound, "The packet event has not received on the target chain.")
@@ -173,6 +174,24 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context, relayer ibc.Relayer)
 
 		r.T.Run("unordered packet test chainB-chainA", func(t *testing.T) {
 			r.PacketFlowTest(ctx, t, chainB, chainA, ibc.Unordered)
+		})
+
+		r.T.Run("send multiple packets on same ChainA height", func(t *testing.T) {
+			results, err := r.multiplePacketsOnSameHeight(ctx, chainA, chainB, 1000)
+			assert.NoErrorf(t, err, "Error while sending multiple package from chainA-chainB")
+			for packetNum, res := range results {
+				assert.Truef(t, res.IsPacketSent, "The packet has not been sent to the target chain - %d. ", packetNum)
+				assert.Truef(t, res.IsPacketReceiptEventFound, "The packet event has not received on the target chain -%d.", packetNum)
+			}
+		})
+
+		r.T.Run("send multiple packets on same ChainB height", func(t *testing.T) {
+			results, err := r.multiplePacketsOnSameHeight(ctx, chainB, chainA, 1000)
+			assert.NoErrorf(t, err, "Error while sending multiple package from chainB-chainA")
+			for packetNum, res := range results {
+				assert.Truef(t, res.IsPacketSent, "The packet has not been sent to the target chain - %d. ", packetNum)
+				assert.Truef(t, res.IsPacketReceiptEventFound, "The packet event has not received on the target chain -%d.", packetNum)
+			}
 		})
 	})
 
@@ -219,14 +238,14 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context, relayer ibc.Relayer)
 		})
 
 		r.T.Run("single relay packet flow chainA-chainB", func(t *testing.T) {
-			response, err := r.SendPacket(ctx, chainA, chainB, "data", 1000, false)
+			response, err := r.SendPacket(ctx, chainA, chainB, "data", 1000)
 			assert.NoErrorf(t, err, "Error while sending package from chainA-chainB")
 			assert.Truef(t, response.IsPacketSent, "The packet has not been sent to the target chain.")
 			assert.Truef(t, response.IsPacketReceiptEventFound, "The packet event has not received on the target chain.")
 		})
 
 		r.T.Run("single relay packet flow chainB-chainA", func(t *testing.T) {
-			response, err := r.SendPacket(ctx, chainB, chainA, "data", 1000, false)
+			response, err := r.SendPacket(ctx, chainB, chainA, "data", 1000)
 			assert.NoErrorf(t, err, "Error while sending package from chainB-chainA")
 			assert.Truef(t, response.IsPacketSent, "The packet has not been sent to the target chain.")
 			assert.Truef(t, response.IsPacketReceiptEventFound, "The packet event has not received on the target chain.")
@@ -239,20 +258,6 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context, relayer ibc.Relayer)
 		r.T.Run("ordered packet test chainB-chainA", func(t *testing.T) {
 			r.PacketFlowTest(ctx, t, chainB, chainA, ibc.Ordered)
 		})
-	})
-
-	r.T.Run("send multiple packets on same ChainA height", func(t *testing.T) {
-		chainA, chainB := r.GetChains()
-		height, err := chainA.(ibc.Chain).Height(ctx)
-		r.Require().NoError(err)
-		r.Require().NoError(r.multiplePacketsOnSameHeight(chainA, chainB, height+100, 5))
-	})
-
-	r.T.Run("send multiple packets on same ChainB height", func(t *testing.T) {
-		chainA, chainB := r.GetChains()
-		height, err := chainB.(ibc.Chain).Height(ctx)
-		r.Require().NoError(err)
-		r.Require().NoError(r.multiplePacketsOnSameHeight(chainB, chainA, height+100, 5))
 	})
 }
 
@@ -271,7 +276,7 @@ func (r *RelayerTestSuite) PacketFlowTest(ctx context.Context, t *testing.T, src
 	assert.Falsef(t, isPacketReceived, "The packet event has received on the target chain.\n%v\n", packet)
 
 	msg := "new-message"
-	response, err := r.SendPacket(ctx, src, target, msg, 1000, false) //new packet
+	response, err := r.SendPacket(ctx, src, target, msg, 1000) //new packet
 	if order == ibc.Ordered {
 		assert.Errorf(t, err, "Error on sending packet (%s): %v", msg, err)
 		assert.Falsef(t, response.IsPacketReceiptEventFound, "The packet event has been received on the target chain.")
@@ -316,7 +321,7 @@ func (r *RelayerTestSuite) RelayerCrashTest(ctx context.Context, chainA, chainB 
 
 	// check if relay is working as expected with ping pong to cross chain
 	msg := "new-message"
-	response, err := r.SendPacket(ctx, chainA, chainB, msg, 1000, false)
+	response, err := r.SendPacket(ctx, chainA, chainB, msg, 100)
 	assert.NoErrorf(r.T, err, "Error on sending packet (%s) %v", msg, err)
 	assert.Truef(r.T, response.IsPacketSent, "The packet has not been sent to the target chain.")
 	assert.Truef(r.T, response.IsPacketReceiptEventFound, "The packet event has NOT been received on the target chain.")
@@ -344,7 +349,7 @@ func (r *RelayerTestSuite) handleCrashAndSendPacket(ctx context.Context, src cha
 	r.T.Logf("crashed at: %s %d", chainID, crashedHeight)
 	// send packet from src to target crashed node and check if it is received
 	var msg = fmt.Sprintf("data-%s", chainID)
-	response, _ := r.SendPacket(ctx, src, target, msg, 1000000, false)
+	response, _ := r.SendPacket(ctx, src, target, msg, 1000000)
 	packet := response.Packet
 	assert.NotEqualf(r.T, types.Packet{}, packet, "packet is empty")
 	assert.Truef(r.T, response.IsPacketSent, "The packet has not been sent to the target chain.")
@@ -376,17 +381,27 @@ func findPacket(ctx context.Context, chain chains.Chain, params map[string]inter
 	}
 }
 
-func (r *RelayerTestSuite) multiplePacketsOnSameHeight(src, dst chains.Chain, height uint64, numPackets uint) error {
-	ctx := context.Background()
-	res, err := r.SendPacket(ctx, src, dst, fmt.Sprintf("test-%d", numPackets), height, true)
-	if err != nil {
-		return err
+func (r *RelayerTestSuite) multiplePacketsOnSameHeight(ctx context.Context, src, dst chains.Chain, height uint64) (map[int]chains.PacketTransferResponse, error) {
+	var wg sync.WaitGroup
+	var err error
+	var mu sync.Mutex
+	results := make(map[int]chains.PacketTransferResponse)
+
+	for i := 0; i < 2; i++ {
+		wg.Add(1)
+		go func(numPackets int) {
+			defer wg.Done()
+			var res chains.PacketTransferResponse
+			res, err = r.SendPacket(ctx, src, dst, fmt.Sprintf("test-%d", numPackets), height)
+			if err != nil {
+				err = fmt.Errorf("Error on %d: %v\n", numPackets, err)
+				return
+			}
+			mu.Lock()
+			results[numPackets] = res
+			mu.Unlock()
+		}(i)
 	}
-	if !res.IsPacketSent {
-		return fmt.Errorf("packet not sent")
-	}
-	if numPackets == 0 {
-		return nil
-	}
-	return r.multiplePacketsOnSameHeight(src, dst, height, numPackets-1)
+	wg.Wait()
+	return results, err
 }
