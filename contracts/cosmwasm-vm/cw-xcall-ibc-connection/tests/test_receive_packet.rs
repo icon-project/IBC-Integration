@@ -9,9 +9,9 @@ use cosmwasm_std::{
 };
 
 use cw_xcall::types::{
-    message::CallServiceMessage,
-    request::CallServiceMessageRequest,
-    response::CallServiceMessageResponse,
+    message::CSMessage,
+    request::CSMessageRequest,
+    response::CSMessageResponse,
     rlp::{self},
 };
 use cw_xcall_ibc_connection::{
@@ -36,7 +36,7 @@ fn test_receive_packet_for_call_message_request() {
         .set_xcall_host(mock_deps.as_mut().storage, Addr::unchecked("xcallhost"))
         .unwrap();
 
-    let data = CallServiceMessageRequest::new(
+    let data = CSMessageRequest::new(
         NetworkAddress::new("nid", mock_info.sender.as_str()),
         Addr::unchecked(alice().to_string()),
         1,
@@ -45,7 +45,7 @@ fn test_receive_packet_for_call_message_request() {
         vec![],
     );
 
-    let message: CallServiceMessage = data.try_into().unwrap();
+    let message: CSMessage = data.try_into().unwrap();
     let message: Message = Message {
         sn: common::rlp::Nullable::new(Some(0)),
         fee: 0,
@@ -90,12 +90,12 @@ fn test_receive_packet_for_call_message_response() {
     contract
         .set_xcall_host(mock_deps.as_mut().storage, Addr::unchecked("xcallhost"))
         .unwrap();
-    let data = CallServiceMessageResponse::new(
+    let data = CSMessageResponse::new(
         1,
         cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
     );
 
-    let message: CallServiceMessage = data.try_into().unwrap();
+    let message: CSMessage = data.try_into().unwrap();
     let message: Message = Message {
         sn: common::rlp::Nullable::new(Some(0)),
         fee: 0,

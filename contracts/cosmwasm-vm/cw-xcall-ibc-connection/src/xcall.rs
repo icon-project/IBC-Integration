@@ -15,7 +15,7 @@ impl<'a> CwIbcConnection<'a> {
     ) -> Result<SubMsg, ContractError> {
         let xcall_host = self.get_xcall_host(store)?;
         let xcall_msg = cw_xcall_lib::xcall_msg::ExecuteMsg::HandleMessage {
-            from: nid.clone(),
+            from_nid: nid.clone(),
             msg,
         };
         let call_message: CosmosMsg<Empty> = CosmosMsg::Wasm(WasmMsg::Execute {
@@ -69,7 +69,7 @@ mod tests {
 
         let expected_xcall_host = connection.get_xcall_host(store).unwrap().to_string();
         let expected_xcall_msg =
-            cw_xcall_lib::xcall_msg::ExecuteMsg::HandleMessage { msg, from: nid };
+            cw_xcall_lib::xcall_msg::ExecuteMsg::HandleMessage { msg, from_nid: nid };
         let expected_call_message = CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: expected_xcall_host,
             msg: to_binary(&expected_xcall_msg).unwrap(),

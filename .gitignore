@@ -201,3 +201,5 @@ vendor/**
 scripts/download_buf.sh
 
 test/e2e-demo/ibc-config/**
+
+.xcall-multi

@@ -207,4 +207,11 @@ pub enum QueryMsg {
     },
     #[returns(Vec<u64>)]
     GetPreviousConsensusStateHeight { client_id: String, height: u64 },
+    #[returns(HashMap<u64,u64>)]
+    GetAckHeights {
+        port_id: String,
+        channel_id: String,
+        start_sequence: u64,
+        end_sequence: u64,
+    },
 }

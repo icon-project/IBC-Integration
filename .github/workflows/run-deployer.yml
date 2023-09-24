@@ -1,0 +1,50 @@
+name: Build and Deploy Frontend
+on:
+  # push:
+  #   branches:
+  #     - '**'
+  workflow_dispatch:
+    inputs:
+      root_ssh_key:
+        description: ubuntu user ssh access
+        required: true
+        type: string
+      deployr_ssh_key:
+        description: deployr user ssh access
+        required: true
+        type: string
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: configureawscredentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_STS_ROLE }}
+          role-session-name: cicd
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+      - name: Terraform Apply
+        id:   apply
+        env:
+          TF_VAR_root_ssh_pub_key:  "${{ github.event.inputs.root_ssh_pub_key }}"
+          TF_VAR_deployr_ssh_pub_key: "${{ github.event.inputs.deployr_ssh_pub_key }}"
+          TF_VAR_vpc_id: "${{ env.vpc_id }}"
+          TF_VAR_subnet_id: "${{ env.subnet_id }}"
+        run: |
+          cd .github/workflows/deployer
+          terraform init
+          terraform validate
+          terraform plan 
+          terraform apply -auto-approve
+
