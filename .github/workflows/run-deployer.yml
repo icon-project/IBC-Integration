@@ -42,6 +42,8 @@ jobs:
           TF_VAR_vpc_id: "${{ env.vpc_id }}"
           TF_VAR_subnet_id: "${{ env.subnet_id }}"
         run: |
+          ls
+          pwd
           cd .github/workflows/deployer
           terraform init
           terraform validate
