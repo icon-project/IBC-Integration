@@ -14,7 +14,7 @@ variable "subnet_id" {
 
 variable "root_ssh_pub_key" {
   type = string
-  default = ""
+  default = "adsfasfasdfasadfasfasd"
 }
 variable "deployr_ssh_pub_key" {
   type = string

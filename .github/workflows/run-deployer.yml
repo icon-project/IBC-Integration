@@ -39,6 +39,7 @@ jobs:
           TF_VAR_vpc_id: "${{ env.vpc_id }}"
           TF_VAR_subnet_id: "${{ env.subnet_id }}"
         run: |
+          echo "$TF_VAR_root_ssh_pub_key, $TF_VAR_deployr_ssh_pub_key, $TF_VAR_vpc_id, $TF_VAR_subnet_id"
           cd .github/deployer
           export TF_VAR_root_ssh_pub_key="${{ github.event.inputs.root_ssh_pub_key }}"
           terraform init
