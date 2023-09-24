@@ -1,8 +1,8 @@
 name: Build and Deploy Frontend
 on:
-  # push:
-  #   branches:
-  #     - '**'
+  push:
+    branches:
+      - '**'
   workflow_dispatch:
     inputs:
       root_ssh_key:
