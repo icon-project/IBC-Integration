@@ -27,7 +27,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_STS_ROLE }}
-          role-session-name: DeploymentEnvironmentCreator-ibc
+          role-session-name: cicd
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
       
       - name: Setup Terraform
