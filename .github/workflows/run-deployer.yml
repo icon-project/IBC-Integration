@@ -36,11 +36,12 @@ jobs:
         env:
           TF_VAR_root_ssh_pub_key:  "${{ github.event.inputs.root_ssh_pub_key }}"
           TF_VAR_deployr_ssh_pub_key: "${{ github.event.inputs.deployr_ssh_pub_key }}"
-          TF_VAR_vpc_id: "${{ env.vpc_id }}"
-          TF_VAR_subnet_id: "${{ env.subnet_id }}"
+          TF_VAR_vpc_id: "${{ env.VPC_ID }}"
+          TF_VAR_subnet_id: "${{ env.SUBNET_ID }}"
         run: |
           echo "$TF_VAR_root_ssh_pub_key, $TF_VAR_deployr_ssh_pub_key, $TF_VAR_vpc_id, $TF_VAR_subnet_id"
           cd .github/deployer
+          echo "$TF_VAR_root_ssh_pub_key" > id_rsa.pub
           export TF_VAR_root_ssh_pub_key="${{ github.event.inputs.root_ssh_pub_key }}"
           terraform init
           terraform validate

@@ -14,7 +14,7 @@ variable "subnet_id" {
 
 variable "root_ssh_pub_key" {
   type = string
-  default = "adsfasfasdfasadfasfasd"
+  default = ""
 }
 variable "deployr_ssh_pub_key" {
   type = string
@@ -23,6 +23,12 @@ variable "deployr_ssh_pub_key" {
 
 data "template_file" "init_script" {
   template = file("init_script.sh") 
+}
+
+resource "aws_key_pair" "deployer_root_key" {
+  key_name = "deployer_root_key"
+  public_key = public_key = file("./id_rsa.pub")
+  
 }
 
 data "aws_ami" "ubuntu" {
@@ -42,7 +48,7 @@ owners = ["099720109477"]
 resource "aws_instance" "ibc-deployer" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro" 
-  key_name      = "root_ssh_pub_key"
+  key_name      = "deployer_root_key"
 
   subnet_id             = var.subnet_id
 
