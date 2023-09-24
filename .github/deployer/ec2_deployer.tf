@@ -27,7 +27,7 @@ data "template_file" "init_script" {
 
 resource "aws_key_pair" "deployer_root_key" {
   key_name = "deployer_root_key"
-  public_key = public_key = file("./id_rsa.pub")
+  public_key = file("./id_rsa.pub")
   
 }
 
