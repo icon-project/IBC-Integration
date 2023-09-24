@@ -1,8 +1,8 @@
 name: Build and Deploy Frontend
 on:
-  # push:
-  #   branches:
-  #     - '**'
+  push:
+    branches:
+      - '**'
   workflow_dispatch:
     inputs:
       root_ssh_key:
@@ -42,7 +42,9 @@ jobs:
           TF_VAR_vpc_id: "${{ env.vpc_id }}"
           TF_VAR_subnet_id: "${{ env.subnet_id }}"
         run: |
-          cd .github/workflows/deployer
+          ls
+          pwd
+          cd .github/deployer
           terraform init
           terraform validate
           terraform plan 
