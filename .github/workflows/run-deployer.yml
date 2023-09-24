@@ -1,18 +1,18 @@
 name: Build and Deploy Frontend
 on:
-  push:
-    branches:
-      - '**'
-  # workflow_dispatch:
-  #   inputs:
-  #     root_ssh_key:
-  #       description: ubuntu user ssh access
-  #       required: true
-  #       type: string
-  #     deployr_ssh_key:
-  #       description: deployr user ssh access
-  #       required: true
-  #       type: string
+  # push:
+  #   branches:
+  #     - '**'
+  workflow_dispatch:
+    inputs:
+      root_ssh_key:
+        description: ubuntu user ssh access
+        required: true
+        type: string
+      deployr_ssh_key:
+        description: deployr user ssh access
+        required: true
+        type: string
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -42,7 +42,7 @@ jobs:
           TF_VAR_vpc_id: "${{ env.vpc_id }}"
           TF_VAR_subnet_id: "${{ env.subnet_id }}"
         run: |
-          cd .github/workflows
+          cd .github/workflows/deployer
           terraform init
           terraform validate
           terraform plan 
