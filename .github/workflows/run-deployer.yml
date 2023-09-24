@@ -44,7 +44,7 @@ jobs:
         run: |
           ls
           pwd
-          cd .github/workflows/deployer
+          cd .github/deployer
           terraform init
           terraform validate
           terraform plan 
