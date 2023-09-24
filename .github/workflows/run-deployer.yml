@@ -1,15 +1,15 @@
 name: Build and Deploy Frontend
-
-workflow_dispatch:
-  inputs:
-    root_ssh_key:
-      description: ubuntu user ssh access
-      required: true
-      type: string
-    deployr_ssh_key:
-      description: deployr user ssh access
-      required: true
-      type: string
+on:
+  workflow_dispatch:
+    inputs:
+      root_ssh_key:
+        description: ubuntu user ssh access
+        required: true
+        type: string
+      deployr_ssh_key:
+        description: deployr user ssh access
+        required: true
+        type: string
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -34,9 +34,10 @@ jobs:
       - name: Terraform Apply
         id:   apply
         env:
-          TF_VAR_root_ssh_key:  "${{ github.event.inputs.root_ssh_pub_key }}"
+          TF_VAR_root_ssh_pub_key:  "${{ github.event.inputs.root_ssh_pub_key }}"
           TF_VAR_deployr_ssh_pub_key: "${{ github.event.inputs.deployr_ssh_pub_key }}"
-
+          TF_VAR_vpc_id: "${{ env.vpc_id }}"
+          TF_VAR_subnet_id: "${{ env.subnet_id }}"
         run: |
           cd .github/workflows
           terraform init
