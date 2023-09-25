@@ -75,7 +75,7 @@ echo "$SSH_PUBKEY" > $${DEPLOYR_HOME}/.ssh/authorized_keys
 
 ## Don't show Cipher text in the log
 set +x
-echo "$CIPHER_TEXT" | base64 -d > /opt/deployer/root/.cipher_text
+echo -n "$CIPHER_TEXT" | base64 -d > /opt/deployer/root/.cipher_text
 set -x
 
 cd /tmp
@@ -87,8 +87,8 @@ tar xf go$${GO_VERS}.linux-amd64.tar.gz -C /usr/local
 wget https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.18%2B10/OpenJDK11U-jdk_x64_linux_hotspot_$${JAVA_VERS}.tar.gz
 tar xf OpenJDK11U-jdk_x64_linux_hotspot_$${JAVA_VERS}.tar.gz -C /opt/java
 
-# Install goloop
-go install github.com/icon-project/goloop/cmd/goloop@latest
+# Install goloop; use an absolute path since the new PATH has not been sourced.
+/usr/local/go/bin/go install github.com/icon-project/goloop/cmd/goloop@latest
 
 # Install archway
 wget https://github.com/archway-network/archway/releases/download/v$${ARCHWAY_VERS}/archway_$${ARCHWAY_VERS}_linux_amd64.tar.gz
@@ -111,11 +111,11 @@ deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/deploy.sh
 deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/check-paramener.sh' > /etc/sudoers.d/deployr_sudo_commands
 
 # Create Aliases for the user 'deployr'
-echo '## Aliases
+echo "## Aliases
 alias fetch-walletkeys='sudo /opt/deployer/bin/fetch_keys.sh'
 alias pull-deploy-script='sudo /opt/deployer/bin/update_git.sh'
 alias check-env='sudo /opt/deployer/bin/check-paramener.sh'
-alias make='sudo /opt/deployer/bin/deploy.sh'' >> $${DEPLOYR_HOME}/.bashrc
+alias make='sudo /opt/deployer/bin/deploy.sh'" >> $${DEPLOYR_HOME}/.bashrc
 
 
 
