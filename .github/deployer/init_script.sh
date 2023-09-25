@@ -17,6 +17,7 @@ sysctl -p
 apt-get update
 apt-get upgrade -y
 
+cat << 'EOF' >> /etc/profile
 # Setup ENV and command history loging
 echo '# Export ICON node environment
 export GOROOT=/usr/local/go
@@ -30,7 +31,9 @@ export TMOUT
 
 # Log shell commands
 # Set PROMPT_COMMAND to log every command to syslog
-PROMPT_COMMAND='history -a >(logger -t "[$USER] $SSH_CONNECTION")'' >> /etc/profile
+PROMPT_COMMAND='history -a >(logger -t "[$USER] $SSH_CONNECTION")''
+EOF
+
 
 # Configure auditd
 echo '-a always,exit -F arch=b64 -S execve -k command-exec
@@ -47,13 +50,16 @@ mkdir -p /opt/deployer/root/{keystore,keyutils}
 
 # Clone repo
 cd /opt/deployer/root/ && git clone https://github.com/izyak/icon-ibc.git
+cd icon-ibc
+git checkout lisbon
+cd ..
 cp -r icon-ibc/deployer/* /opt/deployer
 
 # Create user & configure ssh access
 useradd -m -d ${DEPLOYR_HOME} -s /bin/bash deployr
 mkdir ${DEPLOYR_HOME}/.ssh
-echo "$SSH_PUBKEY" | base64 -d > ${DEPLOYR_HOME}/.ssh/authorized_keys
-echo "$CIPHER_TEXT" | base64 -d > /opt/deployer/root/.cipher_text
+echo "$SSH_PUBKEY" > ${DEPLOYR_HOME}/.ssh/authorized_keys
+echo "$CIPHER_TEXT" > /opt/deployer/root/.cipher_text
 # Create Aliases for the user 'deployr'
 echo '## Aliases
 alias fetch-walletkeys='sudo /opt/deployer/bin/fetch_keys.sh'
