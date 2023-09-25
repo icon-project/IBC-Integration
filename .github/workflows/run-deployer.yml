@@ -1,4 +1,4 @@
-name: Build and Deploy Frontend
+name: Setup Deployment Machine
 on:
   workflow_dispatch:
     inputs:
