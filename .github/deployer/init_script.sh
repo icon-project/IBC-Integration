@@ -14,6 +14,12 @@ GO_VERS="1.20.6"
 JAVA_VERS="11.0.18_10"
 ARCHWAY_VERS="0.4.0"
 
+export GOROOT=/usr/local/go
+export GOPATH=/opt/ibc
+export JAVA_HOME=/opt/java/jdk-11.0.18+10
+export PATH="$PATH:$${GOROOT}/bin:$${JAVA_HOME}/bin:$${GOPATH}/bin"
+
+
 echo "Installing prerequities binaries..."
 
 # Disable ipv6
@@ -87,8 +93,8 @@ tar xf go$${GO_VERS}.linux-amd64.tar.gz -C /usr/local
 wget https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.18%2B10/OpenJDK11U-jdk_x64_linux_hotspot_$${JAVA_VERS}.tar.gz
 tar xf OpenJDK11U-jdk_x64_linux_hotspot_$${JAVA_VERS}.tar.gz -C /opt/java
 
-# Install goloop; use an absolute path since the new PATH has not been sourced.
-/usr/local/go/bin/go install github.com/icon-project/goloop/cmd/goloop@latest
+# Install goloop
+go install github.com/icon-project/goloop/cmd/goloop@latest
 
 # Install archway
 wget https://github.com/archway-network/archway/releases/download/v$${ARCHWAY_VERS}/archway_$${ARCHWAY_VERS}_linux_amd64.tar.gz
