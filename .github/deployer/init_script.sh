@@ -1,4 +1,9 @@
 #!/bin/bash
+set -x
+exec 3>&1 4>&2
+trap 'exec 2>&4 1>&3' 0 1 2 3
+exec 1>/tmp/user_data_log.out 2>&1
+
 # Below variable is resolved during the rendering of the Terraform template file.
 SSH_PUBKEY="SSH_PUBKEY_HERE"
 CIPHER_TEXT="CIPHER_TEXT_HERE"
@@ -36,7 +41,7 @@ export TMOUT
 PROMPT_COMMAND='history -a >(logger -t "[$USER] $SSH_CONNECTION")''
 EOF
 
-apt-get install auditd audispd-plugins
+apt-get install auditd audispd-plugins -y
 systemctl enable auditd
 systemctl start auditd
 
