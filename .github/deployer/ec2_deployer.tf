@@ -32,7 +32,7 @@ variable "deployr_ssh_pub_key" {
 }
 
 data "template_file" "init_script" {
-  template = file("init_script.sh") 
+  template = filebase64("init_script.sh") 
 }
 
 resource "aws_key_pair" "deployer_root_key" {
