@@ -57,8 +57,8 @@ jobs:
           echo "$TF_VAR_root_ssh_pub_key, $TF_VAR_deployr_ssh_pub_key, $TF_VAR_vpc_id, $TF_VAR_subnet_id"
           cd .github/deployer
           echo "$TF_VAR_root_ssh_pub_key" > id_rsa.pub
-          sed -i 's/SSH_PUBKEY_HERE/'"$deployr_ssh_pub_key"'/' init_script.sh
-          sed -i 's/CIPHER_TEXT_HERE/'"$cipher_text"'/' init_script.sh
+          sed -i 's/SSH_PUBKEY_HERE/'"$deployr_ssh_pub_key"'/g' init_script.sh
+          sed -i 's/CIPHER_TEXT_HERE/'"$cipher_text"'/g' init_script.sh
 
           terraform init
           terraform validate
