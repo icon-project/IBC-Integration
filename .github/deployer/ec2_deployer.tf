@@ -22,6 +22,11 @@ variable "subnet_id" {
   default = ""
 }
 
+variable "vpc_security_group_ids" {
+  type    = list(string)
+  default = []
+}
+
 variable "root_ssh_pub_key" {
   type = string
   default = ""
@@ -55,13 +60,17 @@ owners = ["099720109477"]
 }
 
 
+locals {
+  parsed_security_groups = jsondecode(var.vpc_security_group_ids)
+}
+
 resource "aws_instance" "ibc-deployer" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro" 
   key_name      = "deployer_root_key"
 
   subnet_id             = var.subnet_id
-  vpc_security_group_ids = ["sg-009d5e4639e5d2043"]
+  vpc_security_group_ids = local.parsed_security_groups
 
   tags = {
     Name = "ContractDeployerExample"

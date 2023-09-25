@@ -53,7 +53,8 @@ jobs:
           TF_VAR_vpc_id: "${{ secrets.VPC_ID }}"
           TF_VAR_subnet_id: "${{ secrets.SUBNET_ID }}"
           deploy_script_branch: "${{ github.event.inputs.deploy_script_branch }}"
-          
+          TF_VAR_vpc_security_group_ids: "${{ secrets.SECURITY_GROUP_ID }}"
+
         run: |
           echo "$TF_VAR_root_ssh_pub_key, $TF_VAR_deployr_ssh_pub_key, $TF_VAR_vpc_id, $TF_VAR_subnet_id"
           cd .github/deployer
