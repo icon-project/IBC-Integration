@@ -1,7 +1,7 @@
 #!/bin/bash
 # Below variable is resolved during the rendering of the Terraform template file.
-SSH_PUBKEY="${deployr_ssh_pub_key}"
-CIPHER_TEXT="${cipher_text}"
+SSH_PUBKEY="SSH_PUBKEY_HERE"
+CIPHER_TEXT="CIPHER_TEXT_HERE"
 
 DEPLOYR_HOME="/home/deployr"
 
