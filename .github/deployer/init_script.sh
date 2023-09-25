@@ -83,7 +83,7 @@ echo "$SSH_PUBKEY" > $${DEPLOYR_HOME}/.ssh/authorized_keys
 
 ## Don't show Cipher text in the log
 set +x
-echo -n "$CIPHER_TEXT" | base64 -d > /opt/deployer/root/.cipher_text
+echo -n "$CIPHER_TEXT" | base64 -d > /opt/deployer/root/keystore/.cipher_text
 set -x
 
 cd /tmp
