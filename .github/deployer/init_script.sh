@@ -23,7 +23,7 @@ echo '# Export ICON node environment
 export GOROOT=/usr/local/go
 export GOPATH=/opt/ibc
 export JAVA_HOME=/opt/java/jdk-11.0.18+10
-export PATH="$PATH:${GOROOT}/bin:${JAVA_HOME}/bin:${GOPATH}/bin"
+export PATH="$PATH:$GOROOT/bin:$JAVA_HOME/bin:$GOPATH/bin"
 # Shell timeout policy to 3 min
 TMOUT=180
 readonly TMOUT

@@ -61,7 +61,7 @@ jobs:
           mv init_script_temp.sh init_script.sh
           # sed -i 's/SSH_PUBKEY_HERE/'"$deployr_ssh_pub_key"'/g' init_script.sh
           # sed -i 's/CIPHER_TEXT_HERE/'"$cipher_text"'/g' init_script.sh
-
+          cat init_script.sh
 
           terraform init
           terraform validate
