@@ -61,8 +61,9 @@ jobs:
           cipher_text=$(echo "${{ github.event.inputs.cipher_text }}" | base64)
           echo $deployr_ssh_pub_key
           echo $cipher_text
-          sed -i 's@SSH_PUBKEY_HERE@'"$deployr_ssh_pub_key"'@g' init_script.sh
-          sed -i 's@CIPHER_TEXT_HERE@'"$cipher_text"'@g' init_script.sh
+          sed -i -e "s/SSH_PUBKEY_HERE/${deployr_ssh_pub_key}/g" init_script.sh
+        
+          
 
 
           terraform init
