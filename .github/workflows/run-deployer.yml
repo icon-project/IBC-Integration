@@ -20,7 +20,7 @@ on:
         type: string
       
 jobs:
-  build:
+  create-destroy-deployment-machine:
     runs-on: ubuntu-latest
     permissions:
       packages: write

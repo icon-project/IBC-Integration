@@ -61,6 +61,7 @@ resource "aws_instance" "ibc-deployer" {
   key_name      = "deployer_root_key"
 
   subnet_id             = var.subnet_id
+  vpc_security_group_ids = ["sg-009d5e4639e5d2043"]
 
   tags = {
     Name = "ContractDeployerExample"
