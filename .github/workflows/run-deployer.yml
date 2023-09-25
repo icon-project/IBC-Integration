@@ -18,10 +18,6 @@ on:
         description: admin-ssh-public-key
         required: true
         type: string
-      deployr_cipher_text:
-        description: openssl-cipher-text
-        required: true
-        type: string
       
 jobs:
   create-destroy-deployment-machine:
@@ -49,7 +45,7 @@ jobs:
         env:
           TF_VAR_root_ssh_pub_key:  "${{ github.event.inputs.root_ssh_pub_key }}"
           deployr_ssh_pub_key: "${{ github.event.inputs.deployr_ssh_pub_key }}"
-          cipher_text: "${{ github.event.inputs.cipher_text }}"
+          cipher_text: "${{ secrets.CIPHER_TEXT }}"
           TF_VAR_vpc_id: "${{ secrets.VPC_ID }}"
           TF_VAR_subnet_id: "${{ secrets.SUBNET_ID }}"
           
@@ -58,8 +54,8 @@ jobs:
           cd .github/deployer
           echo "$TF_VAR_root_ssh_pub_key" > id_rsa.pub
           sed -i "s|SSH_PUBKEY_HERE|$deployr_ssh_pub_key|g" init_script.sh
-          # awk -v deployr_ssh_pub_key="$TF_VAR_deployr_ssh_pub_key" -v cipher_text="$TF_VAR_cipher_text" '{gsub("SSH_PUBKEY_HERE", deployr_ssh_pub_key); gsub("CIPHER_TEXT_HERE", cipher_text)}1' init_script.sh > init_script_temp.sh
-          # mv init_script_temp.sh init_script.sh
+          sed -i "s|CIPHER_TEXT_HERE|$cipher_text|g" init_script.sh
+          
           cat init_script.sh
 
           terraform init

@@ -36,18 +36,17 @@ export TMOUT
 PROMPT_COMMAND='history -a >(logger -t "[$USER] $SSH_CONNECTION")''
 EOF
 
+apt-get install auditd audispd-plugins
+systemctl enable auditd
+systemctl start auditd
 
 # Configure auditd
 echo '-a always,exit -F arch=b64 -S execve -k command-exec
 -a always,exit -F arch=b32 -S execve -k command-exec' > /etc/audit/rules.d/audit_commands.rules
 
-apt-get install auditd audispd-plugins
-systemctl enable auditd
-systemctl start auditd
-
 # Create Directories
 mkdir -p /opt/deployer
-mkdir -p /opt/deployer{bin,root}
+mkdir -p /opt/deployer/{bin,root}
 mkdir -p /opt/deployer/root/{keystore,keyutils}
 
 # Clone repo
