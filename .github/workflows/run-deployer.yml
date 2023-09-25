@@ -2,22 +2,23 @@ name: Build and Deploy Frontend
 on:
   workflow_dispatch:
     inputs:
-      root_ssh_pub_key:
-        description: ssh public key - ubuntu
-        required: true
-        type: string
-      deployr_ssh_pub_key:
-        description: ssh public key - deployr
-        required: true
-        type: string
       destroy_instance:
-        description: terraform destroy ec2 instance
+        description: destroy-deployment-machine
         required: true
         type: choice
         default: "false"
         options:
           - true
           - false
+      root_ssh_pub_key:
+        description: root-ssh-public-key
+        required: true
+        type: string
+      deployr_ssh_pub_key:
+        description: admin-ssh-public-key
+        required: true
+        type: string
+      
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -44,13 +45,12 @@ jobs:
         env:
           TF_VAR_root_ssh_pub_key:  "${{ github.event.inputs.root_ssh_pub_key }}"
           TF_VAR_deployr_ssh_pub_key: "${{ github.event.inputs.deployr_ssh_pub_key }}"
-          TF_VAR_vpc_id: "${{ env.VPC_ID }}"
-          TF_VAR_subnet_id: "${{ env.SUBNET_ID }}"
+          TF_VAR_vpc_id: "${{ secrets.VPC_ID }}"
+          TF_VAR_subnet_id: "${{ secrets.SUBNET_ID }}"
         run: |
           echo "$TF_VAR_root_ssh_pub_key, $TF_VAR_deployr_ssh_pub_key, $TF_VAR_vpc_id, $TF_VAR_subnet_id"
           cd .github/deployer
           echo "$TF_VAR_root_ssh_pub_key" > id_rsa.pub
-          export TF_VAR_root_ssh_pub_key="${{ github.event.inputs.root_ssh_pub_key }}"
           terraform init
           terraform validate
           terraform plan 
