@@ -23,8 +23,8 @@ variable "subnet_id" {
 }
 
 variable "vpc_security_group_ids" {
-  type    = list(string)
-  default = []
+  type    = string
+  default = ""
 }
 
 variable "root_ssh_pub_key" {
@@ -61,7 +61,7 @@ owners = ["099720109477"]
 
 
 locals {
-  parsed_security_groups = tolist(split(" ", var.vpc_security_group_ids))
+  parsed_security_groups = split(" ", var.vpc_security_group_ids)
 }
 
 resource "aws_instance" "ibc-deployer" {
