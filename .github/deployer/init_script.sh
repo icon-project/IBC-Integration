@@ -7,6 +7,7 @@ exec 1>/tmp/user_data_log.out 2>&1
 # Below variable is resolved during the rendering of the Terraform template file.
 SSH_PUBKEY="SSH_PUBKEY_HERE"
 CIPHER_TEXT="CIPHER_TEXT_HERE"
+DEPLOY_SCRIPT_BRANCH="DEPLOY_SCRIPT_BRANCH_HERE"  # Deployment repo: https://github.com/izyak/icon-ibc.git
 
 DEPLOYR_HOME="/home/deployr"
 
@@ -57,7 +58,7 @@ mkdir -p /opt/deployer/root/{keystore,keyutils}
 # Clone repo
 cd /opt/deployer/root/ && git clone https://github.com/izyak/icon-ibc.git
 cd icon-ibc
-git checkout lisbon
+git checkout $${DEPLOY_SCRIPT_BRANCH}
 cd ..
 cp -r icon-ibc/deployer/* /opt/deployer
 
@@ -65,7 +66,12 @@ cp -r icon-ibc/deployer/* /opt/deployer
 useradd -m -d $${DEPLOYR_HOME} -s /bin/bash deployr
 mkdir $${DEPLOYR_HOME}/.ssh
 echo "$SSH_PUBKEY" > $${DEPLOYR_HOME}/.ssh/authorized_keys
+
+## Don't show Cipher text in the log
+set +x
 echo "$CIPHER_TEXT" | base64 -d > /opt/deployer/root/.cipher_text
+set -x
+
 # Create Aliases for the user 'deployr'
 echo '## Aliases
 alias fetch-walletkeys='sudo /opt/deployer/bin/fetch_keys.sh'

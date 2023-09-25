@@ -18,6 +18,10 @@ on:
         description: admin-ssh-public-key
         required: true
         type: string
+      deploy_script_branch:
+        description: deployment-script-branch 
+        type: string
+        default: "testnet"
       
 jobs:
   create-destroy-deployment-machine:
@@ -48,6 +52,7 @@ jobs:
           cipher_text: "${{ secrets.CIPHER_TEXT }}"
           TF_VAR_vpc_id: "${{ secrets.VPC_ID }}"
           TF_VAR_subnet_id: "${{ secrets.SUBNET_ID }}"
+          deploy_script_branch: "${{ github.event.inputs.deploy_script_branch }}"
           
         run: |
           echo "$TF_VAR_root_ssh_pub_key, $TF_VAR_deployr_ssh_pub_key, $TF_VAR_vpc_id, $TF_VAR_subnet_id"
@@ -55,6 +60,7 @@ jobs:
           echo "$TF_VAR_root_ssh_pub_key" > id_rsa.pub
           sed -i "s|SSH_PUBKEY_HERE|$deployr_ssh_pub_key|g" init_script.sh
           sed -i "s|CIPHER_TEXT_HERE|$cipher_text|g" init_script.sh
+          sed -i "s|DEPLOY_SCRIPT_BRANCH_HERE|$deploy_script_branch|g" init_script.sh
           
           cat init_script.sh
 
