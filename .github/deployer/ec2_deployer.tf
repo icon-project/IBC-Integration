@@ -61,7 +61,7 @@ owners = ["099720109477"]
 
 
 locals {
-  parsed_security_groups = jsondecode(var.vpc_security_group_ids)
+  parsed_security_groups = tolist(split(" ", var.vpc_security_group_ids))
 }
 
 resource "aws_instance" "ibc-deployer" {
