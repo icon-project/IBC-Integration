@@ -59,8 +59,6 @@ jobs:
           echo "$TF_VAR_root_ssh_pub_key" > id_rsa.pub
           awk -v deployr_ssh_pub_key="$TF_VAR_deployr_ssh_pub_key" -v cipher_text="$TF_VAR_cipher_text" '{gsub("SSH_PUBKEY_HERE", deployr_ssh_pub_key); gsub("CIPHER_TEXT_HERE", cipher_text)}1' init_script.sh > init_script_temp.sh
           mv init_script_temp.sh init_script.sh
-          # sed -i 's/SSH_PUBKEY_HERE/'"$deployr_ssh_pub_key"'/g' init_script.sh
-          # sed -i 's/CIPHER_TEXT_HERE/'"$cipher_text"'/g' init_script.sh
           cat init_script.sh
 
           terraform init
