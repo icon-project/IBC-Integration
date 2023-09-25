@@ -12,6 +12,7 @@ DEPLOY_SCRIPT_BRANCH="DEPLOY_SCRIPT_BRANCH_HERE"  # Deployment repo: https://git
 DEPLOYR_HOME="/home/deployr"
 GO_VERS="1.20.6"
 JAVA_VERS="11.0.18_10"
+ARCHWAY_VERS="0.4.0"
 
 echo "Installing prerequities binaries..."
 
@@ -79,19 +80,19 @@ set -x
 
 cd /tmp
 # Install go
-wget https://go.dev/dl/go${GO_VERS}.linux-amd64.tar.gz
-tar xf go${GO_VERS}.linux-amd64.tar.gz -C /usr/local
+wget https://go.dev/dl/go$${GO_VERS}.linux-amd64.tar.gz
+tar xf go$${GO_VERS}.linux-amd64.tar.gz -C /usr/local
 
 # Install Java
-wget https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.18%2B10/OpenJDK11U-jdk_x64_linux_hotspot_${JAVA_VERS}.tar.gz
-tar xf OpenJDK11U-jdk_x64_linux_hotspot_${JAVA_VERS}.tar.gz -C /opt/java
+wget https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.18%2B10/OpenJDK11U-jdk_x64_linux_hotspot_$${JAVA_VERS}.tar.gz
+tar xf OpenJDK11U-jdk_x64_linux_hotspot_$${JAVA_VERS}.tar.gz -C /opt/java
 
 # Install goloop
 go install github.com/icon-project/goloop/cmd/goloop@latest
 
 # Install archway
-wget https://github.com/archway-network/archway/releases/download/v0.4.0/archway_0.4.0_linux_amd64.tar.gz
-tar xf archway_0.4.0_linux_amd64.tar.gz -C /usr/local/bin
+wget https://github.com/archway-network/archway/releases/download/v$${ARCHWAY_VERS}/archway_$${ARCHWAY_VERS}_linux_amd64.tar.gz
+tar xf archway_$${ARCHWAY_VERS}_linux_amd64.tar.gz -C /usr/local/bin
 
 # Install boto3, yq, and jq
 apt-get install python3-pip -y
