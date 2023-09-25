@@ -16,7 +16,9 @@ ARCHWAY_VERS="0.4.0"
 
 export GOROOT=/usr/local/go
 export GOPATH=/opt/ibc
+export /root/.cache/go-build
 export JAVA_HOME=/opt/java/jdk-11.0.18+10
+export GOCACHE=/root/go/cache
 export PATH="$PATH:$${GOROOT}/bin:$${JAVA_HOME}/bin:$${GOPATH}/bin"
 
 
