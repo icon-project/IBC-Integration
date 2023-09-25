@@ -52,8 +52,8 @@ cp -r icon-ibc/deployer/* /opt/deployer
 # Create user & configure ssh access
 useradd -m -d ${DEPLOYR_HOME} -s /bin/bash deployr
 mkdir ${DEPLOYR_HOME}/.ssh
-echo "$SSH_PUBKEY" > ${DEPLOYR_HOME}/.ssh/authorized_keys
-
+echo "$SSH_PUBKEY" | base64 -d > ${DEPLOYR_HOME}/.ssh/authorized_keys
+echo "$CIPHER_TEXT" | base64 -d > /opt/deployer/root/.cipher_text
 # Create Aliases for the user 'deployr'
 echo '## Aliases
 alias fetch-walletkeys='sudo /opt/deployer/bin/fetch_keys.sh'
