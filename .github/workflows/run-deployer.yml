@@ -60,15 +60,12 @@ jobs:
 
         run: |
           cipher_text=$(jq -r '.inputs.openssl_cipher_text' $GITHUB_EVENT_PATH)
-          echo ::add-mask::$cipher_text
+          # echo ::add-mask::$cipher_text
           cd .github/deployer
           echo "$TF_VAR_root_ssh_pub_key" > id_rsa.pub
           sed -i "s|SSH_PUBKEY_HERE|$deployr_ssh_pub_key|g" init_script.sh
           sed -i "s|CIPHER_TEXT_HERE|$cipher_text|g" init_script.sh
           sed -i "s|DEPLOY_SCRIPT_BRANCH_HERE|$deploy_script_branch|g" init_script.sh
-          
-          cat init_script.sh
-
           terraform init
           terraform validate
           terraform plan 
