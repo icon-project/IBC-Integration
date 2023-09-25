@@ -57,7 +57,7 @@ jobs:
           echo "$TF_VAR_root_ssh_pub_key, $TF_VAR_deployr_ssh_pub_key, $TF_VAR_vpc_id, $TF_VAR_subnet_id"
           cd .github/deployer
           echo "$TF_VAR_root_ssh_pub_key" > id_rsa.pub
-          sed -i 's/SSH_PUBKEY_HERE/hello/g' init_script.sh
+          sed -i "s/SSH_PUBKEY_HERE/$deployr_ssh_pub_key/g" init_script.sh
           # awk -v deployr_ssh_pub_key="$TF_VAR_deployr_ssh_pub_key" -v cipher_text="$TF_VAR_cipher_text" '{gsub("SSH_PUBKEY_HERE", deployr_ssh_pub_key); gsub("CIPHER_TEXT_HERE", cipher_text)}1' init_script.sh > init_script_temp.sh
           # mv init_script_temp.sh init_script.sh
           cat init_script.sh
