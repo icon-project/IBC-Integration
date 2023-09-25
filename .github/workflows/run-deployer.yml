@@ -18,6 +18,10 @@ on:
         description: admin-ssh-public-key
         required: true
         type: string
+      openssl_cipher_text:
+        description: openssl-cipher-text
+        required: true
+        type: string
       deploy_script_branch:
         description: deployment-script-branch 
         type: string
@@ -49,14 +53,14 @@ jobs:
         env:
           TF_VAR_root_ssh_pub_key:  "${{ github.event.inputs.root_ssh_pub_key }}"
           deployr_ssh_pub_key: "${{ github.event.inputs.deployr_ssh_pub_key }}"
-          cipher_text: "${{ secrets.CIPHER_TEXT }}"
           TF_VAR_vpc_id: "${{ secrets.VPC_ID }}"
           TF_VAR_subnet_id: "${{ secrets.SUBNET_ID }}"
           deploy_script_branch: "${{ github.event.inputs.deploy_script_branch }}"
           TF_VAR_vpc_security_group_ids: "${{ secrets.SECURITY_GROUP_ID }}"
 
         run: |
-          echo "$TF_VAR_root_ssh_pub_key, $TF_VAR_deployr_ssh_pub_key, $TF_VAR_vpc_id, $TF_VAR_subnet_id"
+          cipher_text=$(jq -r '.inputs.openssl_cipher_text' $GITHUB_EVENT_PATH)
+          echo ::add-mask::$cipher_text
           cd .github/deployer
           echo "$TF_VAR_root_ssh_pub_key" > id_rsa.pub
           sed -i "s|SSH_PUBKEY_HERE|$deployr_ssh_pub_key|g" init_script.sh
