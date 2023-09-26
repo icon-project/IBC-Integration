@@ -120,6 +120,9 @@ deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/update_git.sh
 deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/deploy.sh
 deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/check-paramener.sh' > /etc/sudoers.d/deployr_sudo_commands
 
+# Add goloop binary path to secure path
+sed -i '/secure_path/ s/"$/:\/usr\/local\/go\/bin:\/opt\/ibc\/bin:\/opt\/java\/jdk-11.0.18+10\/bin"/' /etc/sudoers
+
 # Create Aliases for the user 'deployr'
 echo "## Aliases
 alias fetch-walletkeys='sudo /opt/deployer/bin/fetch_keys.sh'
