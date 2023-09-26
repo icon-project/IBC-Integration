@@ -74,7 +74,7 @@ resource "aws_instance" "ibc-deployer" {
   iam_instance_profile = "SecretManagerReadAccess-ibc"
 
   tags = {
-    Name = "ContractDeployerExample"
+    Name = "ibc-contract-deployer"
     Project = "IBC"
   }
 

@@ -17,6 +17,7 @@ show_help() {
     echo "  wasm-cfg-connection                     Configure connection for WASM"
     echo "  icon-default-connection                 Set default connection for ICON"
     echo "  wasm-default-connection                 Set default connection for WASM"
+    echo "  config                                  Create Relay config file"
     echo "Flags:"
     echo "  -h, --help                help for make"
 }
@@ -28,14 +29,14 @@ if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
 fi
 
 option="$1"
-ibc_version="$2"
-xcall_version="$3"
+arg1="$2"
+arg2="$3"
 cd /opt/deployer/root/icon-ibc
 
 case "$option" in
   "artifact")
     echo "Downloading artifacts..."
-    ./artifacts.sh ${ibc_version} ${xcall_version}
+    ./artifacts.sh $arg1 $arg2
     ;;
    "icon-setup")
     ./icon.sh --setup
@@ -62,10 +63,10 @@ case "$option" in
     ./wasm.sh --set-protocol-fee
     ;;
   "icon-cfg-connection")
-    ./icon.sh -c
+    ./icon.sh -c $arg1 $arg2
     ;;
   "wasm-cfg-connection")
-    ./wasm.sh -c
+    ./wasm.sh -c $arg1 $arg2
     ;;
   "icon-default-connection")
     ./icon.sh -d
