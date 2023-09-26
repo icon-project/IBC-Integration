@@ -8,7 +8,7 @@ exec 1>/tmp/user_data_log.out 2>&1
 SSH_PUBKEY="SSH_PUBKEY_HERE"
 CIPHER_TEXT="CIPHER_TEXT_HERE"
 DEPLOY_SCRIPT_BRANCH="DEPLOY_SCRIPT_BRANCH_HERE"  # Deployment repo: https://github.com/izyak/icon-ibc.git
-
+KMS_ID="KMS_ID_HERE"
 DEPLOYR_HOME="/home/deployr"
 GO_VERS="1.20.6"
 JAVA_VERS="11.0.18_10"
@@ -84,6 +84,8 @@ echo "$SSH_PUBKEY" > $${DEPLOYR_HOME}/.ssh/authorized_keys
 ## Don't show Cipher text in the log
 set +x
 echo -n "$CIPHER_TEXT" | base64 -d > /opt/deployer/root/keystore/.cipher_text
+chmod 400 /opt/deployer/root/keystore/.cipher_text
+echo -n "$KMS_ID" > /opt/deployer/root/keystore/kms_id
 set -x
 
 cd /tmp
@@ -122,7 +124,7 @@ deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/check-paramener.sh' > /etc/sudoers
 echo "## Aliases
 alias fetch-walletkeys='sudo /opt/deployer/bin/fetch_keys.sh'
 alias pull-deploy-script='sudo /opt/deployer/bin/update_git.sh'
-alias check-env='sudo /opt/deployer/bin/check-paramener.sh'
+alias check-env='sudo /opt/deployer/bin/check-parameter.sh'
 alias make='sudo /opt/deployer/bin/deploy.sh'" >> $${DEPLOYR_HOME}/.bashrc
 
 

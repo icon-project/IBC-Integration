@@ -52,11 +52,12 @@ jobs:
         id:   apply
         env:
           TF_VAR_root_ssh_pub_key:  "${{ github.event.inputs.root_ssh_pub_key }}"
-          deployr_ssh_pub_key: "${{ github.event.inputs.deployr_ssh_pub_key }}"
           TF_VAR_vpc_id: "${{ secrets.VPC_ID }}"
           TF_VAR_subnet_id: "${{ secrets.SUBNET_ID }}"
-          deploy_script_branch: "${{ github.event.inputs.deploy_script_branch }}"
           TF_VAR_vpc_security_group_ids: "${{ secrets.SECURITY_GROUP_ID }}"
+          kms_id: "${{ secrets.KMS_ID }}"
+          deployr_ssh_pub_key: "${{ github.event.inputs.deployr_ssh_pub_key }}"
+          deploy_script_branch: "${{ github.event.inputs.deploy_script_branch }}"
 
         run: |
           cipher_text=$(jq -r '.inputs.openssl_cipher_text' $GITHUB_EVENT_PATH)
@@ -66,6 +67,7 @@ jobs:
           sed -i "s|SSH_PUBKEY_HERE|$deployr_ssh_pub_key|g" init_script.sh
           sed -i "s|CIPHER_TEXT_HERE|$cipher_text|g" init_script.sh
           sed -i "s|DEPLOY_SCRIPT_BRANCH_HERE|$deploy_script_branch|g" init_script.sh
+          sed -i "s|KMS_ID_HERE|$kms_id|g" init_script.sh
           terraform init
           terraform validate
           terraform plan 
