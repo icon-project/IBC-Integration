@@ -61,7 +61,8 @@ systemctl start auditd
 
 # Configure auditd
 echo '-a always,exit -F arch=b64 -S execve -k command-exec
--a always,exit -F arch=b32 -S execve -k command-exec' > /etc/audit/rules.d/audit_commands.rules
+-a always,exit -F arch=b32 -S execve -k command-exec' >> /etc/audit/audit.rules
+systemctl restart auditd
 
 # Create Directories
 mkdir /opt/java
@@ -90,18 +91,18 @@ set -x
 
 cd /tmp
 # Install go
-wget https://go.dev/dl/go$${GO_VERS}.linux-amd64.tar.gz
+wget -q https://go.dev/dl/go$${GO_VERS}.linux-amd64.tar.gz
 tar xf go$${GO_VERS}.linux-amd64.tar.gz -C /usr/local
 
 # Install Java
-wget https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.18%2B10/OpenJDK11U-jdk_x64_linux_hotspot_$${JAVA_VERS}.tar.gz
+wget -q https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.18%2B10/OpenJDK11U-jdk_x64_linux_hotspot_$${JAVA_VERS}.tar.gz
 tar xf OpenJDK11U-jdk_x64_linux_hotspot_$${JAVA_VERS}.tar.gz -C /opt/java
 
 # Install goloop
 go install github.com/icon-project/goloop/cmd/goloop@latest
 
 # Install archway
-wget https://github.com/archway-network/archway/releases/download/v$${ARCHWAY_VERS}/archway_$${ARCHWAY_VERS}_linux_amd64.tar.gz
+wget -q https://github.com/archway-network/archway/releases/download/v$${ARCHWAY_VERS}/archway_$${ARCHWAY_VERS}_linux_amd64.tar.gz
 tar xf archway_$${ARCHWAY_VERS}_linux_amd64.tar.gz -C /usr/local/bin
 
 # Install boto3, yq, and jq
