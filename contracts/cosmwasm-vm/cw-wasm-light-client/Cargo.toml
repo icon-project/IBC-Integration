@@ -49,8 +49,8 @@ cw-common = { path="../cw-common",default-features = false }
 prost = { workspace=true}
 serde-json-wasm = {workspace=true}
 debug_print = {workspace=true}
-ibc-proto = { workspace=true}
-
+ibc-proto = {package = "ibc-proto", git="https://github.com/ComposableFi/composable-ibc.git", branch = "main"}
+base64      = { version = "0.13", default-features = false, features = ["alloc"] }
 
 [dev-dependencies]
 cosmwasm = "0.7.2"

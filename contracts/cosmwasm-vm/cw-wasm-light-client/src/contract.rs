@@ -21,10 +21,10 @@ use cw_common::raw_types::Any;
 use cw_common::types::VerifyChannelState;
 
 use crate::constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH, HEIGHT};
-use crate::ContractError;
 use crate::light_client::IconClient;
 use crate::state::CwContext;
 use crate::traits::{Config, IContext, ILightClient};
+use crate::ContractError;
 use cw_common::client_msg::{
     ExecuteMsg, InstantiateMsg, LightClientPacketMessage, QueryMsg, VerifyClientConsensusState,
     VerifyClientFullState, VerifyConnectionState,
@@ -532,4 +532,3 @@ pub fn ensure_owner(deps: Deps, info: &MessageInfo) -> Result<(), ContractError>
     }
     Ok(())
 }
-

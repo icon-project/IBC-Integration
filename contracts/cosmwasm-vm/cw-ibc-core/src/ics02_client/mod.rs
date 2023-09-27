@@ -23,4 +23,3 @@ use cw_common::raw_types::Any;
 use events::{create_client_event, update_client_event, upgrade_client_event};
 
 use std::time::Duration;
-

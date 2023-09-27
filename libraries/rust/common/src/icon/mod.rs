@@ -5,6 +5,11 @@ pub mod icon {
         pub mod v1 {
             include!("icon.lightclient.v1.rs");
             // @@protoc_insertion_point(icon.lightclient.v1)
+            // @@protoc_insertion_point(attribute:icon.lightclient.v1.wasm)
+            pub mod wasm {
+                include!("icon.lightclient.v1.wasm.rs");
+                // @@protoc_insertion_point(icon.lightclient.v1.wasm)
+            }
         }
     }
     pub mod proto {

@@ -17,26 +17,26 @@
 use crate::msg::Base64;
 use crate::Bytes;
 use alloc::{
-	boxed::Box,
-	string::{String, ToString},
-	vec::Vec,
+    boxed::Box,
+    string::{String, ToString},
+    vec::Vec,
 };
 use core::{
-	convert::Infallible,
-	fmt::{Debug, Display},
+    convert::Infallible,
+    fmt::{Debug, Display},
 };
 #[cfg(feature = "cosmwasm")]
 use cosmwasm_schema::cw_serde;
-use ibc::{
-	core::{
-		ics02_client::client_consensus::ConsensusState as IbcConsensusState,
-		ics23_commitment::commitment::CommitmentRoot,
-	},
-	protobuf::Protobuf,
-	timestamp::Timestamp,
+use common::ibc::{
+    core::{
+        ics02_client::client_consensus::ConsensusState as IbcConsensusState,
+        ics23_commitment::commitment::CommitmentRoot,
+    },
+    protobuf::Protobuf,
+    timestamp::Timestamp,
 };
 use ibc_proto::{
-	google::protobuf::Any, ibc::lightclients::wasm::v1::ConsensusState as RawConsensusState,
+    google::protobuf::Any, ibc::lightclients::wasm::v1::ConsensusState as RawConsensusState,
 };
 use prost::Message;
 
@@ -46,79 +46,86 @@ pub const WASM_CONSENSUS_STATE_TYPE_URL: &str = "/ibc.lightclients.wasm.v1.Conse
 #[cfg_attr(not(feature = "cosmwasm"), derive(Clone, Debug, PartialEq))]
 #[derive(Eq)]
 pub struct ConsensusState<AnyConsensusState> {
-	#[cfg_attr(feature = "cosmwasm", schemars(with = "String"))]
-	#[cfg_attr(feature = "cosmwasm", serde(with = "Base64", default))]
-	pub data: Bytes,
-	pub timestamp: u64,
-	#[cfg_attr(feature = "cosmwasm", serde(skip))]
-	#[cfg_attr(feature = "cosmwasm", schemars(skip))]
-	pub inner: Box<AnyConsensusState>,
+    #[cfg_attr(feature = "cosmwasm", schemars(with = "String"))]
+    #[cfg_attr(feature = "cosmwasm", serde(with = "Base64", default))]
+    pub data: Bytes,
+    pub timestamp: u64,
+    #[cfg_attr(feature = "cosmwasm", serde(skip))]
+    #[cfg_attr(feature = "cosmwasm", schemars(skip))]
+    pub inner: Box<AnyConsensusState>,
 }
 
 impl<AnyConsensusState: IbcConsensusState> IbcConsensusState for ConsensusState<AnyConsensusState>
 where
-	AnyConsensusState: Clone + Debug + Send + Sync,
-	AnyConsensusState: TryFrom<Any>,
-	<AnyConsensusState as TryFrom<Any>>::Error: Display,
+    AnyConsensusState: Clone + Debug + Send + Sync,
+    AnyConsensusState: TryFrom<Any>,
+    <AnyConsensusState as TryFrom<Any>>::Error: Display,
 {
-	type Error = Infallible;
+    type Error = Infallible;
 
-	fn root(&self) -> &CommitmentRoot {
-		unimplemented!()
-	}
+    fn root(&self) -> &CommitmentRoot {
+        unimplemented!()
+    }
 
-	fn timestamp(&self) -> Timestamp {
-		Timestamp::from_nanoseconds(self.timestamp).expect("timestamp is valid")
-	}
+    fn timestamp(&self) -> Timestamp {
+        Timestamp::from_nanoseconds(self.timestamp).expect("timestamp is valid")
+    }
 
-	fn encode_to_vec(&self) -> Result<Vec<u8>, tendermint_proto::Error> {
-		self.encode_vec()
-	}
+    fn encode_to_vec(&self) -> Result<Vec<u8>, tendermint_proto::Error> {
+        self.encode_vec()
+    }
 }
 
 impl<AnyConsensusState> ConsensusState<AnyConsensusState>
 where
-	AnyConsensusState: Clone + Debug + Send + Sync,
-	AnyConsensusState: TryFrom<Any> + IbcConsensusState,
-	<AnyConsensusState as TryFrom<Any>>::Error: Display,
+    AnyConsensusState: Clone + Debug + Send + Sync,
+    AnyConsensusState: TryFrom<Any> + IbcConsensusState,
+    <AnyConsensusState as TryFrom<Any>>::Error: Display,
 {
-	pub fn to_any(&self) -> Any {
-		Any {
-			type_url: WASM_CONSENSUS_STATE_TYPE_URL.to_string(),
-			value: self.encode_to_vec().expect(
-				"ConsensusState<AnyConsensusState> is always valid and can be encoded to Any",
-			),
-		}
-	}
+    pub fn to_any(&self) -> Any {
+        Any {
+            type_url: WASM_CONSENSUS_STATE_TYPE_URL.to_string(),
+            value: self.encode_to_vec().expect(
+                "ConsensusState<AnyConsensusState> is always valid and can be encoded to Any",
+            ),
+        }
+    }
 }
 
 impl<AnyConsensusState> TryFrom<RawConsensusState> for ConsensusState<AnyConsensusState>
 where
-	AnyConsensusState: TryFrom<Any>,
-	<AnyConsensusState as TryFrom<Any>>::Error: Display,
+    AnyConsensusState: TryFrom<Any>,
+    <AnyConsensusState as TryFrom<Any>>::Error: Display,
 {
-	type Error = String;
+    type Error = String;
 
-	fn try_from(raw: RawConsensusState) -> Result<Self, Self::Error> {
-		let any = Any::decode(&mut &raw.data[..])
-			.map_err(|e| format!("failed to decode ConsensusState::data into Any: {e}"))?;
-		let inner = AnyConsensusState::try_from(any).map_err(|e| {
-			format!("failed to decode ConsensusState::data into ConsensusState: {e}")
-		})?;
-		Ok(Self { data: raw.data, timestamp: raw.timestamp, inner: Box::new(inner) })
-	}
+    fn try_from(raw: RawConsensusState) -> Result<Self, Self::Error> {
+        let any = Any::decode(&mut &raw.data[..])
+            .map_err(|e| format!("failed to decode ConsensusState::data into Any: {e}"))?;
+        let inner = AnyConsensusState::try_from(any).map_err(|e| {
+            format!("failed to decode ConsensusState::data into ConsensusState: {e}")
+        })?;
+        Ok(Self {
+            data: raw.data,
+            timestamp: raw.timestamp,
+            inner: Box::new(inner),
+        })
+    }
 }
 
 impl<AnyConsensusState> From<ConsensusState<AnyConsensusState>> for RawConsensusState {
-	fn from(value: ConsensusState<AnyConsensusState>) -> Self {
-		Self { data: value.data, timestamp: value.timestamp }
-	}
+    fn from(value: ConsensusState<AnyConsensusState>) -> Self {
+        Self {
+            data: value.data,
+            timestamp: value.timestamp,
+        }
+    }
 }
 
 impl<AnyConsensusState> Protobuf<RawConsensusState> for ConsensusState<AnyConsensusState>
 where
-	AnyConsensusState: Clone,
-	AnyConsensusState: TryFrom<Any>,
-	<AnyConsensusState as TryFrom<Any>>::Error: Display,
+    AnyConsensusState: Clone,
+    AnyConsensusState: TryFrom<Any>,
+    <AnyConsensusState as TryFrom<Any>>::Error: Display,
 {
 }

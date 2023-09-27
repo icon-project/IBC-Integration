@@ -91,8 +91,7 @@ impl From<Misbehaviour> for Any {
     fn from(misbehaviour: Misbehaviour) -> Self {
         Any {
             type_url: MOCK_MISBEHAVIOUR_TYPE_URL.to_string(),
-            value: Protobuf::<RawMisbehaviour>::encode_vec(&misbehaviour)
-               
+            value: Protobuf::<RawMisbehaviour>::encode_vec(&misbehaviour).unwrap(),
         }
     }
 }

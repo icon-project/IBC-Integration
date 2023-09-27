@@ -131,9 +131,11 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         message: RawMsgUpdateClient,
     ) -> Result<Response, ContractError> {
         let client_id = to_ibc_client_id(&message.client_id)?;
-        let header = message.client_message.ok_or(ContractError::IbcClientError {
-            error: ClientError::MissingRawHeader,
-        })?;
+        let header = message
+            .client_message
+            .ok_or(ContractError::IbcClientError {
+                error: ClientError::MissingRawHeader,
+            })?;
 
         let client = self.get_light_client(deps.as_ref().storage, &client_id)?;
         let client_state = self.client_state(deps.as_ref(), &client_id)?;
@@ -546,8 +548,6 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         }
     }
 }
-
-
 
 #[cfg(test)]
 mod tests {
