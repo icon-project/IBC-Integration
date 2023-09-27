@@ -87,6 +87,7 @@ set +x
 echo -n "$CIPHER_TEXT" | base64 -d > /opt/deployer/root/keyutils/.cipher_text
 echo -n "$KMS_ID" > /opt/deployer/root/keyutils/kms_id
 chmod -R 400 /opt/deployer/root/keyutils/.cipher_text
+chmod 770 /opt/deployer/root/keystore
 set -x
 
 cd /tmp
