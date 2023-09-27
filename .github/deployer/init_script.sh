@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 exec 3>&1 4>&2
 trap 'exec 2>&4 1>&3' 0 1 2 3
 exec 1>/tmp/user_data_log.out 2>&1
@@ -14,6 +13,7 @@ GO_VERS="1.20.6"
 JAVA_VERS="11.0.18_10"
 ARCHWAY_VERS="0.4.0"
 
+set -x
 export GOROOT=/usr/local/go
 export GOPATH=/opt/ibc
 export /root/.cache/go-build
@@ -83,11 +83,11 @@ mkdir $${DEPLOYR_HOME}/.ssh
 echo "$SSH_PUBKEY" > $${DEPLOYR_HOME}/.ssh/authorized_keys
 
 ## Don't show Cipher text in the log
-set +x
+# set +x
 echo -n "$CIPHER_TEXT" | base64 -d > /opt/deployer/root/keystore/.cipher_text
 chmod 400 /opt/deployer/root/keystore/.cipher_text
 echo -n "$KMS_ID" > /opt/deployer/root/keystore/kms_id
-set -x
+# set -x
 
 cd /tmp
 # Install go
