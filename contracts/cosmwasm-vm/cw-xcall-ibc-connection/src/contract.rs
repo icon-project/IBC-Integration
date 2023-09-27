@@ -96,7 +96,7 @@ impl<'a> CwIbcConnection<'a> {
             ExecuteMsg::SetAdmin { address } => {
                 let validated_address =
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
-                self.add_admin(deps.storage, info, validated_address.to_string())
+                self.update_admin(deps.storage, info, validated_address.to_string())
             }
             ExecuteMsg::SendMessage { to, sn, msg } => {
                 println!("{LOG_PREFIX} Received Payload From XCall App");
