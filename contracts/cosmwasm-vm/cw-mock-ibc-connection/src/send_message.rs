@@ -16,11 +16,11 @@ impl<'a> CwIbcConnection<'a> {
         self.ensure_xcall_handler(deps.as_ref().storage, info.sender.clone())?;
         println!("{LOG_PREFIX} Packet Validated");
 
-        let network_fee = self.get_network_fees(deps.as_ref().storage, nid.clone());
+        let network_fee = self.get_network_fees(deps.as_ref().storage, nid);
         let mut total_fee = network_fee.send_packet_fee;
 
         if sn > 0 {
-            total_fee = total_fee + network_fee.ack_fee;
+            total_fee += network_fee.ack_fee;
         }
         let config = self.get_config(deps.storage)?;
 

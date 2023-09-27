@@ -9,7 +9,7 @@ RUSTC_VERS="1.69.0"
 
 MAX_WASM_SIZE=800 # 800 KB
 
-PROJECTS=("cw-common" "cw-ibc-core" "cw-icon-light-client" "cw-integration" "cw-mock-ibc-core" "cw-xcall-ibc-connection")
+PROJECTS=("cw-common" "cw-ibc-core" "cw-icon-light-client" "cw-integration" "cw-mock-ibc-core" "cw-xcall-ibc-connection" "cw-wasm-light-client")
 
 
 # Install wasm-opt binary

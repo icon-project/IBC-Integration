@@ -144,7 +144,7 @@ impl From<MockClientState> for Any {
         Any {
             type_url: MOCK_CLIENT_STATE_TYPE_URL.to_string(),
             value: Protobuf::<RawMockClientState>::encode_vec(&client_state)
-                .expect("encoding to `Any` from `MockClientState`"),
+                ,
         }
     }
 }

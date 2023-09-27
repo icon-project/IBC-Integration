@@ -1,6 +1,6 @@
 [package]
-name = "cw-icon-light-client"
-version.workspace = true
+name = "cw-wasm-light-client"
+version = "0.1.0"
 authors.workspace = true
 edition = "2021"
 
@@ -44,11 +44,12 @@ hex ={workspace=true }
 sha3 = { version = "0.10.6", default-features = false }
 bytes = { workspace=true }
 common = { path="../../../libraries/rust/common", default-features = false }
-cw-common = { path="../cw-common",default-features = false }
 cw-light-client-common = { path="../cw-light-client-common",default-features = false }
+cw-common = { path="../cw-common",default-features = false }
 prost = { workspace=true}
 serde-json-wasm = {workspace=true}
 debug_print = {workspace=true}
+ibc-proto = { workspace=true}
 
 
 [dev-dependencies]

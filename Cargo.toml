@@ -24,7 +24,7 @@ cw-mock-dapp = { git="https://github.com/icon-project/xCall.git", branch="main" 
 cw-mock-dapp-multi = { git="https://github.com/icon-project/xCall.git", branch="main" }
 cw2 = "1.0.1"
 
-ibc-proto = { version = "0.26.0", default-features = false}
+ibc-proto = { version = "0.35.0", default-features = false,features = ["std", "schemars","serde"]}
 prost = { version = "0.11.8", default-features = false,features=["prost-derive"]}
 
 serde-json-wasm = {version="0.5.0", default-features = false}

@@ -131,7 +131,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         message: RawMsgUpdateClient,
     ) -> Result<Response, ContractError> {
         let client_id = to_ibc_client_id(&message.client_id)?;
-        let header = message.header.ok_or(ContractError::IbcClientError {
+        let header = message.client_message.ok_or(ContractError::IbcClientError {
             error: ClientError::MissingRawHeader,
         })?;
 
@@ -468,7 +468,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         let clinet_message = LightClientMessage::Misbehaviour {
             client_id: client_id.to_string(),
-            misbehaviour: to_vec(&message.misbehaviour)?,
+            misbehaviour: message.misbehaviour.unwrap().encode_to_vec(),
         };
 
         let wasm_exec_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {
@@ -546,6 +546,8 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         }
     }
 }
+
+
 
 #[cfg(test)]
 mod tests {

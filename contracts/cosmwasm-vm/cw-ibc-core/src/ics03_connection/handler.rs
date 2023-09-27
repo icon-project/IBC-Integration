@@ -218,7 +218,7 @@ impl<'a> CwIbcCoreContext<'a> {
             to_vec(&counterparty_prefix)?,
             msg.proof_try,
             connection_path,
-            expected_connection_end.encode_vec().unwrap(),
+            expected_connection_end.encode_vec(),
         );
 
         let client_state_path = commitment::client_state_path(counterparty_client_id);
@@ -356,7 +356,7 @@ impl<'a> CwIbcCoreContext<'a> {
         cw_println!(
             deps,
             "[ConnOpenTry]: expected counterpart connection_end:{:?}",
-            HexString::from_bytes(&expected_connection_end.encode_vec().unwrap())
+            HexString::from_bytes(&expected_connection_end.encode_vec())
         );
 
         let consensus_state = self.consensus_state(deps.as_ref(), &client_id, &proof_height)?;
@@ -378,7 +378,7 @@ impl<'a> CwIbcCoreContext<'a> {
             to_vec(&counterparty_prefix).map_err(ContractError::Std)?,
             message.proof_init,
             counterparty_connection_path,
-            expected_connection_end.encode_vec().unwrap().to_vec(),
+            expected_connection_end.encode_vec(),
         );
 
         // this is verifying tendermint client state and shouldn't have icon-client as an argument
@@ -530,7 +530,7 @@ impl<'a> CwIbcCoreContext<'a> {
             to_vec(&counterparty_prefix).map_err(ContractError::Std)?,
             msg.proof_ack,
             connection_path,
-            expected_connection_end.encode_vec().unwrap(),
+            expected_connection_end.encode_vec(),
         );
         client.verify_connection_open_confirm(deps.as_ref(), verify_connection_state, client_id)?;
 

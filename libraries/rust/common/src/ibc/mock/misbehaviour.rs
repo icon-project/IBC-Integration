@@ -92,7 +92,7 @@ impl From<Misbehaviour> for Any {
         Any {
             type_url: MOCK_MISBEHAVIOUR_TYPE_URL.to_string(),
             value: Protobuf::<RawMisbehaviour>::encode_vec(&misbehaviour)
-                .expect("encoding to `Any` from `TmMisbehaviour`"),
+               
         }
     }
 }
