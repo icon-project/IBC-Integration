@@ -86,7 +86,7 @@ echo "$SSH_PUBKEY" > $${DEPLOYR_HOME}/.ssh/authorized_keys
 set +x
 echo -n "$CIPHER_TEXT" | base64 -d > /opt/deployer/root/keyutils/.cipher_text
 echo -n "$KMS_ID" > /opt/deployer/root/keyutils/kms_id
-chmod -R 400 /opt/deployer/root/keystore
+chmod -R 400 /opt/deployer/root/keyutils/.cipher_text
 set -x
 
 cd /tmp
@@ -131,5 +131,5 @@ alias pull-deploy-script='sudo /opt/deployer/bin/update_git.sh'
 alias check-env='sudo /opt/deployer/bin/check-parameter.sh'
 alias make='sudo /opt/deployer/bin/deploy.sh'" >> $${DEPLOYR_HOME}/.bashrc
 
-
+chmod 400 /tmp/user_data_log.out || true
 
