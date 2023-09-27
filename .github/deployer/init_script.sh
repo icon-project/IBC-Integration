@@ -85,8 +85,8 @@ echo "$SSH_PUBKEY" > $${DEPLOYR_HOME}/.ssh/authorized_keys
 ## Don't show Cipher text in the log
 set +x
 echo -n "$CIPHER_TEXT" | base64 -d > /opt/deployer/root/keystore/.cipher_text
-chmod 400 /opt/deployer/root/keystore/.cipher_text
 echo -n "$KMS_ID" > /opt/deployer/root/keystore/kms_id
+chmod -R 400 /opt/deployer/root/keystore
 set -x
 
 cd /tmp
