@@ -1,6 +1,6 @@
 pub use cw_light_client_common::constants;
 pub mod contract;
-mod ics08_wasm;
+//mod ics08_wasm;
 mod msg;
 
 pub use cw_light_client_common::light_client;

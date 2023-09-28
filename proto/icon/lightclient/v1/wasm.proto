@@ -5,8 +5,9 @@ package icon.lightclient.v1.wasm;
 import "gogoproto/gogo.proto";
 import "core/02-client/Client.proto";
 import "core/23-commitment/commitment.proto";
+import "google/protobuf/any.proto";
 
-option go_package = "github.com/cosmos/ibc-go/v5/modules/light-clients/08-wasm;wasm";
+option go_package = "github.com/cosmos/ibc-go/v7/modules/light-clients/08-wasm;wasm";
 
 // Wasm light client's Client state
 message ClientState {
@@ -45,3 +46,5 @@ message Misbehaviour {
   string client_id = 1 [(gogoproto.moretags) = "yaml:\"client_id\""];
   bytes  data      = 2;
 }
+
+

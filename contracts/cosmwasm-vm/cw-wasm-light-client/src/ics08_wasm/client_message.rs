@@ -22,16 +22,18 @@ use alloc::{
     vec::Vec,
 };
 use common::ibc::{
-    core::ics02_client::{client_message::ClientMessage as IbcClientMessage, error::Error},
+    core::ics02_client::{client_message::ClientMessage as IbcClientMessage},
     Height,
 };
 use core::fmt::Display;
 #[cfg(feature = "cosmwasm")]
 use cosmwasm_schema::cw_serde;
+use cosmwasm_std::StdError;
 use cw_common::raw_types::Protobuf;
-use ibc_proto_composable::{
-    google::protobuf::Any,
-    ibc::lightclients::wasm::v1::{Header as RawHeader, Misbehaviour as RawMisbehaviour},
+use ibc_proto::google::protobuf::Any;
+
+use crate::ics08_wasm::wasm::{
+    Header as RawHeader, Misbehaviour as RawMisbehaviour,
 };
 
 use prost::Message;
@@ -68,7 +70,7 @@ where
     AnyClientMessage: TryFrom<Any>,
     <AnyClientMessage as TryFrom<Any>>::Error: Display,
 {
-    fn encode_to_vec(&self) -> Result<Vec<u8>, tendermint_proto::Error> {
+    fn encode_to_vec(&self) -> Result<Vec<u8>, StdError> {
         self.encode_vec()
     }
 }
@@ -87,17 +89,17 @@ where
     AnyClientMessage: TryFrom<Any>,
     <AnyClientMessage as TryFrom<Any>>::Error: Display,
 {
-    type Error = Error;
+    type Error = StdError;
 
     fn try_from(any: Any) -> Result<Self, Self::Error> {
         let msg = match &*any.type_url {
             WASM_HEADER_TYPE_URL => {
-                Self::Header(Header::decode(&*any.value).map_err(Error::decode_raw_header)?)
+                Self::Header(Header::decode(&*any.value).map_err(|e|StdError::GenericErr { msg:e.to_string()  })?)
             }
             WASM_MISBEHAVIOUR_TYPE_URL => Self::Misbehaviour(
-                Misbehaviour::decode(&*any.value).map_err(Error::decode_raw_misbehaviour)?,
+                Misbehaviour::decode(&*any.value).map_err(|e|StdError::GenericErr { msg:e.to_string()  })?,
             ),
-            _ => return Err(Error::malformed_header()), // TODO: choose a better error
+            _ => return Err(|e|StdError::GenericErr { msg:"Malformed Data".to_string() }), // TODO: choose a better error
         };
 
         Ok(msg)
@@ -149,13 +151,13 @@ where
     }
 }
 
-impl<AnyClientMessage> Protobuf<RawHeader> for Header<AnyClientMessage>
-where
-    AnyClientMessage: Clone,
-    AnyClientMessage: TryFrom<Any>,
-    <AnyClientMessage as TryFrom<Any>>::Error: Display,
-{
-}
+// impl<AnyClientMessage> Protobuf<RawHeader> for Header<AnyClientMessage>
+// where
+//     AnyClientMessage: Clone,
+//     AnyClientMessage: TryFrom<Any>,
+//     <AnyClientMessage as TryFrom<Any>>::Error: Display,
+// {
+// }
 
 impl<AnyClientMessage> TryFrom<RawHeader> for Header<AnyClientMessage>
 where
@@ -211,11 +213,11 @@ impl<AnyClientMessage> From<Misbehaviour<AnyClientMessage>> for RawMisbehaviour 
     }
 }
 
-impl<AnyClientMessage> From<Header<AnyClientMessage>> for RawHeader {
-    fn from(value: Header<AnyClientMessage>) -> Self {
-        RawHeader {
-            data: value.data,
-            height: Some(value.height.into()),
-        }
-    }
-}
+// impl<AnyClientMessage> From<Header<AnyClientMessage>> for RawHeader {
+//     fn from(value: Header<AnyClientMessage>) -> Self {
+//         RawHeader {
+//             data: value.data,
+//             height: Some(value.height.into()),
+//         }
+//     }
+// }

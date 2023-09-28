@@ -7,3 +7,4 @@ pub mod events;
 pub mod header;
 pub mod height;
 pub mod misbehaviour;
+pub mod client_message;
