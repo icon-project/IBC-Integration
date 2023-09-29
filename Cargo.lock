@@ -562,6 +562,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-mock-ibc-connection"
+version = "0.1.0"
+dependencies = [
+ "common 0.1.0",
+ "cosmwasm",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-common",
+ "cw-storage-plus 1.1.0",
+ "cw-xcall 0.1.0 (git+https://github.com/icon-project/xCall.git?tag=v0.1.0-alpha.5)",
+ "cw-xcall-lib 0.1.0 (git+https://github.com/icon-project/xCall.git?tag=v0.1.0-alpha.5)",
+ "cw2",
+ "debug_print",
+ "getrandom",
+ "hex",
+ "schemars 0.8.12",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "cw-mock-ibc-core"
 version = "0.1.0"
 dependencies = [
