@@ -283,7 +283,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         let connection_commit_key = commitment::connection_commitment_key(connection_id);
 
-        let connection_end_bytes = connection_end.encode_vec();
+        let connection_end_bytes = connection_end.encode_vec().unwrap();
 
         let commitment_bytes = keccak256(&connection_end_bytes).to_vec();
 

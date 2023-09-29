@@ -4,8 +4,11 @@ use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::SignedHeader;
 use cosmwasm_std::Addr;
 
+use cosmwasm_std::Storage;
 use serde::Deserialize;
 use serde::Serialize;
+
+use crate::ContractError;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConsensusStateUpdate {
@@ -74,7 +77,7 @@ pub trait ILightClient {
 }
 
 pub trait IStoreReader {}
-pub trait IContext {
+pub trait IContext{
     type Error;
 
     fn get_client_state(&self, client_id: &str) -> Result<ClientState, Self::Error>;
@@ -131,4 +134,19 @@ pub trait IContext {
 
     fn ensure_owner(&self, caller: Addr) -> Result<(), Self::Error>;
     fn ensure_ibc_host(&self, caller: Addr) -> Result<(), Self::Error>;
+}
+
+
+pub trait IQueryHandler{
+     fn get_consensus_state(
+        storage: &dyn Storage,
+        client_id: &str,
+        height: u64,
+    ) -> Result<ConsensusState, ContractError>;
+
+     fn get_client_state(
+        storage: &dyn Storage,
+        client_id: &str,
+    ) -> Result<ClientState, ContractError>;
+
 }

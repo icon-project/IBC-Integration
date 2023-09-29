@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 
@@ -12,8 +14,9 @@ use cw_storage_plus::{Item, Map};
 use debug_print::debug_eprintln;
 
 use prost::Message;
-
 use crate::query_handler::QueryHandler;
+use crate::traits::IQueryHandler;
+
 use crate::traits::Config;
 use crate::traits::IContext;
 use crate::ContractError;
@@ -25,26 +28,31 @@ pub const PROCESSED_HEIGHTS: Map<(ClientId, u64), u64> = Map::new("PROCESSED_HEI
 
 pub const CONFIG: Item<Config> = Item::new("CONFIG");
 
-pub struct CwContext<'a> {
+pub struct CwContext<'a,Q:IQueryHandler> {
     pub storage: &'a mut dyn Storage,
     pub api: &'a dyn Api,
     pub env: Env,
+    pub query:PhantomData<Q>
+
 }
 
-impl<'a> CwContext<'a> {
+impl<'a,Q:IQueryHandler> CwContext<'a,Q> {
     pub fn new(deps_mut: DepsMut<'a>, env: Env) -> Self {
         Self {
             storage: deps_mut.storage,
             api: deps_mut.api,
             env,
+            query:PhantomData::default()
         }
     }
 }
 
-impl<'a> IContext for CwContext<'a> {
+impl<'a,Q:IQueryHandler> IContext for CwContext<'a,Q> {
     type Error = ContractError;
+   
+    
     fn get_client_state(&self, client_id: &str) -> Result<ClientState, Self::Error> {
-        QueryHandler::get_client_state(self.storage, client_id)
+        Q::get_client_state(self.storage, client_id)
     }
 
     fn insert_client_state(
@@ -310,12 +318,12 @@ mod tests {
         // Store client state
         let client_id = "my-client";
         let client_state = ClientState::default();
-        CwContext::new(deps.as_mut(), mock_env())
+        CwContext::<QueryHandler>::new(deps.as_mut(), mock_env())
             .insert_client_state(client_id, client_state.clone())
             .unwrap();
 
         // Retrieve client state
-        let context = CwContext::new(deps.as_mut(), mock_env());
+        let context = CwContext::<QueryHandler>::new(deps.as_mut(), mock_env());
         let result = context.get_client_state(client_id).unwrap();
         assert_eq!(client_state, result);
     }
@@ -328,12 +336,12 @@ mod tests {
         let client_id = "my-client";
         let height = 1;
         let consensus_state = ConsensusState::default();
-        CwContext::new(deps.as_mut(), mock_env())
+        CwContext::<QueryHandler>::new(deps.as_mut(), mock_env())
             .insert_consensus_state(client_id, height, consensus_state.clone())
             .unwrap();
 
         // Retrieve consensus state
-        let context = CwContext::new(deps.as_mut(), mock_env());
+        let context = CwContext::<QueryHandler>::new(deps.as_mut(), mock_env());
         let result = context.get_consensus_state(client_id, height).unwrap();
         assert_eq!(consensus_state, result);
     }
@@ -346,7 +354,7 @@ mod tests {
         let client_id = "my-client";
         let height = 1;
         let time = 1571797419879305533;
-        CwContext::new(deps.as_mut(), mock_env())
+        CwContext::<QueryHandler>::new(deps.as_mut(), mock_env())
             .insert_timestamp_at_height(client_id, height)
             .unwrap();
 
@@ -364,7 +372,7 @@ mod tests {
         let msg = keccak256(b"test message");
         let address = "8efcaf2c4ebbf88bf07f3bb44a2869c4c675ad7a";
         let signature = hex!("c8b2b5eeb7b54620a0246b2355e42ce6d3bdf1648cd8eae298ebbbe5c3bacc197d5e8bfddb0f1e33778b7fc558c54d35e47c88daa24fff243aa743088e5503d701");
-        let context = CwContext::new(deps.as_mut(), mock_env());
+        let context = CwContext::<QueryHandler>::new(deps.as_mut(), mock_env());
         let result = context.recover_signer(msg.as_slice(), &signature);
         assert_eq!(address, hex::encode(result.unwrap()));
     }
@@ -391,7 +399,7 @@ mod tests {
         );
         let address = "b040bff300eee91f7665ac8dcf89eb0871015306";
         let signature = signed_header.signatures[0].clone();
-        let context = CwContext::new(deps.as_mut(), mock_env());
+        let context = CwContext::<QueryHandler>::new(deps.as_mut(), mock_env());
         let result = context
             .recover_icon_signer(msg.as_slice(), &signature)
             .unwrap();
@@ -412,7 +420,7 @@ mod tests {
             );
             let address = "b040bff300eee91f7665ac8dcf89eb0871015306";
             let signature = signed_header.signatures[0].clone();
-            let context = CwContext::new(deps.as_mut(), mock_env());
+            let context = CwContext::<QueryHandler>::new(deps.as_mut(), mock_env());
             let result = context
                 .recover_icon_signer(msg.as_slice(), &signature)
                 .unwrap();
@@ -429,7 +437,7 @@ mod tests {
         CONFIG.save(deps.as_mut().storage, &config).unwrap();
 
         // Retrieve config
-        let context = CwContext::new(deps.as_mut(), mock_env());
+        let context = CwContext::<QueryHandler>::new(deps.as_mut(), mock_env());
         let result = context.get_config().unwrap();
         assert_eq!(config, result);
     }
@@ -440,7 +448,7 @@ mod tests {
         let env = mock_env();
         let client_id = "client";
         let state = ClientState::default();
-        let mut ctx = CwContext::new(deps.as_mut(), env);
+        let mut ctx = CwContext::<QueryHandler>::new(deps.as_mut(), env);
         ctx.insert_client_state(client_id, state.clone()).unwrap();
 
         let loaded = CLIENT_STATES.load(deps.as_ref().storage, client_id.to_string())?;
@@ -455,7 +463,7 @@ mod tests {
         let client_id = "client";
         let height = 100;
         let state = ConsensusState::default();
-        let mut ctx = CwContext::new(deps.as_mut(), env);
+        let mut ctx = CwContext::<QueryHandler>::new(deps.as_mut(), env);
         ctx.insert_consensus_state(client_id, height, state.clone())
             .unwrap();
 
@@ -470,7 +478,7 @@ mod tests {
         let mut deps = mock_dependencies();
         let client_id = "client";
         let height = 100;
-        let mut ctx = CwContext::new(deps.as_mut(), mock_env());
+        let mut ctx = CwContext::<QueryHandler>::new(deps.as_mut(), mock_env());
         ctx.insert_timestamp_at_height(client_id, height).unwrap();
 
         let loaded =

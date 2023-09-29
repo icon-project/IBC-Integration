@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::{
     state::{CLIENT_STATES, CONFIG, CONSENSUS_STATES, PROCESSED_HEIGHTS, PROCESSED_TIMES},
-    traits::Config,
+    traits::{Config, IQueryHandler},
     ContractError,
 };
 use common::{
@@ -19,23 +19,38 @@ use cw_storage_plus::Bound;
 
 use prost::Message;
 
-pub struct QueryHandler {}
+pub struct QueryHandler;
 
-impl QueryHandler {
-    pub fn get_consensus_state(
+impl IQueryHandler for QueryHandler {
+    fn get_consensus_state(
         storage: &dyn Storage,
         client_id: &str,
         height: u64,
     ) -> Result<ConsensusState, ContractError> {
         let data = CONSENSUS_STATES
-            .load(storage, (client_id.to_string(), height))
-            .map_err(|_e| ContractError::ConsensusStateNotFound {
-                height,
-                client_id: client_id.to_string(),
-            })?;
-        let state = ConsensusState::decode(data.as_slice()).map_err(ContractError::DecodeError)?;
+        .load(storage, (client_id.to_string(), height))
+        .map_err(|_e| ContractError::ConsensusStateNotFound {
+            height,
+            client_id: client_id.to_string(),
+        })?;
+    let state = ConsensusState::decode(data.as_slice()).map_err(ContractError::DecodeError)?;
+    Ok(state)
+    }
+
+    fn get_client_state(
+        storage: &dyn Storage,
+        client_id: &str,
+    ) -> Result<ClientState, ContractError> {
+        let data = CLIENT_STATES
+            .load(storage, client_id.to_string())
+            .map_err(|_e| ContractError::ClientStateNotFound(client_id.to_string()))?;
+        let state = ClientState::decode(data.as_slice()).map_err(ContractError::DecodeError)?;
         Ok(state)
     }
+}
+
+impl QueryHandler {
+   
 
     pub fn get_latest_consensus_state(
         storage: &dyn Storage,
@@ -65,16 +80,6 @@ impl QueryHandler {
             })
     }
 
-    pub fn get_client_state(
-        storage: &dyn Storage,
-        client_id: &str,
-    ) -> Result<ClientState, ContractError> {
-        let data = CLIENT_STATES
-            .load(storage, client_id.to_string())
-            .map_err(|_e| ContractError::ClientStateNotFound(client_id.to_string()))?;
-        let state = ClientState::decode(data.as_slice()).map_err(ContractError::DecodeError)?;
-        Ok(state)
-    }
 
     pub fn get_config(storage: &dyn Storage) -> Result<Config, ContractError> {
         CONFIG

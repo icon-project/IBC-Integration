@@ -1,6 +1,6 @@
 use crate::constants::TRUST_LEVEL;
 use crate::state::CwContext;
-use crate::traits::{ConsensusStateUpdate, IContext, ILightClient};
+use crate::traits::{ConsensusStateUpdate, IContext, ILightClient, IQueryHandler};
 use crate::ContractError;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::lightclient::v1::{ClientState, TrustLevel};
@@ -11,12 +11,12 @@ use cosmwasm_std::Addr;
 use cw_common::cw_println;
 use prost::Message;
 
-pub struct IconClient<'a> {
-    context: CwContext<'a>,
+pub struct IconClient<'a,Q:IQueryHandler> {
+    context: CwContext<'a,Q>,
 }
 
-impl<'a> IconClient<'a> {
-    pub fn new(context: CwContext<'a>) -> Self {
+impl<'a,Q:IQueryHandler> IconClient<'a,Q> {
+    pub fn new(context: CwContext<'a,Q>) -> Self {
         Self { context }
     }
     pub fn has_quorum_of(n_validators: u64, votes: u64, trust_level: &TrustLevel) -> bool {
@@ -97,7 +97,7 @@ impl<'a> IconClient<'a> {
     }
 }
 
-impl ILightClient for IconClient<'_> {
+impl<'a,Q:IQueryHandler> ILightClient for IconClient<'a,Q> {
     type Error = crate::ContractError;
 
     fn create_client(
