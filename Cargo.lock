@@ -280,6 +280,12 @@ checksum = "520fbf3c07483f94e3e3ca9d0cfd913d7718ef2483d2cfd91c0d9e91474ab913"
 
 [[package]]
 name = "convert_case"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
+
+[[package]]
+name = "convert_case"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec182b0ca2f35d8fc196cf3404988fd8b8c739a4d270ff118a398feb0cbec1ca"
@@ -741,6 +747,9 @@ dependencies = [
  "getrandom",
  "hex",
  "hex-literal 0.4.1",
+ "ibc 0.15.0",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/composable-ibc.git)",
+ "ics07-tendermint-cw",
  "ics08-wasm",
  "prost 0.11.9",
  "schemars 0.8.12",
@@ -748,6 +757,7 @@ dependencies = [
  "serde-json-wasm 0.5.1",
  "sha2 0.10.6",
  "sha3",
+ "tendermint-proto 0.28.0",
  "test-utils",
  "thiserror",
 ]
@@ -854,8 +864,10 @@ version = "0.99.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fb810d30a7c1953f91334de7244731fc3f3c10d7fe163338a35b9f640960321"
 dependencies = [
+ "convert_case 0.4.0",
  "proc-macro2 1.0.59",
  "quote 1.0.28",
+ "rustc_version",
  "syn 1.0.109",
 ]
 
@@ -1042,6 +1054,9 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "835c052cb0c08c1acf6ffd71c022172e18723949c8282f2b9f27efbc51e64534"
 dependencies = [
+ "byteorder",
+ "rand",
+ "rustc-hex",
  "static_assertions",
 ]
 
@@ -1236,14 +1251,14 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/composable-ibc.git?branch=master#19c0265110ce33a2d24a69b2e84de69861ee0b21"
+source = "git+https://github.com/ComposableFi/composable-ibc.git?branch=master#44b05025ba055a444c38708426cdcdbee363df18"
 dependencies = [
  "cosmwasm-schema",
  "derive_more",
  "flex-error",
  "hex",
  "ibc-derive",
- "ibc-proto 0.18.0",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/composable-ibc.git?branch=master)",
  "ics23 0.10.0",
  "log",
  "num-traits",
@@ -1255,6 +1270,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
+ "sha2 0.10.6",
  "subtle-encoding",
  "tendermint 0.28.0",
  "tendermint-proto 0.28.0",
@@ -1289,7 +1305,7 @@ dependencies = [
  "sha2 0.10.6",
  "subtle-encoding",
  "tendermint 0.29.1",
- "tendermint-light-client-verifier",
+ "tendermint-light-client-verifier 0.29.1",
  "tendermint-proto 0.29.1",
  "time",
  "tracing",
@@ -1299,9 +1315,9 @@ dependencies = [
 [[package]]
 name = "ibc-derive"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc.git?branch=master#19c0265110ce33a2d24a69b2e84de69861ee0b21"
+source = "git+https://github.com/ComposableFi/composable-ibc.git?branch=master#44b05025ba055a444c38708426cdcdbee363df18"
 dependencies = [
- "convert_case",
+ "convert_case 0.6.0",
  "proc-macro-crate 1.3.1",
  "proc-macro2 1.0.59",
  "quote 1.0.28",
@@ -1311,11 +1327,25 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/ComposableFi/composable-ibc.git?branch=master#19c0265110ce33a2d24a69b2e84de69861ee0b21"
+source = "git+https://github.com/ComposableFi/composable-ibc.git?branch=master#44b05025ba055a444c38708426cdcdbee363df18"
 dependencies = [
  "base64 0.13.1",
  "bytes",
  "prost 0.11.9",
+ "schemars 0.8.12",
+ "serde",
+ "tendermint-proto 0.28.0",
+]
+
+[[package]]
+name = "ibc-proto"
+version = "0.18.0"
+source = "git+https://github.com/ComposableFi/composable-ibc.git#19c0265110ce33a2d24a69b2e84de69861ee0b21"
+dependencies = [
+ "base64 0.13.1",
+ "bytes",
+ "prost 0.11.9",
+ "schemars 0.8.12",
  "serde",
  "tendermint-proto 0.28.0",
 ]
@@ -1339,14 +1369,67 @@ dependencies = [
 ]
 
 [[package]]
+name = "ics07-tendermint"
+version = "0.1.0"
+source = "git+https://github.com/ComposableFi/composable-ibc.git?branch=master#44b05025ba055a444c38708426cdcdbee363df18"
+dependencies = [
+ "bytes",
+ "flex-error",
+ "hex",
+ "ibc 0.15.0",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/composable-ibc.git?branch=master)",
+ "ics23 0.10.0",
+ "log",
+ "prost 0.11.9",
+ "serde",
+ "serde_json",
+ "subtle-encoding",
+ "tendermint 0.28.0",
+ "tendermint-light-client-verifier 0.28.0",
+ "tendermint-proto 0.28.0",
+ "time",
+]
+
+[[package]]
+name = "ics07-tendermint-cw"
+version = "0.1.0"
+source = "git+https://github.com/ComposableFi/composable-ibc.git?branch=master#44b05025ba055a444c38708426cdcdbee363df18"
+dependencies = [
+ "byteorder",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "derive_more",
+ "digest 0.10.7",
+ "ed25519",
+ "ed25519-consensus",
+ "ed25519-zebra",
+ "hex",
+ "ibc 0.15.0",
+ "ibc-derive",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/composable-ibc.git?branch=master)",
+ "ics07-tendermint",
+ "ics08-wasm",
+ "ics23 0.10.0",
+ "prost 0.11.9",
+ "schemars 0.8.12",
+ "serde",
+ "sha2 0.10.6",
+ "sha3",
+ "tendermint 0.28.0",
+ "tendermint-light-client-verifier 0.28.0",
+ "tendermint-proto 0.28.0",
+ "thiserror",
+]
+
+[[package]]
 name = "ics08-wasm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable-ibc.git?branch=master#19c0265110ce33a2d24a69b2e84de69861ee0b21"
+source = "git+https://github.com/ComposableFi/composable-ibc.git?branch=master#44b05025ba055a444c38708426cdcdbee363df18"
 dependencies = [
  "cosmwasm-schema",
  "hex",
  "ibc 0.15.0",
- "ibc-proto 0.18.0",
+ "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/composable-ibc.git?branch=master)",
  "prost 0.11.9",
  "serde",
  "tendermint-proto 0.28.0",
@@ -1376,6 +1459,15 @@ dependencies = [
  "bytes",
  "hex",
  "prost 0.11.9",
+]
+
+[[package]]
+name = "impl-codec"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba6a270039626615617f3f36d15fc827041df3b78c439da2cadfa47455a77f2f"
+dependencies = [
+ "parity-scale-codec",
 ]
 
 [[package]]
@@ -1665,6 +1757,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "ppv-lite86"
+version = "0.2.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
+
+[[package]]
 name = "prettyplease"
 version = "0.1.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1681,6 +1779,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f3486ccba82358b11a77516035647c34ba167dfa53312630de83b12bd4f3d66"
 dependencies = [
  "fixed-hash",
+ "impl-codec",
  "impl-serde",
  "uint",
 ]
@@ -1824,6 +1923,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc33ff2d4973d518d823d61aa239014831e521c75da58e3df4840d3f47749d09"
 
 [[package]]
+name = "rand"
+version = "0.8.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "34af8d1a0e25924bc5b7c43c079c942339d8f0a8b57c39049bef581b46327404"
+dependencies = [
+ "libc",
+ "rand_chacha",
+ "rand_core 0.6.4",
+]
+
+[[package]]
+name = "rand_chacha"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6c10a63a0fa32252be49d21e7709d4d4baf8d231c2dbce1eaa8141b9b127d88"
+dependencies = [
+ "ppv-lite86",
+ "rand_core 0.6.4",
+]
+
+[[package]]
 name = "rand_core"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1913,6 +2033,15 @@ name = "rustc-hex"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e75f6a532d0fd9f7f13144f392b6ad56a32696bfcd9c78f797f16bbb6f072d6"
+
+[[package]]
+name = "rustc_version"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfa0f585226d2e68097d4f95d113b15b83a82e819ab25717ec0590d9584ef366"
+dependencies = [
+ "semver",
+]
 
 [[package]]
 name = "rustix"
@@ -2411,6 +2540,18 @@ dependencies = [
  "tendermint-proto 0.29.1",
  "time",
  "zeroize",
+]
+
+[[package]]
+name = "tendermint-light-client-verifier"
+version = "0.28.0"
+source = "git+https://github.com/informalsystems/tendermint-rs?rev=e81f7bf23d63ffbcd242381d1ce5e35da3515ff1#e81f7bf23d63ffbcd242381d1ce5e35da3515ff1"
+dependencies = [
+ "derive_more",
+ "flex-error",
+ "serde",
+ "tendermint 0.28.0",
+ "time",
 ]
 
 [[package]]

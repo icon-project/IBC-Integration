@@ -16,13 +16,12 @@
 // use crate::{contract::HostFunctions, ics23::FakeInner, Bytes, ContractError};
 
 use cosmwasm_schema::cw_serde;
-use cw_common::raw_types::Any;
 
-use std::convert::Infallible;
 // use ics07_tendermint::{
 // 	client_message::{ClientMessage, Header, Misbehaviour},
 // 	client_state::ClientState,
 // };
+use ics07_tendermint_cw::ics23::FakeInner;
 use ics08_wasm::{
     client_message::Header as WasmHeader, client_state::ClientState as WasmClientState,
     consensus_state::ConsensusState as WasmConsensusState,
@@ -140,17 +139,17 @@ impl ContractResult {
     }
 }
 
-#[derive(Eq, Default)]
-#[cw_serde]
-pub struct FakeInner;
+// #[derive(Eq, Default)]
+// #[cw_serde]
+// pub struct FakeInner;
 
-impl TryFrom<Any> for FakeInner {
-    type Error = Infallible;
+// impl TryFrom<ibc_proto::google::protobuf::Any> for FakeInner {
+// 	type Error = Infallible;
 
-    fn try_from(_: Any) -> Result<Self, Self::Error> {
-        Ok(FakeInner)
-    }
-}
+// 	fn try_from(_: ibc_proto::google::protobuf::Any) -> Result<Self, Self::Error> {
+// 		Ok(FakeInner)
+// 	}
+// }
 
 #[cw_serde]
 pub struct InstantiateMsg {}

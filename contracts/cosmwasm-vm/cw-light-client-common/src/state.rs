@@ -8,22 +8,19 @@ use cosmwasm_std::DepsMut;
 use cosmwasm_std::Env;
 use cosmwasm_std::Storage;
 
-use cw_storage_plus::{Item, Map};
 use debug_print::debug_eprintln;
 
+use crate::constants::CLIENT_STATES;
+use crate::constants::CONFIG;
+use crate::constants::CONSENSUS_STATES;
+use crate::constants::PROCESSED_HEIGHTS;
+use crate::constants::PROCESSED_TIMES;
 use crate::query_handler::QueryHandler;
 use prost::Message;
 
 use crate::traits::Config;
 use crate::traits::IContext;
 use crate::ContractError;
-type ClientId = String;
-pub const CLIENT_STATES: Map<String, Vec<u8>> = Map::new("CLIENT_STATES");
-pub const CONSENSUS_STATES: Map<(ClientId, u64), Vec<u8>> = Map::new("CONSENSUS_STATES");
-pub const PROCESSED_TIMES: Map<(ClientId, u64), u64> = Map::new("PROCESSED_TIMES");
-pub const PROCESSED_HEIGHTS: Map<(ClientId, u64), u64> = Map::new("PROCESSED_HEIGHTS");
-
-pub const CONFIG: Item<Config> = Item::new("CONFIG");
 
 pub struct CwContext<'a> {
     pub storage: &'a mut dyn Storage,

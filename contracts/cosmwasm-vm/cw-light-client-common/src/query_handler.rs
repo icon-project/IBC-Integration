@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::{
-    state::{CLIENT_STATES, CONFIG, CONSENSUS_STATES, PROCESSED_HEIGHTS, PROCESSED_TIMES},
+    constants::{CLIENT_STATES, CONFIG, CONSENSUS_STATES, PROCESSED_HEIGHTS, PROCESSED_TIMES},
     traits::Config,
     ContractError,
 };
@@ -140,6 +140,35 @@ impl QueryHandler {
         deps: Deps,
         client_id: &str,
         height: u64,
+        delay_time_period: u64,
+        delay_block_period: u64,
+        proof: &[MerkleNode],
+        value: &[u8],
+        path: &[u8],
+    ) -> Result<bool, ContractError> {
+        let client_state = Self::get_client_state(deps.storage, client_id)?;
+        let consensus_state: ConsensusState =
+            Self::get_consensus_state(deps.storage, client_id, height)?;
+        Self::verify_membership_inner(
+            deps,
+            client_id,
+            client_state,
+            consensus_state,
+            height,
+            delay_time_period,
+            delay_block_period,
+            proof,
+            value,
+            path,
+        )
+    }
+
+    pub fn verify_membership_inner(
+        deps: Deps,
+        client_id: &str,
+        client_state: ClientState,
+        consensus_state: ConsensusState,
+        height: u64,
         _delay_time_period: u64,
         _delay_block_period: u64,
         proof: &[MerkleNode],
@@ -159,10 +188,8 @@ impl QueryHandler {
         let path = keccak256(path).to_vec();
         cw_println!(deps.api, "[LightClient]: client id is: {:?}", client_id);
 
-        let state = Self::get_client_state(deps.storage, client_id)?;
-
-        if state.frozen_height != 0 && height > state.frozen_height {
-            return Err(ContractError::ClientStateFrozen(state.frozen_height));
+        if client_state.frozen_height != 0 && height > client_state.frozen_height {
+            return Err(ContractError::ClientStateFrozen(client_state.frozen_height));
         }
 
         let mut value_hash = value.to_vec();
@@ -172,8 +199,7 @@ impl QueryHandler {
 
         // let _ =
         //     self.validate_delay_args(client_id, height, delay_time_period, delay_block_period)?;
-        let consensus_state: ConsensusState =
-            Self::get_consensus_state(deps.storage, client_id, height)?;
+
         cw_println!(
             deps.api,
             "[LightClient]: Path Hash {:?}",
@@ -257,7 +283,7 @@ impl QueryHandler {
 mod tests {
     use cosmwasm_std::testing::MockStorage;
 
-    use crate::state::CONSENSUS_STATES;
+    use crate::constants::CONSENSUS_STATES;
 
     use super::QueryHandler;
 

@@ -2,6 +2,7 @@ use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 
 use common::icon::icon::types::v1::SignedHeader;
+use common::utils::keccak256;
 use cosmwasm_std::Addr;
 
 use cosmwasm_std::Api;
@@ -111,8 +112,23 @@ pub trait IContext {
         height: u64,
     ) -> Result<(), ContractError>;
 
-    fn recover_signer(&self, msg: &[u8], signature: &[u8]) -> Option<[u8; 20]>;
-    fn recover_icon_signer(&self, msg: &[u8], signature: &[u8]) -> Option<Vec<u8>>;
+    fn recover_signer(&self, msg: &[u8], signature: &[u8]) -> Option<[u8; 20]> {
+        if signature.len() != 65 {
+            return None;
+        }
+        let mut rs = [0u8; 64];
+        rs[..].copy_from_slice(&signature[..64]);
+        let v = signature[64];
+        let pubkey = self.api().secp256k1_recover_pubkey(msg, &rs, v).unwrap();
+        let pubkey_hash = keccak256(&pubkey[1..]);
+        let address: Option<[u8; 20]> = pubkey_hash.as_slice()[12..].try_into().ok();
+        address
+    }
+
+    fn recover_icon_signer(&self, msg: &[u8], signature: &[u8]) -> Option<Vec<u8>> {
+        self.recover_signer(msg, signature)
+            .map(|addr| addr.to_vec())
+    }
 
     fn get_config(&self) -> Result<Config, ContractError>;
 

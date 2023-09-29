@@ -48,10 +48,13 @@ cw-light-client-common = { path="../cw-light-client-common",default-features = f
 cw-common = { path="../cw-common",default-features = false }
 prost = { workspace=true}
 serde-json-wasm = {workspace=true}
+ibc-proto={git="https://github.com/ComposableFi/composable-ibc.git",default-features = false,features = ["json-schema"] }
+ibc={git="https://github.com/ComposableFi/composable-ibc.git",default-features = false,branch="master"}
+ics07-tendermint-cw={git="https://github.com/ComposableFi/composable-ibc.git",default-features = false,features=["library","rust-crypto"],branch="master"}
 debug_print = {workspace=true}
 base64 = { version = "0.13", default-features = false, features = ["alloc"] }
 ics08-wasm={ git="https://github.com/ComposableFi/composable-ibc.git",default-features = false, features=["cosmwasm"],branch="master"}
-
+tendermint-proto = { git = "https://github.com/informalsystems/tendermint-rs", rev = "e81f7bf23d63ffbcd242381d1ce5e35da3515ff1", default-features = false }
 [dev-dependencies]
 cosmwasm = "0.7.2"
 hex-literal="*"
