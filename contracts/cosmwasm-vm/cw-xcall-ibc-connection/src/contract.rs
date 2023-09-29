@@ -94,7 +94,7 @@ impl<'a> CwIbcConnection<'a> {
     ) -> Result<Response, ContractError> {
         match msg {
             ExecuteMsg::SetAdmin { address } => {
-                self.ensure_admin(deps.as_ref().storage, info.sender.clone())?;
+                self.ensure_admin(deps.as_ref().storage, info.sender)?;
                 let validated_address =
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
                 self.update_admin(deps.storage, validated_address)
@@ -302,7 +302,7 @@ impl<'a> CwIbcConnection<'a> {
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
-        let owner = info.clone().sender;
+        let owner = info.sender;
 
         self.add_owner(store, owner.clone())?;
         self.update_admin(store, owner)?;

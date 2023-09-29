@@ -3,7 +3,7 @@ mod setup;
 use account::*;
 use cosmwasm_std::{testing::mock_env, Addr};
 use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
-use cw_xcall_ibc_connection::{execute, state::CwIbcConnection, msg::InstantiateMsg};
+use cw_xcall_ibc_connection::{execute, state::CwIbcConnection};
 use setup::*;
 
 #[test]
@@ -16,13 +16,12 @@ fn update_admin_unauthorzied() {
     let contract = CwIbcConnection::default();
 
     contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.clone().sender)
+        .add_owner(mock_deps.as_mut().storage, mock_info.sender)
         .unwrap();
 
     contract
         .update_admin(
             mock_deps.as_mut().storage,
-            
             Addr::unchecked(Addr::unchecked(admin_one().to_string())),
         )
         .unwrap();
@@ -49,13 +48,12 @@ fn update_admin() {
     let contract = CwIbcConnection::default();
 
     contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.clone().sender)
+        .add_owner(mock_deps.as_mut().storage, mock_info.sender)
         .unwrap();
 
     contract
         .update_admin(
             mock_deps.as_mut().storage,
-            
             Addr::unchecked(admin_one().to_string()),
         )
         .unwrap();
@@ -99,7 +97,6 @@ fn add_invalid_char_as_admin() {
     let mock_env = mock_env();
 
     let mut contract = CwIbcConnection::default();
-   
 
     contract
         .update_admin(mock_deps.as_mut().storage, mock_info.clone().sender)
@@ -182,11 +179,9 @@ fn update_admin_fails() {
 
     let contract = CwIbcConnection::default();
 
-
     contract
         .update_admin(
             mock_deps.as_mut().storage,
-            
             Addr::unchecked(admin_one().to_string()),
         )
         .unwrap();

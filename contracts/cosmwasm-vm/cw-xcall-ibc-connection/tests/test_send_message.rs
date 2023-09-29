@@ -57,8 +57,8 @@ fn send_message_setup() -> (
     contract
         .store_ibc_config(
             deps.as_mut().storage,
-            &nid.clone(),
-            &IbcConfig::new(src.clone(), dst.clone()),
+            &nid,
+            &IbcConfig::new(src.clone(), dst),
         )
         .unwrap();
 
@@ -69,7 +69,7 @@ fn send_message_setup() -> (
     let xcall_address = Addr::unchecked("xcalladdress");
 
     contract
-        .set_xcall_host(deps.as_mut().storage, xcall_address.clone())
+        .set_xcall_host(deps.as_mut().storage, xcall_address)
         .unwrap();
 
     contract
@@ -163,7 +163,7 @@ fn send_message_with_negative_sn() {
     };
     let timeout = IbcTimeout::with_block(timeout_block);
 
-    let packet = IbcPacket::new(vec![], src.clone(), dst.clone(), 0, timeout);
+    let packet = IbcPacket::new(vec![], src.clone(), dst, 0, timeout);
 
     contract
         .store_incoming_packet(deps.as_mut().storage, &src.channel_id, 1, packet)

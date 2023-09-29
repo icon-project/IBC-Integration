@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Api, MessageInfo, Response, Storage};
+use cosmwasm_std::{Addr, Api, Response, Storage};
 
 use crate::{error::ContractError, state::CwIbcConnection};
 
