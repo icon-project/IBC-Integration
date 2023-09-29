@@ -43,10 +43,9 @@ impl<'a> CwIbcConnection<'a> {
     /// the `ContractError::AdminAddressCannotBeNull` variant. If the `info.sender` is not the owner, it
     /// returns an `Err` with the `ContractError::Unauthorized` variant. If an admin already exists, it
     /// returns an `Err`
-    pub fn add_admin(
+    pub fn update_admin(
         &self,
         store: &mut dyn Storage,
-        info: MessageInfo,
         admin: Addr,
     ) -> Result<Response, ContractError> {
         self.admin().save(store, &admin)?;
