@@ -1,6 +1,6 @@
 use crate::constants::TRUST_LEVEL;
 use crate::state::CwContext;
-use crate::traits::{ConsensusStateUpdate, IContext, ILightClient, IQueryHandler};
+use crate::traits::{ConsensusStateUpdate, IContext, ILightClient};
 use crate::ContractError;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::lightclient::v1::{ClientState, TrustLevel};
@@ -11,12 +11,13 @@ use cosmwasm_std::Addr;
 use cw_common::cw_println;
 use prost::Message;
 
-pub struct IconClient<'a,Q:IQueryHandler> {
-    context: CwContext<'a,Q>,
+pub struct IconClient<C:IContext> {
+    context: C,
 }
 
-impl<'a,Q:IQueryHandler> IconClient<'a,Q> {
-    pub fn new(context: CwContext<'a,Q>) -> Self {
+impl<C:IContext> IconClient<C> {
+    
+    pub fn new(context: C) -> Self {
         Self { context }
     }
     pub fn has_quorum_of(n_validators: u64, votes: u64, trust_level: &TrustLevel) -> bool {
@@ -36,7 +37,7 @@ impl<'a,Q:IQueryHandler> IconClient<'a,Q> {
             .get_network_type_section_decision_hash(&state.src_network_id, state.network_type_id);
 
         cw_println!(
-            self.context,
+            self.context.api(),
             "network type section decision hash {}",
             hex::encode(decision)
         );
@@ -64,7 +65,7 @@ impl<'a,Q:IQueryHandler> IconClient<'a,Q> {
             }
         }
         if !Self::has_quorum_of(num_validators, votes, trust_level) {
-            cw_println!(self.context, "Insuffcient Quorom detected");
+            cw_println!(self.context.api(), "Insuffcient Quorom detected");
             return Err(ContractError::InSuffcientQuorum);
         }
         Ok(true)
@@ -97,7 +98,7 @@ impl<'a,Q:IQueryHandler> IconClient<'a,Q> {
     }
 }
 
-impl<'a,Q:IQueryHandler> ILightClient for IconClient<'a,Q> {
+impl<C:IContext> ILightClient for IconClient<C> {
     type Error = crate::ContractError;
 
     fn create_client(
@@ -122,7 +123,7 @@ impl<'a,Q:IQueryHandler> ILightClient for IconClient<'a,Q> {
             consensus_state.clone(),
         )?;
         cw_println!(
-            self.context,
+            self.context.api(),
             "[CreateClient]: create client called with id {}",
             client_id
         );

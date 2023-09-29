@@ -427,14 +427,14 @@ impl<'a> CwIbcConnection<'a> {
         deps: DepsMut,
         msg: CwChannelOpenMsg,
     ) -> Result<Response, ContractError> {
-        cw_println!(deps, "[IbcConnection]: Called On channel open");
+        cw_println!(deps.api, "[IbcConnection]: Called On channel open");
         println!("{msg:?}");
 
         let channel = msg.channel();
         let ibc_endpoint = channel.endpoint.clone();
 
         check_order(&channel.order)?;
-        cw_println!(deps, "[IbcConnection]: check order pass");
+        cw_println!(deps.api, "[IbcConnection]: check order pass");
 
         self.setup_channel(deps, channel.clone())?;
 
@@ -465,16 +465,16 @@ impl<'a> CwIbcConnection<'a> {
         msg: CwChannelConnectMsg,
     ) -> Result<Response, ContractError> {
         let channel = msg.channel();
-        cw_println!(deps, "[IBCConnection]: channel connect called");
+        cw_println!(deps.api, "[IBCConnection]: channel connect called");
 
         check_order(&channel.order)?;
-        cw_println!(deps, "[IBCConnection]: check order pass");
+        cw_println!(deps.api, "[IBCConnection]: check order pass");
 
         if let Some(counter_version) = msg.counterparty_version() {
             check_version(counter_version)?;
         }
 
-        cw_println!(deps, "[IBCConnection]: check version passed");
+        cw_println!(deps.api, "[IBCConnection]: check version passed");
         self.setup_channel(deps, channel.clone())?;
 
         Ok(Response::new()
@@ -663,7 +663,7 @@ impl<'a> CwIbcConnection<'a> {
             self.get_counterparty_nid(deps.storage, &channel.connection_id, &destination.port_id)?;
         let connection_config = self.get_connection_config(deps.storage, &channel.connection_id)?;
         let ibc_config = IbcConfig::new(source, destination);
-        cw_println!(deps, "[IBCConnection]: save ibc config is {:?}", ibc_config);
+        cw_println!(deps.api, "[IBCConnection]: save ibc config is {:?}", ibc_config);
 
         self.store_ibc_config(deps.storage, &nid, &ibc_config)?;
 
@@ -677,7 +677,7 @@ impl<'a> CwIbcConnection<'a> {
             },
         )?;
 
-        cw_println!(deps, "[IBCConnection]: Channel Config Stored");
+        cw_println!(deps.api, "[IBCConnection]: Channel Config Stored");
 
         Ok(())
     }

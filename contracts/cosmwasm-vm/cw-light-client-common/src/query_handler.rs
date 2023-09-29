@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::{
     state::{CLIENT_STATES, CONFIG, CONSENSUS_STATES, PROCESSED_HEIGHTS, PROCESSED_TIMES},
-    traits::{Config, IQueryHandler},
+    traits::{Config},
     ContractError,
 };
 use common::{
@@ -21,8 +21,9 @@ use prost::Message;
 
 pub struct QueryHandler;
 
-impl IQueryHandler for QueryHandler {
-    fn get_consensus_state(
+
+impl QueryHandler {
+    pub fn get_consensus_state(
         storage: &dyn Storage,
         client_id: &str,
         height: u64,
@@ -37,7 +38,7 @@ impl IQueryHandler for QueryHandler {
     Ok(state)
     }
 
-    fn get_client_state(
+    pub fn get_client_state(
         storage: &dyn Storage,
         client_id: &str,
     ) -> Result<ClientState, ContractError> {
@@ -47,10 +48,6 @@ impl IQueryHandler for QueryHandler {
         let state = ClientState::decode(data.as_slice()).map_err(ContractError::DecodeError)?;
         Ok(state)
     }
-}
-
-impl QueryHandler {
-   
 
     pub fn get_latest_consensus_state(
         storage: &dyn Storage,
@@ -152,17 +149,17 @@ impl QueryHandler {
         path: &[u8],
     ) -> Result<bool, ContractError> {
         cw_println!(
-            deps,
+            deps.api,
             "[LightClient]: Path Bytes  {:?}",
             HexString::from_bytes(path)
         );
         cw_println!(
-            deps,
+            deps.api,
             "[LightClient]: Value Bytes  {:?}",
             HexString::from_bytes(value)
         );
         let path = keccak256(path).to_vec();
-        cw_println!(deps, "[LightClient]: client id is: {:?}", client_id);
+        cw_println!(deps.api, "[LightClient]: client id is: {:?}", client_id);
 
         let state = Self::get_client_state(deps.storage, client_id)?;
 
@@ -180,30 +177,30 @@ impl QueryHandler {
         let consensus_state: ConsensusState =
             Self::get_consensus_state(deps.storage, client_id, height)?;
         cw_println!(
-            deps,
+            deps.api,
             "[LightClient]: Path Hash {:?}",
             HexString::from_bytes(&path)
         );
         cw_println!(
-            deps,
+            deps.api,
             "[LightClient]: Value Hash {:?}",
             HexString::from_bytes(&value_hash)
         );
         let leaf = keccak256(&[path, value_hash].concat());
         cw_println!(
-            deps,
+            deps.api,
             "[LightClient]: Leaf Value {:?}",
             HexString::from_bytes(&leaf)
         );
 
         let message_root = calculate_root(leaf, proof);
         cw_println!(
-            deps,
+            deps.api,
             "[LightClient]: Stored Message Root {:?} ",
             hex::encode(consensus_state.message_root.clone())
         );
         cw_println!(
-            deps,
+            deps.api,
             "[LightClient]: Calculated Message Root : {:?}",
             HexString::from_bytes(&message_root)
         );

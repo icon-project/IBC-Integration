@@ -55,7 +55,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let channel_end = self.get_channel_end(deps.storage, &dst_port, &dst_channel)?;
         ensure_channel_state(&dst_channel, &channel_end, &State::Open)?;
 
-        cw_println!(deps, "validate recevie packet state_matched");
+        cw_println!(deps.api, "validate recevie packet state_matched");
         let counterparty = Counterparty::new(src_port.clone(), Some(src_channel.clone()));
 
         if !channel_end.counterparty_matches(&counterparty) {
@@ -101,7 +101,7 @@ impl<'a> CwIbcCoreContext<'a> {
             })
             .map_err(Into::<ContractError>::into)?;
         }
-        cw_println!(deps, "client state created ",);
+        cw_println!(deps.api, "client state created ",);
 
         let consensus_state_of_a_on_b =
             self.consensus_state(deps.as_ref(), client_id, &proof_height)?;
@@ -112,13 +112,13 @@ impl<'a> CwIbcCoreContext<'a> {
             &packet_timeout_height,
             &packet_timestamp,
         );
-        cw_println!(deps, "packet is -> {:?}", msg.packet);
+        cw_println!(deps.api, "packet is -> {:?}", msg.packet);
         cw_println!(
             deps,
             "packet.data is -> {:?}",
             HexString::from_bytes(&packet.data)
         );
-        cw_println!(deps, "expected commitement created {:?}", packet.sequence);
+        cw_println!(deps.api, "expected commitement created {:?}", packet.sequence);
 
         let commitment_path_on_a = commitment::packet_commitment_path(
             &src_port,
@@ -126,7 +126,7 @@ impl<'a> CwIbcCoreContext<'a> {
             Sequence::from(packet.sequence),
         );
 
-        cw_println!(deps, "verify connection delay passed");
+        cw_println!(deps.api, "verify connection delay passed");
         let verify_packet_data = VerifyPacketData {
             height: proof_height.to_string(),
             prefix: connection_end.counterparty().prefix().clone().into_vec(),
@@ -139,7 +139,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let client = self.get_light_client(deps.as_ref().storage, client_id)?;
         client.verify_packet_data(deps.as_ref(), verify_packet_data, client_id)?;
 
-        cw_println!(deps, "before packet already received ");
+        cw_println!(deps.api, "before packet already received ");
 
         let port_id = packet.destination_port.clone();
         let contract_address = self.lookup_modules(deps.storage, port_id.as_bytes().to_vec())?;
@@ -195,7 +195,7 @@ impl<'a> CwIbcCoreContext<'a> {
             None,
         )?;
 
-        cw_println!(deps, "event recieve packet: {:?}", event_recieve_packet);
+        cw_println!(deps.api, "event recieve packet: {:?}", event_recieve_packet);
 
         let sub_msg: SubMsg =
             SubMsg::reply_on_success(receive_packet_message, VALIDATE_ON_PACKET_RECEIVE_ON_MODULE);

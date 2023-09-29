@@ -27,7 +27,7 @@ impl<'a> CwIbcCoreContext<'a> {
         conn_id: &ConnectionId,
         conn_end: &ConnectionEnd,
     ) -> Result<(), ContractError> {
-        let data = conn_end.encode_vec();
+        let data = conn_end.encode_vec().unwrap();
 
         match self.ibc_store().connections().save(store, conn_id, &data) {
             Ok(_) => Ok(()),

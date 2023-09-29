@@ -52,7 +52,7 @@ impl<'a> CwIbcConnection<'a> {
                 self.store_incoming_packet(deps.storage, &channel, sn, packet)?;
             }
         }
-        cw_println!(deps, "[IBCConnection]: forwarding to xcall");
+        cw_println!(deps.api, "[IBCConnection]: forwarding to xcall");
         let data = n_message.data;
         let xcall_submessage = self.call_xcall_handle_message(deps.storage, &nid, data)?;
 

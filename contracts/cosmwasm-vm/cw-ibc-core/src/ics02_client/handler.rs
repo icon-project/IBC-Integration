@@ -132,7 +132,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
     ) -> Result<Response, ContractError> {
         let client_id = to_ibc_client_id(&message.client_id)?;
         let header = message
-            .client_message
+            .header
             .ok_or(ContractError::IbcClientError {
                 error: ClientError::MissingRawHeader,
             })?;

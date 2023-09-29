@@ -4,6 +4,7 @@ use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::SignedHeader;
 use cosmwasm_std::Addr;
 
+use cosmwasm_std::Api;
 use cosmwasm_std::Storage;
 use serde::Deserialize;
 use serde::Serialize;
@@ -78,46 +79,46 @@ pub trait ILightClient {
 
 pub trait IStoreReader {}
 pub trait IContext{
-    type Error;
+    
 
-    fn get_client_state(&self, client_id: &str) -> Result<ClientState, Self::Error>;
+    fn get_client_state(&self, client_id: &str) -> Result<ClientState, ContractError>;
 
     fn insert_client_state(
         &mut self,
         client_id: &str,
         state: ClientState,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), ContractError>;
 
     fn get_consensus_state(
         &self,
         client_id: &str,
         height: u64,
-    ) -> Result<ConsensusState, Self::Error>;
+    ) -> Result<ConsensusState, ContractError>;
     fn insert_consensus_state(
         &mut self,
         client_id: &str,
         height: u64,
         state: ConsensusState,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), ContractError>;
 
-    fn get_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<u64, Self::Error>;
+    fn get_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<u64, ContractError>;
     fn insert_timestamp_at_height(
         &mut self,
         client_id: &str,
         height: u64,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), ContractError>;
     fn insert_blocknumber_at_height(
         &mut self,
         client_id: &str,
         height: u64,
-    ) -> Result<(), Self::Error>;
+    ) -> Result<(), ContractError>;
 
     fn recover_signer(&self, msg: &[u8], signature: &[u8]) -> Option<[u8; 20]>;
     fn recover_icon_signer(&self, msg: &[u8], signature: &[u8]) -> Option<Vec<u8>>;
 
-    fn get_config(&self) -> Result<Config, Self::Error>;
+    fn get_config(&self) -> Result<Config, ContractError>;
 
-    fn insert_config(&mut self, config: &Config) -> Result<(), Self::Error>;
+    fn insert_config(&mut self, config: &Config) -> Result<(), ContractError>;
 
     fn get_current_block_time(&self) -> u64;
     fn get_current_block_height(&self) -> u64;
@@ -125,28 +126,16 @@ pub trait IContext{
         &self,
         client_id: &str,
         height: u64,
-    ) -> Result<u64, Self::Error>;
+    ) -> Result<u64, ContractError>;
     fn get_processed_block_at_height(
         &self,
         client_id: &str,
         height: u64,
-    ) -> Result<u64, Self::Error>;
+    ) -> Result<u64, ContractError>;
 
-    fn ensure_owner(&self, caller: Addr) -> Result<(), Self::Error>;
-    fn ensure_ibc_host(&self, caller: Addr) -> Result<(), Self::Error>;
+    fn ensure_owner(&self, caller: Addr) -> Result<(), ContractError>;
+    fn ensure_ibc_host(&self, caller: Addr) -> Result<(), ContractError>;
+    fn api(&self)->& dyn Api;
 }
 
 
-pub trait IQueryHandler{
-     fn get_consensus_state(
-        storage: &dyn Storage,
-        client_id: &str,
-        height: u64,
-    ) -> Result<ConsensusState, ContractError>;
-
-     fn get_client_state(
-        storage: &dyn Storage,
-        client_id: &str,
-    ) -> Result<ClientState, ContractError>;
-
-}

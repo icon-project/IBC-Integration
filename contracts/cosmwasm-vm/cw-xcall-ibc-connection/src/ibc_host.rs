@@ -62,7 +62,7 @@ impl<'a> CwIbcConnection<'a> {
             gas_limit: None,
             reply_on: cosmwasm_std::ReplyOn::Always,
         };
-        cw_println!(deps, "{LOG_PREFIX} Packet Forwarded To IBCHost {ibc_host} ");
+        cw_println!(deps.api, "{LOG_PREFIX} Packet Forwarded To IBCHost {ibc_host} ");
         Ok(submessage)
     }
 
