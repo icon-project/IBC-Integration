@@ -208,7 +208,7 @@ impl<'a> CwIbcCoreContext<'a> {
             connection_end.delay_period(),
         );
         cw_println!(
-            deps,
+            deps.api,
             "[ConnOpenAck]: Expected conn end {:?}",
             expected_connection_end
         );
@@ -338,7 +338,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let prefix = self.commitment_prefix(deps.as_ref(), &env);
 
         cw_println!(
-            deps,
+            deps.api,
             "prefix_on_b is {:?}",
             from_utf8(&prefix.clone().into_vec()).unwrap()
         );
@@ -354,21 +354,21 @@ impl<'a> CwIbcCoreContext<'a> {
         );
 
         cw_println!(
-            deps,
+            deps.api,
             "[ConnOpenTry]: expected counterpart connection_end:{:?}",
             HexString::from_bytes(&expected_connection_end.encode_vec().unwrap())
         );
 
         let consensus_state = self.consensus_state(deps.as_ref(), &client_id, &proof_height)?;
         cw_println!(
-            deps,
+            deps.api,
             "[ConnOpenTry]: root: {:?} ",
             HexString::from_bytes(consensus_state.root().as_bytes())
         );
         let counterparty_connection_path =
             commitment::connection_path(&counterparty_connection_id.clone().unwrap());
         cw_println!(
-            deps,
+            deps.api,
             "[ConnOpenTry]: connkey: {:?}",
             HexString::from_bytes(&counterparty_connection_path)
         );
@@ -383,13 +383,13 @@ impl<'a> CwIbcCoreContext<'a> {
 
         // this is verifying tendermint client state and shouldn't have icon-client as an argument
         cw_println!(
-            deps,
+            deps.api,
             "[ConnOpenTry]: payload client state path {:?}",
             &counterparty_client_id
         );
         let client_state_path = commitment::client_state_path(&counterparty_client_id);
         cw_println!(
-            deps,
+            deps.api,
             "[ConnOpenTry]: the clientstate value is  {:?}",
             message_client_state.value
         );
@@ -429,7 +429,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let connection_id = self.generate_connection_idenfier(deps.storage)?;
 
         cw_println!(
-            deps,
+            deps.api,
             "[ConnOpenTryReply]: connection id is{:?}",
             connection_id
         );
@@ -500,7 +500,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
         let prefix = self.commitment_prefix(deps.as_ref(), &env);
         cw_println!(
-            deps,
+            deps.api,
             "[ConnOpenConfirm]: Our Connection {:?}",
             connection_end
         );
@@ -509,7 +509,11 @@ impl<'a> CwIbcCoreContext<'a> {
         let counterparty_client_id = counterparty.client_id();
         let counterparty_prefix = counterparty.prefix();
         let counterparty_conn_id = counterparty.connection_id().cloned();
-        cw_println!(deps.api, "[ConnOpenConfirm]: CounterParty  {:?}", &counterparty);
+        cw_println!(
+            deps.api,
+            "[ConnOpenConfirm]: CounterParty  {:?}",
+            &counterparty
+        );
 
         ensure_connection_state(&connection_id, &connection_end, &State::TryOpen)?;
 
@@ -535,7 +539,7 @@ impl<'a> CwIbcCoreContext<'a> {
         client.verify_connection_open_confirm(deps.as_ref(), verify_connection_state, client_id)?;
 
         cw_println!(
-            deps,
+            deps.api,
             "[ConnOpenConfirmReply]: CounterParty  {:?}",
             counterparty
         );

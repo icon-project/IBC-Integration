@@ -64,7 +64,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     ) -> Result<cosmwasm_std::Response, ContractError> {
         // connection hops should be 1
         cw_println!(
-            deps,
+            deps.api,
             "inside validate channel open init: input parameter: {:?}",
             message
         );
@@ -180,7 +180,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let source_channel = channel_end.remote.channel_id.clone().unwrap();
 
         cw_println!(
-            deps,
+            deps.api,
             "stoed: channel id: {:?}  portid :{:?} channel_end :{:?}",
             &dest_channel,
             &dest_port,

@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::{
     state::{CLIENT_STATES, CONFIG, CONSENSUS_STATES, PROCESSED_HEIGHTS, PROCESSED_TIMES},
-    traits::{Config},
+    traits::Config,
     ContractError,
 };
 use common::{
@@ -21,7 +21,6 @@ use prost::Message;
 
 pub struct QueryHandler;
 
-
 impl QueryHandler {
     pub fn get_consensus_state(
         storage: &dyn Storage,
@@ -29,13 +28,13 @@ impl QueryHandler {
         height: u64,
     ) -> Result<ConsensusState, ContractError> {
         let data = CONSENSUS_STATES
-        .load(storage, (client_id.to_string(), height))
-        .map_err(|_e| ContractError::ConsensusStateNotFound {
-            height,
-            client_id: client_id.to_string(),
-        })?;
-    let state = ConsensusState::decode(data.as_slice()).map_err(ContractError::DecodeError)?;
-    Ok(state)
+            .load(storage, (client_id.to_string(), height))
+            .map_err(|_e| ContractError::ConsensusStateNotFound {
+                height,
+                client_id: client_id.to_string(),
+            })?;
+        let state = ConsensusState::decode(data.as_slice()).map_err(ContractError::DecodeError)?;
+        Ok(state)
     }
 
     pub fn get_client_state(
@@ -76,7 +75,6 @@ impl QueryHandler {
                 client_id: client_id.to_string(),
             })
     }
-
 
     pub fn get_config(storage: &dyn Storage) -> Result<Config, ContractError> {
         CONFIG

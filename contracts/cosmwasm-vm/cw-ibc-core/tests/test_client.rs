@@ -536,7 +536,7 @@ fn check_for_update_client_message() {
 
     let update_client_message = RawMsgUpdateClient {
         client_id: client_id.to_string(),
-        client_message: Some(client_state.to_any()),
+        header: Some(client_state.to_any()),
         signer: signer.to_string(),
     };
 
@@ -598,7 +598,7 @@ fn fails_on_updating_non_existing_client() {
     let signer = Signer::from_str("new_signer").unwrap();
     let update_client_message = RawMsgUpdateClient {
         client_id: client_id.to_string(),
-        client_message: Some(client_state.to_any()),
+        header: Some(client_state.to_any()),
         signer: signer.to_string(),
     };
 

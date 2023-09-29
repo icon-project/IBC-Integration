@@ -650,7 +650,7 @@ impl<'a> CwIbcConnection<'a> {
 
         let our_port = self.get_port(deps.storage)?;
         cw_println!(
-            deps,
+            deps.api,
             "[IBCConnection]: Check if ports match : {:?} vs {:?}",
             our_port,
             source.port_id
@@ -663,7 +663,11 @@ impl<'a> CwIbcConnection<'a> {
             self.get_counterparty_nid(deps.storage, &channel.connection_id, &destination.port_id)?;
         let connection_config = self.get_connection_config(deps.storage, &channel.connection_id)?;
         let ibc_config = IbcConfig::new(source, destination);
-        cw_println!(deps.api, "[IBCConnection]: save ibc config is {:?}", ibc_config);
+        cw_println!(
+            deps.api,
+            "[IBCConnection]: save ibc config is {:?}",
+            ibc_config
+        );
 
         self.store_ibc_config(deps.storage, &nid, &ibc_config)?;
 

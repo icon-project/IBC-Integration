@@ -1,5 +1,5 @@
 use crate::constants::TRUST_LEVEL;
-use crate::state::CwContext;
+
 use crate::traits::{ConsensusStateUpdate, IContext, ILightClient};
 use crate::ContractError;
 use common::icon::icon::lightclient::v1::ConsensusState;
@@ -11,12 +11,11 @@ use cosmwasm_std::Addr;
 use cw_common::cw_println;
 use prost::Message;
 
-pub struct IconClient<C:IContext> {
+pub struct IconClient<C: IContext> {
     context: C,
 }
 
-impl<C:IContext> IconClient<C> {
-    
+impl<C: IContext> IconClient<C> {
     pub fn new(context: C) -> Self {
         Self { context }
     }
@@ -98,7 +97,7 @@ impl<C:IContext> IconClient<C> {
     }
 }
 
-impl<C:IContext> ILightClient for IconClient<C> {
+impl<C: IContext> ILightClient for IconClient<C> {
     type Error = crate::ContractError;
 
     fn create_client(

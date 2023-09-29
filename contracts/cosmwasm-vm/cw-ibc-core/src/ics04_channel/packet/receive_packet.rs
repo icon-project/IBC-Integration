@@ -114,11 +114,15 @@ impl<'a> CwIbcCoreContext<'a> {
         );
         cw_println!(deps.api, "packet is -> {:?}", msg.packet);
         cw_println!(
-            deps,
+            deps.api,
             "packet.data is -> {:?}",
             HexString::from_bytes(&packet.data)
         );
-        cw_println!(deps.api, "expected commitement created {:?}", packet.sequence);
+        cw_println!(
+            deps.api,
+            "expected commitement created {:?}",
+            packet.sequence
+        );
 
         let commitment_path_on_a = commitment::packet_commitment_path(
             &src_port,

@@ -165,7 +165,7 @@ impl<'a> CwIbcCoreContext<'a> {
             verify_channel_state,
             next_seq_recv_verification_result,
         )?;
-        cw_println!(deps, "Light Client Validation Passed");
+        cw_println!(deps.api, "Light Client Validation Passed");
 
         if let Order::Ordered = channel_end.ordering {
             channel_end.state = State::Closed;

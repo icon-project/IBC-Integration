@@ -182,7 +182,7 @@ fn test_for_update_client_execution_messages() {
 
     let msg_hex = RawMsgUpdateClient {
         client_id: "iconclient-0".to_string(),
-        client_message: Some(signed_header.to_any()),
+        header: Some(signed_header.to_any()),
         signer: "signeraddress".to_string(),
     };
 

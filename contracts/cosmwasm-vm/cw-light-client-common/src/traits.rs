@@ -5,7 +5,7 @@ use common::icon::icon::types::v1::SignedHeader;
 use cosmwasm_std::Addr;
 
 use cosmwasm_std::Api;
-use cosmwasm_std::Storage;
+
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -78,9 +78,7 @@ pub trait ILightClient {
 }
 
 pub trait IStoreReader {}
-pub trait IContext{
-    
-
+pub trait IContext {
     fn get_client_state(&self, client_id: &str) -> Result<ClientState, ContractError>;
 
     fn insert_client_state(
@@ -135,7 +133,5 @@ pub trait IContext{
 
     fn ensure_owner(&self, caller: Addr) -> Result<(), ContractError>;
     fn ensure_ibc_host(&self, caller: Addr) -> Result<(), ContractError>;
-    fn api(&self)->& dyn Api;
+    fn api(&self) -> &dyn Api;
 }
-
-
