@@ -1,9 +1,4 @@
-use common::consensus_state::IConsensusState;
-use common::{
-    ibc::Height,
-    icon::icon::lightclient::v1::{ClientState, ConsensusState},
-    traits::AnyTypes,
-};
+use common::ibc::Height;
 use cosmwasm_std::{Api, Env, Storage};
 
 use cw_light_client_common::traits::IQueryHandler;
@@ -12,7 +7,6 @@ use cw_light_client_common::{
     traits::IContext,
     ContractError,
 };
-use ics07_tendermint_cw::ics23::FakeInner;
 
 use crate::utils::{
     get_client_state_key, get_consensus_state_key, to_wasm_client_state, to_wasm_consensus_state,
@@ -78,7 +72,7 @@ impl<'a> IContext for CwContext<'a> {
         let ibc_height = Height::new(0, height).unwrap();
         let wasm_consensus_state = to_wasm_consensus_state(consensus_state);
         self.storage
-            .set(&&get_consensus_state_key(ibc_height), &wasm_consensus_state);
+            .set(&get_consensus_state_key(ibc_height), &wasm_consensus_state);
         Ok(())
     }
 

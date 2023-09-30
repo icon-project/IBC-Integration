@@ -1,30 +1,24 @@
-use common::constants::ICON_CLIENT_TYPE;
-use common::icon::icon::lightclient::v1::{ClientState, ConsensusState};
 use common::traits::AnyTypes;
 use cosmwasm_schema::cw_serde;
+use cw_common::cw_println;
 use cw_common::ibc_types::IbcHeight;
-use cw_common::{cw_println, to_checked_address};
 
 #[cfg(feature = "mock")]
 use crate::mock_client::MockClient;
-use crate::query_handler::QueryHandler;
-use common::icon::icon::types::v1::{MerkleProofs, SignedHeader};
+
+use common::icon::icon::types::v1::SignedHeader;
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
-};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use cw2::set_contract_version;
-use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
-use cw_common::raw_types::Any;
-use cw_common::types::VerifyChannelState;
 
-use crate::constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH, HEIGHT};
+use cw_common::raw_types::Any;
+
 use crate::context::CwContext;
 use crate::light_client::IconClient;
 use crate::msg::{ContractResult, ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::traits::{Config, IContext, ILightClient};
+use crate::traits::{IContext, ILightClient};
 use crate::ContractError;
 use prost::Message;
 
@@ -36,8 +30,8 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
-    info: MessageInfo,
-    msg: InstantiateMsg,
+    _info: MessageInfo,
+    _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)
         .map_err(|_e| ContractError::FailedToInitContract)?;
@@ -56,8 +50,20 @@ pub fn execute(
     env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
+) -> Result<Response, ContractError> {
+    let data = process_message(deps_mut, env, info, msg)?;
+    let mut response = Response::default();
+    response.data = Some(data);
+    Ok(response)
+}
+
+fn process_message(
+    deps_mut: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: ExecuteMsg,
 ) -> Result<Binary, ContractError> {
-    match msg {
+    let result: Result<Binary, ContractError> = match msg {
         ExecuteMsg::VerifyMembership(_) => todo!(),
         ExecuteMsg::VerifyNonMembership(_) => todo!(),
         ExecuteMsg::VerifyClientMessage(_) => todo!(),
@@ -73,7 +79,7 @@ pub fn execute(
                     let header =
                         SignedHeader::from_any(header_any).map_err(ContractError::DecodeError)?;
                     let client_id = "08-wasm-0";
-                    let _update = client.update_client(info.sender, &client_id, header)?;
+                    let _update = client.update_client(info.sender, client_id, header)?;
                     Ok(to_binary(&ContractResult::success()).unwrap())
                 }
                 crate::msg::ClientMessageRaw::Misbehaviour(_) => {
@@ -83,7 +89,8 @@ pub fn execute(
         }
         ExecuteMsg::CheckSubstituteAndUpdateState(_) => todo!(),
         ExecuteMsg::VerifyUpgradeAndUpdateState(_) => todo!(),
-    }
+    };
+    Ok(result.unwrap())
 }
 
 fn to_height_u64(height: &str) -> Result<u64, ContractError> {
@@ -105,14 +112,8 @@ pub fn any_from_byte(bytes: &[u8]) -> Result<Any, ContractError> {
     Ok(any)
 }
 
-// pub fn to_packet_response(packet_data: &[u8]) -> Result<Binary, ContractError> {
-//     let packet_data: PacketData = from_slice(packet_data).map_err(ContractError::Std)?;
-//     let data = to_binary(&PacketDataResponse::from(packet_data)).map_err(ContractError::Std)?;
-//     Ok(data)
-// }
-
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::ClientTypeMsg(_) => todo!(),
         QueryMsg::GetLatestHeightsMsg(_) => todo!(),

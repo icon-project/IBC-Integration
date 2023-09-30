@@ -1,24 +1,4 @@
-use std::marker::PhantomData;
-
-use crate::{
-    constants::{CLIENT_STATES, CONFIG, CONSENSUS_STATES, PROCESSED_HEIGHTS, PROCESSED_TIMES},
-    traits::Config,
-    ContractError,
-};
-use common::{
-    icon::icon::{
-        lightclient::v1::{ClientState, ConsensusState},
-        types::v1::MerkleNode,
-    },
-    traits::AnyTypes,
-    utils::{calculate_root, keccak256},
-};
-use cosmwasm_std::{Deps, Order, StdResult, Storage};
-use cw_common::{cw_println, hex_string::HexString};
 use cw_light_client_common::traits::IQueryHandler;
-use cw_storage_plus::Bound;
-
-use prost::Message;
 
 pub struct QueryHandler;
 impl IQueryHandler for QueryHandler {}

@@ -17,7 +17,7 @@ impl IQueryHandler for QueryHandler {
         let any_bytes = storage
             .get(&get_client_state_key())
             .ok_or(ContractError::ClientStateNotFound(client_id.to_string()))?;
-        return decode_client_state(&any_bytes);
+        decode_client_state(&any_bytes)
     }
 
     fn get_consensus_state(
@@ -32,6 +32,6 @@ impl IQueryHandler for QueryHandler {
                 client_id: client_id.to_string(),
             },
         )?;
-        return decode_consensus_state(&any_bytes);
+        decode_consensus_state(&any_bytes)
     }
 }
