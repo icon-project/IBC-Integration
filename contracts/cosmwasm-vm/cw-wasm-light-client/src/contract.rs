@@ -2,11 +2,13 @@ use common::traits::AnyTypes;
 use cosmwasm_schema::cw_serde;
 use cw_common::cw_println;
 use cw_common::ibc_types::IbcHeight;
+use cw_light_client_common::traits::IQueryHandler;
 
 #[cfg(feature = "mock")]
 use crate::mock_client::MockClient;
+use crate::query_handler::QueryHandler;
 
-use common::icon::icon::types::v1::SignedHeader;
+use common::icon::icon::types::v1::{MerkleNode, MerkleProofs, SignedHeader};
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -64,9 +66,60 @@ fn process_message(
     msg: ExecuteMsg,
 ) -> Result<Binary, ContractError> {
     let result: Result<Binary, ContractError> = match msg {
-        ExecuteMsg::VerifyMembership(_) => todo!(),
-        ExecuteMsg::VerifyNonMembership(_) => todo!(),
-        ExecuteMsg::VerifyClientMessage(_) => todo!(),
+        ExecuteMsg::VerifyMembership(msg) => {
+            let height = msg.height.revision_height;
+            let client_id = "08-wasm-0";
+            let proofs_decoded =
+                MerkleProofs::decode(msg.proof.as_slice()).map_err(ContractError::DecodeError)?;
+            let path = hex::decode(&msg.path.key_path.join("")).unwrap();
+
+            let ok = QueryHandler::verify_membership(
+                deps_mut.as_ref(),
+                client_id,
+                height,
+                msg.delay_time_period,
+                msg.delay_block_period,
+                &proofs_decoded.proofs,
+                &msg.value,
+                &path,
+            )
+            .unwrap();
+
+            Ok(to_binary(&ContractResult::success()).unwrap())
+        }
+        ExecuteMsg::VerifyNonMembership(msg) => {
+            let height = msg.height.revision_height;
+            let client_id = "08-wasm-0";
+            let proofs_decoded =
+                MerkleProofs::decode(msg.proof.as_slice()).map_err(ContractError::DecodeError)?;
+            let path = hex::decode(&msg.path.key_path.join("")).unwrap();
+
+            let _ok = QueryHandler::verify_non_membership(
+                deps_mut.as_ref(),
+                client_id,
+                height,
+                msg.delay_time_period,
+                msg.delay_block_period,
+                &proofs_decoded.proofs,
+                &path,
+            )
+            .unwrap();
+
+            Ok(to_binary(&ContractResult::success()).unwrap())
+        }
+        ExecuteMsg::VerifyClientMessage(msg) => match msg.client_message {
+            crate::msg::ClientMessageRaw::Header(wasmheader) => {
+                let context = CwContext::new(deps_mut, env);
+                let mut client = IconClient::new(context);
+                let header_any = Any::decode(&*wasmheader.data).unwrap();
+                let header =
+                    SignedHeader::from_any(header_any).map_err(ContractError::DecodeError)?;
+                let client_id = "08-wasm-0";
+                let _update = client.update_client(info.sender, client_id, header)?;
+                Ok(to_binary(&ContractResult::success()).unwrap())
+            }
+            crate::msg::ClientMessageRaw::Misbehaviour(_) => unimplemented!(),
+        },
         ExecuteMsg::CheckForMisbehaviour(_) => todo!(),
         ExecuteMsg::UpdateStateOnMisbehaviour(_) => todo!(),
         ExecuteMsg::UpdateState(msg) => {

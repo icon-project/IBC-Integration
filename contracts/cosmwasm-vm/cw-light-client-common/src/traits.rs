@@ -94,6 +94,13 @@ pub trait ILightClient {
         client_id: &str,
         header: SignedHeader,
     ) -> Result<ConsensusStateUpdate, Self::Error>;
+
+    fn verify_header(
+        &mut self,
+        caller: &Addr,
+        client_id: &str,
+        header: &SignedHeader,
+    ) -> Result<(), Self::Error>;
 }
 
 pub trait IQueryHandler {
@@ -423,6 +430,6 @@ pub trait IContext {
     ) -> Result<u64, ContractError>;
 
     fn ensure_owner(&self, caller: Addr) -> Result<(), ContractError>;
-    fn ensure_ibc_host(&self, caller: Addr) -> Result<(), ContractError>;
+    fn ensure_ibc_host(&self, caller: &Addr) -> Result<(), ContractError>;
     fn api(&self) -> &dyn Api;
 }

@@ -1,6 +1,7 @@
 use common::ibc::Height;
 use cosmwasm_std::{Api, Env, Storage};
 
+use crate::query_handler::QueryHandler;
 use cw_light_client_common::traits::IQueryHandler;
 use cw_light_client_common::{
     constants::{PROCESSED_HEIGHTS, PROCESSED_TIMES},
@@ -152,16 +153,12 @@ impl<'a> IContext for CwContext<'a> {
 
     fn ensure_ibc_host(
         &self,
-        _caller: cosmwasm_std::Addr,
+        _caller: &cosmwasm_std::Addr,
     ) -> Result<(), cw_light_client_common::ContractError> {
-        unimplemented!()
+        Ok(())
     }
 
     fn api(&self) -> &dyn Api {
         self.api
     }
 }
-
-pub struct QueryHandler;
-
-impl IQueryHandler for QueryHandler {}

@@ -108,7 +108,7 @@ impl<C: IContext> ILightClient for IconClient<C> {
         client_state: ClientState,
         consensus_state: ConsensusState,
     ) -> Result<ConsensusStateUpdate, Self::Error> {
-        self.context.ensure_ibc_host(caller)?;
+        self.context.ensure_ibc_host(&caller)?;
         let exists = self.context.get_client_state(client_id).is_ok();
         if exists {
             return Err(ContractError::ClientStateAlreadyExists(
@@ -143,6 +143,38 @@ impl<C: IContext> ILightClient for IconClient<C> {
         client_id: &str,
         signed_header: SignedHeader,
     ) -> Result<ConsensusStateUpdate, Self::Error> {
+        self.verify_header(&caller, client_id, &signed_header)?;
+        let state = self.context.get_client_state(client_id)?;
+        let btp_header = signed_header.header.clone().unwrap();
+
+        let consensus_state = btp_header.to_consensus_state();
+        self.context.insert_client_state(client_id, state.clone())?;
+        self.context.insert_consensus_state(
+            client_id,
+            btp_header.main_height,
+            consensus_state.clone(),
+        )?;
+        self.context
+            .insert_timestamp_at_height(client_id, btp_header.main_height)?;
+        self.context
+            .insert_blocknumber_at_height(client_id, btp_header.main_height)?;
+        let commitment = keccak256(&consensus_state.encode_to_vec());
+
+        Ok(ConsensusStateUpdate {
+            consensus_state_commitment: commitment,
+            client_state_commitment: keccak256(&state.encode_to_vec()),
+            client_state_bytes: state.encode_to_vec(),
+            consensus_state_bytes: consensus_state.encode_to_vec(),
+            height: btp_header.main_height,
+        })
+    }
+
+    fn verify_header(
+        &mut self,
+        caller: &Addr,
+        client_id: &str,
+        signed_header: &SignedHeader,
+    ) -> Result<(), Self::Error> {
         self.context.ensure_ibc_host(caller)?;
         let btp_header = signed_header.header.clone().unwrap();
         if self
@@ -202,25 +234,6 @@ impl<C: IContext> ILightClient for IconClient<C> {
             state.latest_height = btp_header.main_height;
         }
 
-        let consensus_state = btp_header.to_consensus_state();
-        self.context.insert_client_state(client_id, state.clone())?;
-        self.context.insert_consensus_state(
-            client_id,
-            btp_header.main_height,
-            consensus_state.clone(),
-        )?;
-        self.context
-            .insert_timestamp_at_height(client_id, btp_header.main_height)?;
-        self.context
-            .insert_blocknumber_at_height(client_id, btp_header.main_height)?;
-        let commitment = keccak256(&consensus_state.encode_to_vec());
-
-        Ok(ConsensusStateUpdate {
-            consensus_state_commitment: commitment,
-            client_state_commitment: keccak256(&state.encode_to_vec()),
-            client_state_bytes: state.encode_to_vec(),
-            consensus_state_bytes: consensus_state.encode_to_vec(),
-            height: btp_header.main_height,
-        })
+        Ok(())
     }
 }
