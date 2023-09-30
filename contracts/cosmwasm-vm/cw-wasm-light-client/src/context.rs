@@ -1,15 +1,22 @@
+use common::consensus_state::IConsensusState;
 use common::{
     ibc::Height,
     icon::icon::lightclient::v1::{ClientState, ConsensusState},
     traits::AnyTypes,
 };
 use cosmwasm_std::{Api, Env, Storage};
-use cw_common::raw_types::Any;
-use cw_light_client_common::{traits::IContext, ContractError};
+
+use cw_light_client_common::traits::IQueryHandler;
+use cw_light_client_common::{
+    constants::{PROCESSED_HEIGHTS, PROCESSED_TIMES},
+    traits::IContext,
+    ContractError,
+};
 use ics07_tendermint_cw::ics23::FakeInner;
-use ics08_wasm::client_state::ClientState as WasmClientState;
-use prost::Message;
-use tendermint_proto::Protobuf;
+
+use crate::utils::{
+    get_client_state_key, get_consensus_state_key, to_wasm_client_state, to_wasm_consensus_state,
+};
 pub struct CwContext<'a> {
     pub storage: &'a mut dyn Storage,
     pub api: &'a dyn Api,
@@ -26,28 +33,6 @@ impl<'a> CwContext<'a> {
     }
 }
 
-pub fn get_consensus_state_key(height: Height) -> Vec<u8> {
-    [
-        "consensusStates/".to_string().into_bytes(),
-        format!("{height}").into_bytes(),
-    ]
-    .concat()
-}
-
-pub fn to_wasm_client_state(
-    client_state: ClientState,
-    old_state: Vec<u8>,
-) -> Result<Vec<u8>, ContractError> {
-    use ibc::Height;
-    let any = Any::decode(&*old_state).unwrap();
-    let mut wasm_client_state =
-        WasmClientState::<FakeInner, FakeInner, FakeInner>::decode_vec(&any.value).unwrap();
-    wasm_client_state.data = client_state.to_any().encode_to_vec();
-    wasm_client_state.latest_height = Height::new(0, client_state.latest_height);
-    let vec1 = wasm_client_state.to_any().encode_to_vec();
-    Ok(vec1)
-}
-
 impl<'a> IContext for CwContext<'a> {
     fn get_client_state(
         &self,
@@ -56,20 +41,21 @@ impl<'a> IContext for CwContext<'a> {
         common::icon::icon::lightclient::v1::ClientState,
         cw_light_client_common::ContractError,
     > {
-        let any_bytes = self
-            .storage
-            .get(&"clientState".to_string().into_bytes())
-            .ok_or(ContractError::ClientStateNotFound(client_id.to_string()))?;
-        let any_state = Any::decode(any_bytes.as_slice()).unwrap();
-        ClientState::from_any(any_state).map_err(ContractError::DecodeError)
+        QueryHandler::get_client_state(self.storage, client_id)
     }
 
     fn insert_client_state(
         &mut self,
-        _client_id: &str,
-        _state: common::icon::icon::lightclient::v1::ClientState,
+        client_id: &str,
+        client_state: common::icon::icon::lightclient::v1::ClientState,
     ) -> Result<(), cw_light_client_common::ContractError> {
-        unimplemented!()
+        let old_state = self
+            .storage
+            .get(&get_client_state_key())
+            .ok_or(ContractError::ClientStateNotFound(client_id.to_string()))?;
+        let new_state = to_wasm_client_state(client_state, old_state)?;
+        self.storage.set(&get_client_state_key(), &new_state);
+        Ok(())
     }
 
     fn get_consensus_state(
@@ -80,49 +66,50 @@ impl<'a> IContext for CwContext<'a> {
         common::icon::icon::lightclient::v1::ConsensusState,
         cw_light_client_common::ContractError,
     > {
-        let ibc_height = Height::new(0, height).unwrap();
-        let any_bytes = self
-            .storage
-            .get(&get_consensus_state_key(ibc_height))
-            .ok_or(ContractError::ConsensusStateNotFound {
-                height,
-                client_id: client_id.to_string(),
-            })?;
-        let any_state = Any::decode(any_bytes.as_slice()).unwrap();
-        ConsensusState::from_any(any_state).map_err(ContractError::DecodeError)
+        QueryHandler::get_consensus_state(self.storage, client_id, height)
     }
 
     fn insert_consensus_state(
         &mut self,
         _client_id: &str,
-        _height: u64,
-        _state: common::icon::icon::lightclient::v1::ConsensusState,
+        height: u64,
+        consensus_state: common::icon::icon::lightclient::v1::ConsensusState,
     ) -> Result<(), cw_light_client_common::ContractError> {
-        unimplemented!()
+        let ibc_height = Height::new(0, height).unwrap();
+        let wasm_consensus_state = to_wasm_consensus_state(consensus_state);
+        self.storage
+            .set(&&get_consensus_state_key(ibc_height), &wasm_consensus_state);
+        Ok(())
     }
 
     fn get_timestamp_at_height(
         &self,
-        _client_id: &str,
-        _height: u64,
+        client_id: &str,
+        height: u64,
     ) -> Result<u64, cw_light_client_common::ContractError> {
-        unimplemented!()
+        QueryHandler::get_processed_time_at_height(self.storage, client_id, height)
     }
 
     fn insert_timestamp_at_height(
         &mut self,
-        _client_id: &str,
-        _height: u64,
-    ) -> Result<(), cw_light_client_common::ContractError> {
-        unimplemented!()
+        client_id: &str,
+        height: u64,
+    ) -> Result<(), ContractError> {
+        let time = self.env.block.time.nanos();
+        PROCESSED_TIMES
+            .save(self.storage, (client_id.to_string(), height), &time)
+            .map_err(|_e| ContractError::FailedToSaveProcessedTime)
     }
 
     fn insert_blocknumber_at_height(
         &mut self,
-        _client_id: &str,
-        _height: u64,
-    ) -> Result<(), cw_light_client_common::ContractError> {
-        unimplemented!()
+        client_id: &str,
+        height: u64,
+    ) -> Result<(), ContractError> {
+        let block_height = self.env.block.height;
+        PROCESSED_HEIGHTS
+            .save(self.storage, (client_id.to_string(), height), &block_height)
+            .map_err(|_e| ContractError::FailedToSaveProcessedTime)
     }
 
     fn get_config(
@@ -139,27 +126,27 @@ impl<'a> IContext for CwContext<'a> {
     }
 
     fn get_current_block_time(&self) -> u64 {
-        unimplemented!()
+        self.env.block.time.nanos()
     }
 
     fn get_current_block_height(&self) -> u64 {
-        unimplemented!()
+        self.env.block.height
     }
 
     fn get_processed_time_at_height(
         &self,
-        _client_id: &str,
-        _height: u64,
-    ) -> Result<u64, cw_light_client_common::ContractError> {
-        unimplemented!()
+        client_id: &str,
+        height: u64,
+    ) -> Result<u64, ContractError> {
+        QueryHandler::get_processed_time_at_height(self.storage, client_id, height)
     }
 
     fn get_processed_block_at_height(
         &self,
-        _client_id: &str,
-        _height: u64,
-    ) -> Result<u64, cw_light_client_common::ContractError> {
-        unimplemented!()
+        client_id: &str,
+        height: u64,
+    ) -> Result<u64, ContractError> {
+        QueryHandler::get_processed_blocknumber_at_height(self.storage, client_id, height)
     }
 
     fn ensure_owner(
@@ -177,6 +164,10 @@ impl<'a> IContext for CwContext<'a> {
     }
 
     fn api(&self) -> &dyn Api {
-        unimplemented!()
+        self.api
     }
 }
+
+pub struct QueryHandler;
+
+impl IQueryHandler for QueryHandler {}

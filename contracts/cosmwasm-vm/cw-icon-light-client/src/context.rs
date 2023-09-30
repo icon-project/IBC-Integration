@@ -8,6 +8,7 @@ use cosmwasm_std::DepsMut;
 use cosmwasm_std::Env;
 use cosmwasm_std::Storage;
 
+use cw_light_client_common::traits::IQueryHandler;
 use debug_print::debug_eprintln;
 
 use crate::constants::CLIENT_STATES;
