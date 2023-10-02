@@ -1,6 +1,7 @@
-pub use cw_light_client_common::constants;
+
 mod context;
 pub mod contract;
+
 mod msg;
 pub mod query_handler;
 pub mod utils;
@@ -12,3 +13,5 @@ pub use cw_light_client_common::error::ContractError;
 extern crate alloc;
 extern crate core;
 pub type Bytes = Vec<u8>;
+
+pub mod constants;
