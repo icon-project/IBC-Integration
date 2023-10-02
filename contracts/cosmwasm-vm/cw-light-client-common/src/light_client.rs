@@ -1,6 +1,4 @@
 use crate::constants::TRUST_LEVEL;
-
-use crate::traits::IQueryHandler;
 use crate::traits::{ConsensusStateUpdate, IContext, ILightClient};
 use crate::ContractError;
 use common::icon::icon::lightclient::v1::ConsensusState;
