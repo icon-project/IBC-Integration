@@ -8,7 +8,7 @@ use cw_light_client_common::traits::IQueryHandler;
 use crate::mock_client::MockClient;
 use crate::query_handler::QueryHandler;
 
-use common::icon::icon::types::v1::{MerkleNode, MerkleProofs, SignedHeader};
+use common::icon::icon::types::v1::{MerkleProofs, SignedHeader};
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
@@ -19,7 +19,7 @@ use cw_common::raw_types::Any;
 
 use crate::context::CwContext;
 use crate::light_client::IconClient;
-use crate::msg::{ContractResult, ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{ContractResult, ExecuteMsg, InstantiateMsg, QueryMsg, QueryResponse};
 use crate::traits::{IContext, ILightClient};
 use crate::ContractError;
 use prost::Message;
@@ -71,9 +71,9 @@ fn process_message(
             let client_id = "08-wasm-0";
             let proofs_decoded =
                 MerkleProofs::decode(msg.proof.as_slice()).map_err(ContractError::DecodeError)?;
-            let path = hex::decode(&msg.path.key_path.join("")).unwrap();
+            let path = hex::decode(msg.path.key_path.join("")).unwrap();
 
-            let ok = QueryHandler::verify_membership(
+            let _ok = QueryHandler::verify_membership(
                 deps_mut.as_ref(),
                 client_id,
                 height,
@@ -92,7 +92,7 @@ fn process_message(
             let client_id = "08-wasm-0";
             let proofs_decoded =
                 MerkleProofs::decode(msg.proof.as_slice()).map_err(ContractError::DecodeError)?;
-            let path = hex::decode(&msg.path.key_path.join("")).unwrap();
+            let path = hex::decode(msg.path.key_path.join("")).unwrap();
 
             let _ok = QueryHandler::verify_non_membership(
                 deps_mut.as_ref(),
@@ -166,11 +166,15 @@ pub fn any_from_byte(bytes: &[u8]) -> Result<Any, ContractError> {
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    let client_id = "08-wasm-0";
     match msg {
         QueryMsg::ClientTypeMsg(_) => todo!(),
         QueryMsg::GetLatestHeightsMsg(_) => todo!(),
-        QueryMsg::ExportMetadata(_) => todo!(),
+        QueryMsg::ExportMetadata(_) => {
+            let res = QueryHandler::get_genesis_metadata(deps.storage, client_id);
+            to_binary(&QueryResponse::genesis_metadata(Some(res)))
+        }
         QueryMsg::Status(_) => todo!(),
     }
 }

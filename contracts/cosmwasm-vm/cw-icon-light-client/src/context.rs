@@ -153,7 +153,7 @@ impl<'a> IContext for CwContext<'a> {
         QueryHandler::get_processed_blocknumber_at_height(self.storage, client_id, height)
     }
 
-    fn ensure_ibc_host(&self, caller: cosmwasm_std::Addr) -> Result<(), ContractError> {
+    fn ensure_ibc_host(&self, caller: &cosmwasm_std::Addr) -> Result<(), ContractError> {
         let config = self.get_config()?;
         if caller != config.ibc_host {
             return Err(ContractError::Unauthorized {});
