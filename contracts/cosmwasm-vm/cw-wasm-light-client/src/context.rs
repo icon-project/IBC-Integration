@@ -1,4 +1,3 @@
-use common::ibc::Height;
 use cosmwasm_std::{Api, Env, Storage};
 
 use crate::query_handler::QueryHandler;
@@ -10,7 +9,7 @@ use cw_light_client_common::{
 };
 
 use crate::utils::{
-    get_client_state_key, get_consensus_state_key, to_wasm_client_state, to_wasm_consensus_state,
+    get_client_state_key, get_consensus_state_key, to_wasm_client_state, to_wasm_consensus_state, to_ibc_height,
 };
 pub struct CwContext<'a> {
     pub storage: &'a mut dyn Storage,
@@ -70,7 +69,7 @@ impl<'a> IContext for CwContext<'a> {
         height: u64,
         consensus_state: common::icon::icon::lightclient::v1::ConsensusState,
     ) -> Result<(), cw_light_client_common::ContractError> {
-        let ibc_height = Height::new(0, height).unwrap();
+        let ibc_height = to_ibc_height(height);
         let wasm_consensus_state = to_wasm_consensus_state(consensus_state);
         self.storage
             .set(&get_consensus_state_key(ibc_height), &wasm_consensus_state);

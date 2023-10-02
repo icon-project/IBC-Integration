@@ -1,6 +1,6 @@
 use common::{
     consensus_state::IConsensusState,
-    ibc::Height,
+    
     icon::icon::lightclient::v1::{ClientState, ConsensusState},
     traits::AnyTypes,
 };
@@ -10,6 +10,7 @@ use ics07_tendermint_cw::ics23::FakeInner;
 use ics08_wasm::client_state::ClientState as WasmClientState;
 use prost::Message;
 use tendermint_proto::Protobuf;
+use ibc::Height;
 pub fn get_consensus_state_key(height: Height) -> Vec<u8> {
     [
         "consensusStates/".to_string().into_bytes(),
@@ -26,12 +27,12 @@ pub fn to_wasm_client_state(
     client_state: ClientState,
     old_wasm_state: Vec<u8>,
 ) -> Result<Vec<u8>, ContractError> {
-    use ibc::Height;
-    let any = Any::decode(&*old_wasm_state).unwrap();
+    let any = any_from_byte(&*old_wasm_state)?;
     let mut wasm_client_state =
-        WasmClientState::<FakeInner, FakeInner, FakeInner>::decode_vec(&any.value).unwrap();
+        WasmClientState::<FakeInner, FakeInner, FakeInner>::decode_vec(&any.value) 
+        .map_err(|e| ContractError::OtherError { error: e.to_string() })?;
     wasm_client_state.data = client_state.to_any().encode_to_vec();
-    wasm_client_state.latest_height = Height::new(0, client_state.latest_height);
+    wasm_client_state.latest_height = to_ibc_height(client_state.latest_height);
     let vec1 = wasm_client_state.to_any().encode_to_vec();
     Ok(vec1)
 }
@@ -46,22 +47,32 @@ pub fn to_wasm_consensus_state(consensus_state: ConsensusState) -> Vec<u8> {
 }
 
 pub fn decode_client_state(data: &[u8]) -> Result<ClientState, ContractError> {
-    let any = Any::decode(data).unwrap();
+    let any = Any::decode(data).map_err(ContractError::DecodeError)?;
     let wasm_state =
         ics08_wasm::client_state::ClientState::<FakeInner, FakeInner, FakeInner>::decode_vec(
             &any.value,
         )
-        .unwrap();
-    let any = Any::decode(&*wasm_state.data).unwrap();
-    let state = ClientState::from_any(any).unwrap();
+        .map_err(|e| ContractError::OtherError { error: e.to_string() })?;
+    let any = Any::decode(&*wasm_state.data).map_err(ContractError::DecodeError)?;
+    let state = ClientState::from_any(any).map_err(ContractError::DecodeError)?;
     Ok(state)
 }
 
 pub fn decode_consensus_state(value: &[u8]) -> Result<ConsensusState, ContractError> {
-    let any = Any::decode(&mut &*value).unwrap();
+    let any = Any::decode(&mut &*value).map_err(ContractError::DecodeError)?;
     let wasm_consensus_state =
-        ics08_wasm::consensus_state::ConsensusState::<FakeInner>::decode_vec(&any.value).unwrap();
-    let any = Any::decode(&mut &wasm_consensus_state.data[..]).unwrap();
-    let any_consensus_state = ConsensusState::from_any(any).unwrap();
+        ics08_wasm::consensus_state::ConsensusState::<FakeInner>::decode_vec(&any.value) 
+        .map_err(|e| ContractError::OtherError { error: e.to_string() })?;
+    let any = Any::decode(&mut &wasm_consensus_state.data[..]).map_err(ContractError::DecodeError)?;
+    let any_consensus_state = ConsensusState::from_any(any).map_err(ContractError::DecodeError)?;
     Ok(any_consensus_state)
+}
+
+pub fn to_ibc_height(height: u64) -> Height{
+    Height::new(0, height)
+}
+
+pub fn any_from_byte(bytes: &[u8]) -> Result<Any, ContractError> {
+    let any = Any::decode(bytes).map_err(ContractError::DecodeError)?;
+    Ok(any)
 }

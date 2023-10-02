@@ -1,7 +1,7 @@
 use common::traits::AnyTypes;
 use cosmwasm_schema::cw_serde;
 use cw_common::cw_println;
-use cw_common::ibc_types::IbcHeight;
+
 use cw_light_client_common::traits::IQueryHandler;
 
 use crate::constants::CLIENT_ID;
@@ -91,10 +91,10 @@ fn process_message(
                 &proofs_decoded.proofs,
                 &msg.value,
                 &path,
-            )
-            .unwrap();
+            )?;
             cw_println!(deps_mut.api, "[WasmClient]: Verify Membership Complete");
-            Ok(to_binary(&ContractResult::success()).unwrap())
+           
+            to_binary(&ContractResult::success()).map_err(ContractError::Std)
         }
         ExecuteMsg::VerifyNonMembership(msg) => {
             cw_println!(deps_mut.api, "[WasmClient]: Verify Non Membership Called");
@@ -112,10 +112,9 @@ fn process_message(
                 msg.delay_block_period,
                 &proofs_decoded.proofs,
                 &path,
-            )
-            .unwrap();
+            )?;
             cw_println!(deps_mut.api, "[WasmClient]: Verify Non Membership Complete");
-            Ok(to_binary(&ContractResult::success()).unwrap())
+            to_binary(&ContractResult::success()).map_err(ContractError::Std)
         }
         ExecuteMsg::VerifyClientMessage(msg) => match msg.client_message {
             crate::msg::ClientMessageRaw::Header(wasmheader) => {
@@ -127,7 +126,7 @@ fn process_message(
                 let header =
                     SignedHeader::from_any(header_any).map_err(ContractError::DecodeError)?;
                 let _update = client.update_client(info.sender, CLIENT_ID, header)?;
-                Ok(to_binary(&ContractResult::success()).unwrap())
+                to_binary(&ContractResult::success()).map_err(ContractError::Std)
             }
             crate::msg::ClientMessageRaw::Misbehaviour(_) => unimplemented!(),
         },
@@ -145,10 +144,10 @@ fn process_message(
                         SignedHeader::from_any(header_any).map_err(ContractError::DecodeError)?;
                     let _update = client.update_client(info.sender, CLIENT_ID, header)?;
 
-                    Ok(to_binary(&ContractResult::success()).unwrap())
+                    to_binary(&ContractResult::success()).map_err(ContractError::Std)
                 }
                 crate::msg::ClientMessageRaw::Misbehaviour(_) => {
-                    Ok(to_binary(&ContractResult::success()).unwrap())
+                    to_binary(&ContractResult::success()).map_err(ContractError::Std)
                 }
             }
         }
@@ -158,24 +157,10 @@ fn process_message(
     Ok(result.unwrap())
 }
 
-fn to_height_u64(height: &str) -> Result<u64, ContractError> {
-    let heights = height.split('-').collect::<Vec<&str>>();
-    if heights.len() != 2 {
-        return Err(ContractError::InvalidHeight);
-    }
-    heights[1]
-        .parse::<u64>()
-        .map_err(|_e| ContractError::InvalidHeight)
-}
 
-fn to_ibc_height(height: u64) -> Result<IbcHeight, ContractError> {
-    IbcHeight::new(0, height).map_err(|_e| ContractError::InvalidHeight)
-}
 
-pub fn any_from_byte(bytes: &[u8]) -> Result<Any, ContractError> {
-    let any = Any::decode(bytes).map_err(ContractError::DecodeError)?;
-    Ok(any)
-}
+
+
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
@@ -185,7 +170,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::ExportMetadata(msg) => {
             cw_println!(deps.api, "Export metadata called {:?}", &msg);
             let res = QueryHandler::get_genesis_metadata(deps.storage, CLIENT_ID);
-            to_binary(&QueryResponse::genesis_metadata(Some(res)))
+            to_binary(&QueryResponse::genesis_metadata(res.ok()))
         }
         QueryMsg::Status(msg) => {
             cw_println!(deps.api, "Export metadata called {:?}", &msg);

@@ -1,26 +1,4 @@
-// Copyright (C) 2022 ComposableFi.
-// SPDX-License-Identifier: Apache-2.0
-
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// 	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// use crate::{contract::HostFunctions, ics23::FakeInner, Bytes, ContractError};
-
 use cosmwasm_schema::cw_serde;
-
-// use ics07_tendermint::{
-// 	client_message::{ClientMessage, Header, Misbehaviour},
-// 	client_state::ClientState,
-// };
 use ics07_tendermint_cw::ics23::FakeInner;
 use ics08_wasm::{
     client_message::Header as WasmHeader, client_state::ClientState as WasmClientState,
@@ -100,6 +78,7 @@ impl QueryResponse {
     }
 }
 
+
 #[cw_serde]
 pub struct ContractResult {
     pub is_valid: bool,
@@ -108,7 +87,7 @@ pub struct ContractResult {
     pub data: Option<Vec<u8>>,
     pub found_misbehaviour: bool,
 }
-
+#[allow(dead_code)]
 impl ContractResult {
     pub fn success() -> Self {
         Self {
@@ -139,17 +118,6 @@ impl ContractResult {
     }
 }
 
-// #[derive(Eq, Default)]
-// #[cw_serde]
-// pub struct FakeInner;
-
-// impl TryFrom<ibc_proto::google::protobuf::Any> for FakeInner {
-// 	type Error = Infallible;
-
-// 	fn try_from(_: ibc_proto::google::protobuf::Any) -> Result<Self, Self::Error> {
-// 		Ok(FakeInner)
-// 	}
-// }
 
 #[cw_serde]
 pub struct InstantiateMsg {}
@@ -205,36 +173,7 @@ pub struct VerifyMembershipMsgRaw {
     pub delay_time_period: u64,
 }
 
-// pub struct VerifyMembershipMsg {
-// 	pub prefix: CommitmentPrefix,
-// 	pub proof: CommitmentProofBytes,
-// 	pub path: Path,
-// 	pub value: Vec<u8>,
-// 	pub height: Height,
-// 	pub delay_block_period: u64,
-// 	pub delay_time_period: u64,
-// }
 
-// impl TryFrom<VerifyMembershipMsgRaw> for VerifyMembershipMsg {
-// 	type Error = ContractError;
-
-// 	fn try_from(mut raw: VerifyMembershipMsgRaw) -> Result<Self, Self::Error> {
-// 		let proof = CommitmentProofBytes::try_from(raw.proof)?;
-// 		let prefix = raw.path.key_path.remove(0).into_bytes();
-// 		let path_str = raw.path.key_path.join("");
-// 		let path = Path::from_str(&path_str)?;
-// 		let height = Height::from(raw.height);
-// 		Ok(Self {
-// 			proof,
-// 			path,
-// 			value: raw.value,
-// 			height,
-// 			prefix: CommitmentPrefix::try_from(prefix)?,
-// 			delay_block_period: raw.delay_block_period,
-// 			delay_time_period: raw.delay_time_period,
-// 		})
-// 	}
-// }
 
 #[cw_serde]
 pub struct VerifyNonMembershipMsgRaw {
@@ -246,35 +185,6 @@ pub struct VerifyNonMembershipMsgRaw {
     pub delay_block_period: u64,
     pub delay_time_period: u64,
 }
-
-// pub struct VerifyNonMembershipMsg {
-// 	pub prefix: CommitmentPrefix,
-// 	pub proof: CommitmentProofBytes,
-// 	pub path: Path,
-// 	pub height: Height,
-// 	pub delay_block_period: u64,
-// 	pub delay_time_period: u64,
-// }
-
-// impl TryFrom<VerifyNonMembershipMsgRaw> for VerifyNonMembershipMsg {
-// 	type Error = ContractError;
-
-// 	fn try_from(mut raw: VerifyNonMembershipMsgRaw) -> Result<Self, Self::Error> {
-// 		let proof = CommitmentProofBytes::try_from(raw.proof)?;
-// 		let prefix = raw.path.key_path.remove(0).into_bytes();
-// 		let path_str = raw.path.key_path.join("");
-// 		let path = Path::from_str(&path_str)?;
-// 		let height = Height::from(raw.height);
-// 		Ok(Self {
-// 			proof,
-// 			path,
-// 			height,
-// 			prefix: CommitmentPrefix::try_from(prefix)?,
-// 			delay_block_period: raw.delay_block_period,
-// 			delay_time_period: raw.delay_time_period,
-// 		})
-// 	}
-// }
 
 #[cw_serde]
 pub struct WasmMisbehaviour {
@@ -323,10 +233,3 @@ pub struct VerifyUpgradeAndUpdateStateMsgRaw {
     #[serde(with = "Base64", default)]
     pub proof_upgrade_consensus_state: Vec<u8>,
 }
-
-// pub struct VerifyUpgradeAndUpdateStateMsg {
-// 	pub upgrade_client_state: WasmClientState<FakeInner, FakeInner, FakeInner>,
-// 	pub upgrade_consensus_state: WasmConsensusState<FakeInner>,
-// 	pub proof_upgrade_client: CommitmentProofBytes,
-// 	pub proof_upgrade_consensus_state: CommitmentProofBytes,
-// }

@@ -192,7 +192,7 @@ impl<C: IContext> ILightClient for IconClient<C> {
             });
         }
 
-        let mut state = self.context.get_client_state(client_id)?;
+        let state = self.context.get_client_state(client_id)?;
 
         if signed_header.trusted_height > btp_header.main_height {
             return Err(ContractError::UpdateBlockOlderThanTrustedHeight);

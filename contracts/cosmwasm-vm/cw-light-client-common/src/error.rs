@@ -83,6 +83,9 @@ pub enum ContractError {
 
     #[error("Height {height:?} already updated ")]
     HeightAlreadyUpdated { height: u64 },
+
+    #[error("{error:?}")]
+    OtherError { error: String },
 }
 
 impl From<CwErrors> for ContractError {

@@ -1,14 +1,14 @@
-use common::ibc::Height;
+
 
 use cosmwasm_std::{to_binary, Binary, Deps, Order, StdResult};
 use cw_light_client_common::{constants::PROCESSED_HEIGHTS, traits::IQueryHandler, ContractError};
-use cw_storage_plus::Endian;
+use ibc::Height;
 
 use crate::{
     constants::CLIENT_ID,
     msg::{GenesisMetadata, QueryResponse},
     utils::{
-        decode_client_state, decode_consensus_state, get_client_state_key, get_consensus_state_key,
+        decode_client_state, decode_consensus_state, get_client_state_key, get_consensus_state_key, to_ibc_height,
     },
 };
 
@@ -31,7 +31,7 @@ impl QueryHandler {
     pub fn get_genesis_metadata(
         storage: &dyn cosmwasm_std::Storage,
         client_id: &str,
-    ) -> Vec<GenesisMetadata> {
+    ) -> Result<Vec<GenesisMetadata>,ContractError> {
         let heights = PROCESSED_HEIGHTS
             .prefix(client_id.to_string())
             .keys(storage, None, None, Order::Ascending)
@@ -40,9 +40,9 @@ impl QueryHandler {
         let mut gm: Vec<GenesisMetadata> = Vec::<GenesisMetadata>::new();
         for h in heights {
             let processed_height =
-                Self::get_processed_blocknumber_at_height(storage, client_id, h).unwrap();
-            let processed_time = Self::get_processed_time_at_height(storage, client_id, h).unwrap();
-            let ibc_height = Height::new(0, h).unwrap();
+                Self::get_processed_blocknumber_at_height(storage, client_id, h)?;
+            let processed_time = Self::get_processed_time_at_height(storage, client_id, h)?;
+            let ibc_height = to_ibc_height(h);
             let processed_height_key = Self::processed_height_key(&ibc_height, &mut Vec::new());
             let processed_time_key = Self::processed_time_key(&ibc_height, &mut Vec::new());
             gm.push(GenesisMetadata {
@@ -55,7 +55,7 @@ impl QueryHandler {
                 value: processed_time.to_be_bytes().to_vec(),
             });
         }
-        gm
+        Ok(gm)
     }
 
     pub fn get_client_status(deps: Deps) -> StdResult<Binary> {
@@ -90,7 +90,7 @@ impl IQueryHandler for QueryHandler {
         client_id: &str,
         height: u64,
     ) -> Result<common::icon::icon::lightclient::v1::ConsensusState, ContractError> {
-        let ibc_height = Height::new(0, height).unwrap();
+        let ibc_height = to_ibc_height(height);
         let any_bytes = storage.get(&get_consensus_state_key(ibc_height)).ok_or(
             ContractError::ConsensusStateNotFound {
                 height,
