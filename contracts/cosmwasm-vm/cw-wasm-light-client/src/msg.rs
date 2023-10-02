@@ -78,7 +78,6 @@ impl QueryResponse {
     }
 }
 
-
 #[cw_serde]
 pub struct ContractResult {
     pub is_valid: bool,
@@ -117,7 +116,6 @@ impl ContractResult {
         self
     }
 }
-
 
 #[cw_serde]
 pub struct InstantiateMsg {}
@@ -172,8 +170,6 @@ pub struct VerifyMembershipMsgRaw {
     pub delay_block_period: u64,
     pub delay_time_period: u64,
 }
-
-
 
 #[cw_serde]
 pub struct VerifyNonMembershipMsgRaw {

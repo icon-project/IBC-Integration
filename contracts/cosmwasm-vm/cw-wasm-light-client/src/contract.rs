@@ -93,7 +93,7 @@ fn process_message(
                 &path,
             )?;
             cw_println!(deps_mut.api, "[WasmClient]: Verify Membership Complete");
-           
+
             to_binary(&ContractResult::success()).map_err(ContractError::Std)
         }
         ExecuteMsg::VerifyNonMembership(msg) => {
@@ -156,11 +156,6 @@ fn process_message(
     };
     Ok(result.unwrap())
 }
-
-
-
-
-
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {

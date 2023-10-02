@@ -9,7 +9,8 @@ use cw_light_client_common::{
 };
 
 use crate::utils::{
-    get_client_state_key, get_consensus_state_key, to_wasm_client_state, to_wasm_consensus_state, to_ibc_height,
+    get_client_state_key, get_consensus_state_key, to_ibc_height, to_wasm_client_state,
+    to_wasm_consensus_state,
 };
 pub struct CwContext<'a> {
     pub storage: &'a mut dyn Storage,
