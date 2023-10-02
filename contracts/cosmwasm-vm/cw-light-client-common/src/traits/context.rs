@@ -1,9 +1,9 @@
+use crate::ContractError;
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::utils::keccak256;
 use cosmwasm_std::Addr;
 use cosmwasm_std::Api;
-use crate::ContractError;
 
 use super::*;
 pub trait IContext {

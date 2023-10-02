@@ -1,4 +1,3 @@
-use std::marker::PhantomData;
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::MerkleNode;
@@ -11,6 +10,7 @@ use cosmwasm_std::Storage;
 use cw_common::cw_println;
 use cw_common::hex_string::HexString;
 use cw_storage_plus::Bound;
+use std::marker::PhantomData;
 
 use super::*;
 use crate::constants::CLIENT_STATES;
@@ -149,32 +149,6 @@ pub trait IQueryHandler {
         let client_state = Self::get_client_state(deps.storage, client_id)?;
         let consensus_state: ConsensusState =
             Self::get_consensus_state(deps.storage, client_id, height)?;
-        Self::verify_membership_inner(
-            deps,
-            client_id,
-            client_state,
-            consensus_state,
-            height,
-            delay_time_period,
-            delay_block_period,
-            proof,
-            value,
-            path,
-        )
-    }
-
-    fn verify_membership_inner(
-        deps: Deps,
-        client_id: &str,
-        client_state: ClientState,
-        consensus_state: ConsensusState,
-        height: u64,
-        _delay_time_period: u64,
-        _delay_block_period: u64,
-        proof: &[MerkleNode],
-        value: &[u8],
-        path: &[u8],
-    ) -> Result<bool, ContractError> {
         cw_println!(
             deps.api,
             "[LightClient]: Path Bytes  {:?}",
