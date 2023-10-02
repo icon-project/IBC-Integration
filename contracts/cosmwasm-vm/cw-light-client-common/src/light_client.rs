@@ -144,7 +144,7 @@ impl<C: IContext> ILightClient for IconClient<C> {
         signed_header: SignedHeader,
     ) -> Result<ConsensusStateUpdate, Self::Error> {
         self.verify_header(&caller, client_id, &signed_header)?;
-       
+
         let mut state = self.context.get_client_state(client_id)?;
         let btp_header = signed_header.header.clone().unwrap();
 
@@ -234,8 +234,6 @@ impl<C: IContext> ILightClient for IconClient<C> {
             &signed_header.signatures,
             &signed_header.current_validators,
         )?;
-
-       
 
         Ok(())
     }
