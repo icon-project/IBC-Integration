@@ -144,8 +144,13 @@ impl<C: IContext> ILightClient for IconClient<C> {
         signed_header: SignedHeader,
     ) -> Result<ConsensusStateUpdate, Self::Error> {
         self.verify_header(&caller, client_id, &signed_header)?;
-        let state = self.context.get_client_state(client_id)?;
+       
+        let mut state = self.context.get_client_state(client_id)?;
         let btp_header = signed_header.header.clone().unwrap();
+
+        if state.latest_height < btp_header.main_height {
+            state.latest_height = btp_header.main_height;
+        }
 
         let consensus_state = btp_header.to_consensus_state();
         self.context.insert_client_state(client_id, state.clone())?;
@@ -230,9 +235,7 @@ impl<C: IContext> ILightClient for IconClient<C> {
             &signed_header.current_validators,
         )?;
 
-        if state.latest_height < btp_header.main_height {
-            state.latest_height = btp_header.main_height;
-        }
+       
 
         Ok(())
     }
