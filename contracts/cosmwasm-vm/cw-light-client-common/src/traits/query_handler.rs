@@ -1,16 +1,9 @@
 use std::marker::PhantomData;
-
 use common::icon::icon::lightclient::v1::ClientState;
 use common::icon::icon::lightclient::v1::ConsensusState;
-
 use common::icon::icon::types::v1::MerkleNode;
-use common::icon::icon::types::v1::SignedHeader;
 use common::utils::calculate_root;
 use common::utils::keccak256;
-use cosmwasm_std::Addr;
-
-use cosmwasm_std::Api;
-
 use cosmwasm_std::Deps;
 use cosmwasm_std::Order;
 use cosmwasm_std::StdResult;
@@ -18,9 +11,8 @@ use cosmwasm_std::Storage;
 use cw_common::cw_println;
 use cw_common::hex_string::HexString;
 use cw_storage_plus::Bound;
-use serde::Deserialize;
-use serde::Serialize;
 
+use super::*;
 use crate::constants::CLIENT_STATES;
 use crate::constants::CONFIG;
 use crate::constants::CONSENSUS_STATES;
@@ -29,7 +21,6 @@ use crate::constants::PROCESSED_TIMES;
 use crate::ContractError;
 use common::traits::AnyTypes;
 use prost::Message;
-use super::*;
 pub trait IQueryHandler {
     fn get_consensus_state(
         storage: &dyn Storage,
