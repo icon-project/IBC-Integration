@@ -73,7 +73,7 @@ fn process_message(
         "[WasmClient]: Contract Execute Called with {:?}",
         msg
     );
-    let result: Result<Binary, ContractError> = match msg {
+    match msg {
         ExecuteMsg::VerifyMembership(msg) => {
             cw_println!(deps_mut.api, "[WasmClient]: Verify Membership called");
             let height = msg.height.revision_height;
@@ -82,7 +82,7 @@ fn process_message(
                 MerkleProofs::decode(msg.proof.as_slice()).map_err(ContractError::DecodeError)?;
             let path = hex::decode(msg.path.key_path.join("")).unwrap();
 
-            let _ok = QueryHandler::verify_membership(
+            QueryHandler::verify_membership(
                 deps_mut.as_ref(),
                 client_id,
                 height,
@@ -94,7 +94,7 @@ fn process_message(
             )?;
             cw_println!(deps_mut.api, "[WasmClient]: Verify Membership Complete");
 
-            to_binary(&ContractResult::success()).map_err(ContractError::Std)
+            Ok(to_binary(&ContractResult::success()).map_err(ContractError::Std)?)
         }
         ExecuteMsg::VerifyNonMembership(msg) => {
             cw_println!(deps_mut.api, "[WasmClient]: Verify Non Membership Called");
@@ -104,7 +104,7 @@ fn process_message(
                 MerkleProofs::decode(msg.proof.as_slice()).map_err(ContractError::DecodeError)?;
             let path = hex::decode(msg.path.key_path.join("")).unwrap();
 
-            let _ok = QueryHandler::verify_non_membership(
+            QueryHandler::verify_non_membership(
                 deps_mut.as_ref(),
                 client_id,
                 height,
@@ -114,7 +114,8 @@ fn process_message(
                 &path,
             )?;
             cw_println!(deps_mut.api, "[WasmClient]: Verify Non Membership Complete");
-            to_binary(&ContractResult::success()).map_err(ContractError::Std)
+
+            Ok(to_binary(&ContractResult::success()).map_err(ContractError::Std)?)
         }
         ExecuteMsg::VerifyClientMessage(msg) => match msg.client_message {
             crate::msg::ClientMessageRaw::Header(wasmheader) => {
@@ -125,13 +126,11 @@ fn process_message(
                 let header_any = Any::decode(&*wasmheader.data).unwrap();
                 let header =
                     SignedHeader::from_any(header_any).map_err(ContractError::DecodeError)?;
-                let _update = client.update_client(info.sender, CLIENT_ID, header)?;
-                to_binary(&ContractResult::success()).map_err(ContractError::Std)
+                client.update_client(info.sender, CLIENT_ID, header)?;
+                Ok(to_binary(&ContractResult::success()).map_err(ContractError::Std)?)
             }
             crate::msg::ClientMessageRaw::Misbehaviour(_) => unimplemented!(),
         },
-        ExecuteMsg::CheckForMisbehaviour(_) => todo!(),
-        ExecuteMsg::UpdateStateOnMisbehaviour(_) => todo!(),
         ExecuteMsg::UpdateState(msg) => {
             cw_println!(deps_mut.api, "Received Header {:?}", &msg);
 
@@ -142,19 +141,16 @@ fn process_message(
                     let header_any = Any::decode(&*wasmheader.data).unwrap();
                     let header =
                         SignedHeader::from_any(header_any).map_err(ContractError::DecodeError)?;
-                    let _update = client.update_client(info.sender, CLIENT_ID, header)?;
-
-                    to_binary(&ContractResult::success()).map_err(ContractError::Std)
+                    client.update_client(info.sender, CLIENT_ID, header)?;
+                    Ok(to_binary(&ContractResult::success()).map_err(ContractError::Std)?)
                 }
                 crate::msg::ClientMessageRaw::Misbehaviour(_) => {
-                    to_binary(&ContractResult::success()).map_err(ContractError::Std)
+                    Ok(to_binary(&ContractResult::success()).map_err(ContractError::Std)?)
                 }
             }
         }
-        ExecuteMsg::CheckSubstituteAndUpdateState(_) => todo!(),
-        ExecuteMsg::VerifyUpgradeAndUpdateState(_) => todo!(),
-    };
-    Ok(result.unwrap())
+        _ => todo!(),
+    }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -170,6 +166,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Status(msg) => {
             cw_println!(deps.api, "Export metadata called {:?}", &msg);
             QueryHandler::get_client_status(deps)
+        }
+        QueryMsg::GetClientState {} => {
+            to_binary(&QueryHandler::get_client_state(deps.storage, CLIENT_ID).unwrap())
         }
     }
 }

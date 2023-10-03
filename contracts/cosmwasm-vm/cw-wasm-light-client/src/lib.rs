@@ -1,7 +1,7 @@
 mod context;
 pub mod contract;
 
-mod msg;
+pub mod msg;
 pub mod query_handler;
 pub mod utils;
 pub use cw_light_client_common::light_client;

@@ -138,6 +138,7 @@ pub enum QueryMsg {
     GetLatestHeightsMsg(GetLatestHeightsMsg),
     ExportMetadata(ExportMetadataMsg),
     Status(StatusMsg),
+    GetClientState {},
 }
 
 #[cw_serde]
