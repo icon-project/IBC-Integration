@@ -6,8 +6,7 @@ use cosmwasm_std::{Env, Response};
 
 use crate::error::ContractError;
 use crate::events::event_rollback_executed;
-use crate::state::CwCallService;
-use crate::state::EXECUTE_ROLLBACK_ID;
+use crate::state::{CwCallService, EXECUTE_ROLLBACK_ID};
 
 impl<'a> CwCallService<'a> {
     /// This function executes a rollback operation for a previously made call request.

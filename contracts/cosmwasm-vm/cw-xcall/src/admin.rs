@@ -37,10 +37,7 @@ impl<'a> CwCallService<'a> {
     ///
     /// Returns:
     ///
-    /// a `Result<Response, ContractError>`. If the `admin` parameter is empty, it returns an `Err` with
-    /// the `ContractError::AdminAddressCannotBeNull` variant. If the `info.sender` is not the owner, it
-    /// returns an `Err` with the `ContractError::Unauthorized` variant. If an admin already exists, it
-    /// returns an `Err` with
+    /// a `Result<Response, ContractError>`
     pub fn set_admin(
         &self,
         store: &mut dyn Storage,

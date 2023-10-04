@@ -14,8 +14,7 @@ impl<'a> CwCallService<'a> {
     /// Arguments:
     ///
     /// * `deps`: `deps` is a `DepsMut` object, which is short for "dependencies mutable". It is a struct
-    /// that provides access to the contract's dependencies, such as the storage, API, and querier. The
-    /// `DepsMut` object is passed as a parameter to most of the
+    /// that provides access to the contract's dependencies, such as the storage, API, and querier.
     /// * `_env`: The `_env` parameter in the `instantiate` function is of type `Env`, which represents
     /// the environment in which the contract is being executed. It contains information such as the
     /// current block height, the current time, and the address of the contract being executed. However,
@@ -23,12 +22,10 @@ impl<'a> CwCallService<'a> {
     /// * `info`: `info` is a struct that contains information about the message sender, such as their
     /// address, the amount of tokens they sent with the message, and the maximum amount of gas they are
     /// willing to pay for the transaction. This information can be used to determine whether the sender
-    /// is authorized to perform certain actions
+    /// is authorized to perform certain actions.
     /// * `msg`: The `msg` parameter in the `instantiate` function is of type `InstantiateMsg` and
     /// contains the message sent by the user when instantiating the contract. It can contain any custom
-    /// data that the user wants to pass to the contract during instantiation. The `msg` parameter is
-    /// used by the
-    ///
+    /// data that the user wants to pass to the contract during instantiation.
     /// Returns:
     ///
     /// The `instantiate` function returns a `Result<Response, ContractError>` where `Response` is a
@@ -97,7 +94,9 @@ impl<'a> CwCallService<'a> {
                 let dests = destinations.unwrap_or(vec![]);
                 self.send_call_message(deps, info, env, to, data, rollback, sources, dests)
             }
-            ExecuteMsg::HandleMessage { msg, from } => self.handle_message(deps, info, from, msg),
+            ExecuteMsg::HandleMessage { msg, from_nid } => {
+                self.handle_message(deps, info, from_nid, msg)
+            }
             ExecuteMsg::HandleError { sn } => self.handle_error(deps, info, sn),
             ExecuteMsg::ExecuteCall { request_id, data } => {
                 self.execute_call(deps, info, request_id, data)

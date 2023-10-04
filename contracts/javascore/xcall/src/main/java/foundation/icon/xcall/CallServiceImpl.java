@@ -261,11 +261,11 @@ public class CallServiceImpl implements CallService, FeeManage {
 
     @Override
     @External
-    public void handleMessage(String _from, byte[] _msg) {
+    public void handleMessage(String _fromNid, byte[] _msg) {
         CSMessage msg = CSMessage.fromBytes(_msg);
         switch (msg.getType()) {
             case CSMessage.REQUEST:
-                handleRequest(_from, msg.getData());
+                handleRequest(_fromNid, msg.getData());
                 break;
             case CSMessage.RESPONSE:
                 handleResponse(msg.getData());

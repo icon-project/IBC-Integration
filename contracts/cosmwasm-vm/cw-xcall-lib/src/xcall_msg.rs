@@ -23,7 +23,7 @@ pub enum ExecuteMsg {
         destinations: Option<Vec<String>>,
     },
     HandleMessage {
-        from: NetId,
+        from_nid: NetId,
         msg: Vec<u8>,
     },
 

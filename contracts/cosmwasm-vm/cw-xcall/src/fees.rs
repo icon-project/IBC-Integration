@@ -1,3 +1,4 @@
+use cosmwasm_std::Coin;
 use cw_xcall_lib::network_address::NetId;
 
 use super::*;
@@ -57,5 +58,16 @@ impl<'a> CwCallService<'a> {
         let conn_total: u128 = conn_fees.iter().sum();
 
         Ok(protocol_fee + conn_total)
+    }
+
+    pub fn get_total_paid(&self, deps: Deps, coins: &Vec<Coin>) -> Result<u128, ContractError> {
+        let config = self.get_config(deps.storage)?;
+        let mut total = 0_u128;
+        for c in coins.iter() {
+            if c.denom == config.denom {
+                total += c.amount.u128();
+            }
+        }
+        Ok(total)
     }
 }

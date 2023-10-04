@@ -19,7 +19,7 @@ const MOCK_CONTRACT_TO_ADDR: &str = "cosmoscontract";
 fn send_packet_by_non_contract_and_rollback_data_is_not_null() {
     let mut mock_deps = deps();
 
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
+    let mock_info = create_mock_info(&alice().to_string(), "arch", 2000);
 
     let contract = CwCallService::default();
 
@@ -144,6 +144,10 @@ fn send_packet_failure_due_rollback_len() {
                     })
                 }
             }
+            WasmQuery::Smart {
+                contract_addr: _,
+                msg: _,
+            } => SystemResult::Ok(ContractResult::Ok(to_binary(&0_u128).unwrap())),
             _ => todo!(),
         }
     });
@@ -182,7 +186,82 @@ fn send_packet_failure_due_rollback_len() {
 fn send_packet_success_needresponse() {
     let mut mock_deps = deps();
 
-    let mock_info = create_mock_info(MOCK_CONTRACT_ADDR, "umlg", 2000);
+    let mock_info = create_mock_info(MOCK_CONTRACT_ADDR, "arch", 2000);
+
+    let _env = mock_env();
+
+    let contract = CwCallService::default();
+    contract
+        .instantiate(
+            mock_deps.as_mut(),
+            _env,
+            mock_info.clone(),
+            cw_xcall::msg::InstantiateMsg {
+                network_id: "nid".to_string(),
+                denom: "arch".to_string(),
+            },
+        )
+        .unwrap();
+
+    contract.sn().save(mock_deps.as_mut().storage, &0).unwrap();
+
+    mock_deps.querier.update_wasm(|r| {
+        let constract1 = Addr::unchecked(MOCK_CONTRACT_ADDR);
+        let mut storage1 = HashMap::<Binary, Binary>::default();
+        storage1.insert(b"the key".into(), b"the value".into());
+        match r {
+            WasmQuery::ContractInfo { contract_addr } => {
+                if *contract_addr == constract1 {
+                    let response = ContractInfoResponse::default();
+                    SystemResult::Ok(ContractResult::Ok(to_binary(&response).unwrap()))
+                } else {
+                    SystemResult::Err(SystemError::NoSuchContract {
+                        addr: contract_addr.clone(),
+                    })
+                }
+            }
+            WasmQuery::Smart {
+                contract_addr: _,
+                msg: _,
+            } => SystemResult::Ok(ContractResult::Ok(to_binary(&10_u128).unwrap())),
+            _ => todo!(),
+        }
+    });
+
+    contract
+        .store_default_connection(
+            mock_deps.as_mut().storage,
+            NetId::from("btp".to_owned()),
+            Addr::unchecked("hostaddress"),
+        )
+        .unwrap();
+
+    contract
+        .send_call_message(
+            mock_deps.as_mut(),
+            mock_info,
+            mock_env(),
+            NetworkAddress::new("btp", MOCK_CONTRACT_TO_ADDR),
+            vec![1, 2, 3],
+            Some(vec![1, 2, 3]),
+            vec![],
+            vec![],
+        )
+        .unwrap();
+
+    let result = contract
+        .get_call_request(mock_deps.as_ref().storage, 1)
+        .unwrap();
+
+    assert!(!result.enabled())
+}
+
+#[test]
+#[should_panic(expected = "InsufficientFunds")]
+fn send_packet_fail_insufficient_funds() {
+    let mut mock_deps = deps();
+
+    let mock_info = create_mock_info(MOCK_CONTRACT_ADDR, "arch", 0);
 
     let _env = mock_env();
 

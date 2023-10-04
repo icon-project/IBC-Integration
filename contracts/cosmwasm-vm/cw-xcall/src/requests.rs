@@ -8,7 +8,7 @@ impl<'a> CwCallService<'a> {
     /// * `store`: `store` is a reference to a trait object of type `dyn Storage`. This is an abstract
     /// type that represents a key-value store where data can be persisted. In the context of smart
     /// contract development on the CosmWasm platform, `store` is typically provided by the runtime
-    /// environment and is
+    /// environment.
     ///
     /// Returns:
     ///

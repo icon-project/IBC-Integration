@@ -68,7 +68,7 @@ impl<'a> CwCallService<'a> {
     ///
     /// * `rollback`: `rollback` is a slice of bytes (`&[u8]`) that represents the data to be rolled back in
     /// a smart contract. The function `ensure_rollback_length` checks if the length of the `rollback` slice
-    /// is within the maximum allowed size (`MAX_ROLLBACK_SIZE`) and
+    /// is within the maximum allowed size (`MAX_ROLLBACK_SIZE`) and is not empty.
     ///
     /// Returns:
     ///
@@ -199,7 +199,7 @@ impl<'a> CwCallService<'a> {
 /// smart contract on the blockchain or not. It does this by querying the blockchain through the
 /// `querier` object to get information about the contract at the given `address`. If the query is
 /// successful, it returns `true`, indicating that the address is a valid contract. If the query fails,
-/// it returns `
+/// it returns false `
 fn is_contract(querier: QuerierWrapper, address: &Addr) -> bool {
     querier.query_wasm_contract_info(address).is_ok()
 }
