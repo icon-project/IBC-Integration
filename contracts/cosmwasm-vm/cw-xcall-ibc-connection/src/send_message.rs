@@ -1,5 +1,5 @@
 use common::rlp::Nullable;
-use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, Storage};
+use cosmwasm_std::{Coin, DepsMut, Env, MessageInfo, Response, Storage, Uint128};
 use cw_xcall_lib::network_address::NetId;
 
 use crate::{
@@ -29,14 +29,23 @@ impl<'a> CwIbcConnection<'a> {
 
         let sequence_number_host = self.query_host_sequence_no(deps.as_ref(), &ibc_config)?;
         let network_fee = self.get_network_fees(deps.as_ref().storage, nid.clone());
+        let mut total_fee = network_fee.send_packet_fee;
 
         if sn > 0 {
+            total_fee += network_fee.ack_fee;
             self.add_unclaimed_ack_fees(
                 deps.storage,
                 &nid,
                 sequence_number_host,
                 network_fee.ack_fee,
             )?;
+        }
+        let config = self.get_config(deps.storage)?;
+
+        let fund = get_amount_for_denom(&info.funds, config.denom);
+
+        if fund < total_fee.into() {
+            return Err(ContractError::InsufficientFunds {});
         }
 
         let timeout_height =
@@ -88,6 +97,14 @@ impl<'a> CwIbcConnection<'a> {
     }
 }
 
+fn get_amount_for_denom(funds: &Vec<Coin>, target_denom: String) -> Uint128 {
+    for coin in funds.iter() {
+        if coin.denom == target_denom {
+            return coin.amount;
+        }
+    }
+    Uint128::zero()
+}
 #[cfg(feature = "native_ibc")]
 impl<'a> CwIbcConnection<'a> {
     /// This function creates an IBC message to send a packet with a timeout to a destination endpoint.
