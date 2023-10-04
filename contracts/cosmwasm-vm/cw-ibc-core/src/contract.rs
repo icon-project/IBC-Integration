@@ -234,7 +234,7 @@ impl<'a> CwIbcCoreContext<'a> {
             } => {
                 cw_println!(deps, "[IBCCore] Write Acknowledgement Called");
                 let ack = acknowledgement.to_bytes()?;
-                self.write_acknowledgement(deps, info, packet, ack)
+                self.write_acknowledgement(deps, info, &env, packet, ack)
             }
         }
         // Ok(Response::new())
@@ -290,10 +290,10 @@ impl<'a> CwIbcCoreContext<'a> {
                 let client_val = IbcClientId::from_str(&client_id).unwrap();
                 let client = self.get_light_client(deps.storage, &client_val).unwrap();
                 let res = client
-                    .get_consensus_state(deps, &client_val, height)
+                    .get_consensus_state_any(deps, &client_val, height)
                     .unwrap();
-                let state = res.as_bytes();
-                to_binary(&hex::encode(state))
+
+                to_binary(&hex::encode(res.encode_to_vec()))
             }
             QueryMsg::GetClientState { client_id } => {
                 let res = self
@@ -466,6 +466,26 @@ impl<'a> CwIbcCoreContext<'a> {
                 let heights = self
                     .ibc_store()
                     .get_packet_heights(
+                        deps.storage,
+                        &port_id,
+                        &channel_id,
+                        start_sequence,
+                        end_sequence,
+                    )
+                    .unwrap();
+                to_binary(&heights)
+            }
+            QueryMsg::GetAckHeights {
+                port_id,
+                channel_id,
+                start_sequence,
+                end_sequence,
+            } => {
+                let port_id = IbcPortId::from_str(&port_id).unwrap();
+                let channel_id = IbcChannelId::from_str(&channel_id).unwrap();
+                let heights = self
+                    .ibc_store()
+                    .get_ack_heights(
                         deps.storage,
                         &port_id,
                         &channel_id,

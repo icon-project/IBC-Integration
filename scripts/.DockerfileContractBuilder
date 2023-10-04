@@ -10,6 +10,7 @@ ENV RUSTUP_HOME=/usr/local/rustup \
 RUN set -eux; \
     apt update; \
     apt-get install -y --no-install-recommends \
+        git bash \
         ca-certificates \
         gcc  \
         libc6-dev \
