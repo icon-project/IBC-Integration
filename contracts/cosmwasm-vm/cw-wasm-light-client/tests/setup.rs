@@ -1,4 +1,5 @@
-use common::{ibc::dynamic_typing::AsAny, icon::icon::types::v1::BtpHeader, traits::AnyTypes};
+use common::{icon::icon::types::v1::BtpHeader, traits::AnyTypes};
+use cosmwasm_std::Storage;
 #[cfg(test)]
 use cosmwasm_std::{
     coins,
@@ -8,13 +9,9 @@ use cosmwasm_std::{
     },
     Addr, BlockInfo, ContractInfo, Empty, Env, MessageInfo, OwnedDeps, Timestamp, TransactionInfo,
 };
-use cosmwasm_std::{DepsMut, Storage};
-use cw_common::raw_types::Any;
-use cw_wasm_light_client::{
-    query_handler::QueryHandler,
-    utils::{
-        get_client_state_key, get_consensus_state_key, to_ibc_height, to_wasm_consensus_state,
-    },
+
+use cw_wasm_light_client::utils::{
+    get_client_state_key, get_consensus_state_key, to_ibc_height, to_wasm_consensus_state,
 };
 use ics07_tendermint_cw::ics23::FakeInner;
 use prost::Message;
@@ -96,13 +93,8 @@ fn test() {
     assert_eq!(mock, mock_env)
 }
 
+#[derive(Default)]
 pub struct TestContext {}
-
-impl Default for TestContext {
-    fn default() -> Self {
-        TestContext {}
-    }
-}
 
 impl TestContext {
     pub fn init(&self, storage: &mut dyn Storage, header: &BtpHeader) {
@@ -129,7 +121,6 @@ impl TestContext {
     }
 
     pub fn for_instantiate() -> TestContext {
-        let context = TestContext::default();
-        context
+        TestContext::default()
     }
 }

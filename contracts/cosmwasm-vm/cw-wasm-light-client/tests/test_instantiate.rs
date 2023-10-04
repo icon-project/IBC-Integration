@@ -13,7 +13,7 @@ mod setup;
 pub fn instantiate_success() {
     let mut deps = mock_dependencies();
     let env = mock_env();
-    let info = mock_info("sender", &vec![Coin::new(100, "test")]);
+    let info = mock_info("sender", &[Coin::new(100, "test")]);
     let header = &get_test_headers()[0];
     let context = TestContext::for_instantiate();
     context.init(deps.as_mut().storage, header);
@@ -28,9 +28,9 @@ pub fn instantiate_success() {
 pub fn instantiate_fails_on_uninitialized_storage() {
     let mut deps = mock_dependencies();
     let env = mock_env();
-    let info = mock_info("sender", &vec![Coin::new(100, "test")]);
-    let header = &get_test_headers()[0];
-    let context = TestContext::for_instantiate();
+    let info = mock_info("sender", &[Coin::new(100, "test")]);
+    let _header = &get_test_headers()[0];
+    let _context = TestContext::for_instantiate();
 
     let msg = InstantiateMsg {};
     let result = instantiate(deps.as_mut(), env, info, msg);

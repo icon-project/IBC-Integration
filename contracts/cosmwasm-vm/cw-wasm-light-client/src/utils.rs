@@ -10,6 +10,8 @@ use ics07_tendermint_cw::ics23::FakeInner;
 use ics08_wasm::client_state::ClientState as WasmClientState;
 use prost::Message;
 use tendermint_proto::Protobuf;
+use ics08_wasm::client_message::Header as WasmHeader;
+use common::icon::icon::types::v1::SignedHeader;
 pub fn get_consensus_state_key(height: Height) -> Vec<u8> {
     [
         "consensusStates/".to_string().into_bytes(),
@@ -83,4 +85,15 @@ pub fn to_ibc_height(height: u64) -> Height {
 pub fn any_from_byte(bytes: &[u8]) -> Result<Any, ContractError> {
     let any = Any::decode(bytes).map_err(ContractError::DecodeError)?;
     Ok(any)
+}
+
+pub fn to_wasm_header(signed_header:&SignedHeader)->WasmHeader<FakeInner>{
+    let header_any: Any = signed_header.to_any();
+    let block_height = signed_header.header.clone().unwrap().main_height;
+    let wasm_header = WasmHeader::<FakeInner> {
+        inner: Box::new(FakeInner),
+        data: header_any.encode_to_vec(),
+        height: to_ibc_height(block_height),
+    };
+    wasm_header
 }
