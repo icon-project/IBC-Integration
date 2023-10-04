@@ -116,6 +116,7 @@ pub struct CwIbcStore<'a> {
     // Stores data by replyid to be used later on reply from cross contract call
     callback_data: Map<'a, u64, Vec<u8>>,
     sent_packets: Map<'a, (&'a PortId, &'a ChannelId, u64), u64>,
+    write_acks: Map<'a, (&'a PortId, &'a ChannelId, u64), u64>,
 }
 
 impl<'a> Default for CwIbcStore<'a> {
@@ -147,6 +148,7 @@ impl<'a> CwIbcStore<'a> {
             last_processed_on: Map::new(StorageKey::LastProcessedOn.as_str()),
             callback_data: Map::new(StorageKey::CallbackData.as_str()),
             sent_packets: Map::new(StorageKey::SentPackets.as_str()),
+            write_acks: Map::new(StorageKey::WriteAcks.as_str()),
         }
     }
     pub fn client_registry(&self) -> &Map<'a, IbcClientType, String> {
@@ -212,6 +214,10 @@ impl<'a> CwIbcStore<'a> {
     }
     pub fn sent_packets(&self) -> &Map<'a, (&'a PortId, &'a ChannelId, u64), u64> {
         &self.sent_packets
+    }
+
+    pub fn write_acks(&self) -> &Map<'a, (&'a PortId, &'a ChannelId, u64), u64> {
+        &self.write_acks
     }
 
     pub fn clear_storage(&self, store: &mut dyn Storage) {
@@ -288,6 +294,28 @@ impl<'a> CwIbcStore<'a> {
         }
 
         Ok(missing)
+    }
+
+    pub fn get_ack_heights(
+        &self,
+        store: &dyn Storage,
+        port_id: &PortId,
+        channel_id: &ChannelId,
+        start_seq: u64,
+        end_seq: u64,
+    ) -> Result<HashMap<u64, u64>, ContractError> {
+        let min_key = (port_id, channel_id, start_seq);
+        let max_key = (port_id, channel_id, end_seq);
+        let min_bound = Bound::Inclusive::<(&PortId, &ChannelId, u64)>((min_key, PhantomData));
+        let max_bound = Bound::Inclusive::<(&PortId, &ChannelId, u64)>((max_key, PhantomData));
+
+        let result: HashMap<u64, u64> = self
+            .write_acks
+            .range(store, Some(min_bound), Some(max_bound), Order::Ascending)
+            .filter_map(|p| p.ok().map(|r| (r.0 .2, r.1)))
+            .collect();
+
+        Ok(result)
     }
 
     pub fn save_commitment(

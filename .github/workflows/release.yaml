@@ -2,7 +2,7 @@ name: Pre-release
 on:
   push:
     tags:
-      - 'v*.*.*-alpha.*'
+      - '*'
 permissions:
   contents: write
   packages: write
@@ -105,7 +105,7 @@ jobs:
           body: |
             ${{ steps.Changelog.outputs.changelog }}
           draft: false
-          prerelease: true
+          prerelease: false
 
       - name: Upload Javascore contracts to release
         uses: svenstaro/upload-release-action@v2
