@@ -70,6 +70,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
+name = "base64"
+version = "0.21.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ba43ea6f343b788c8764558649e08df62f86c6ef251fdaeb1ffd010a9ae50a2"
+
+[[package]]
 name = "base64ct"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -122,6 +128,12 @@ checksum = "3078c7629b62d3f0439517fa394996acacc5cbc91c5a20d8c658e77abd503a71"
 dependencies = [
  "generic-array",
 ]
+
+[[package]]
+name = "bnum"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "128a44527fc0d6abf05f9eda748b9027536e12dff93f5acc8449f51583309350"
 
 [[package]]
 name = "borsh"
@@ -356,11 +368,12 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "1.2.2"
+version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ecc01051aab3bb88d5efe0b90f24a6df1ca96a873b12fc21b862b17539c84ee9"
+checksum = "7d89d680fb60439b7c5947b15f9c84b961b88d1f8a3b20c4bd178a3f87db8bae"
 dependencies = [
- "base64 0.13.1",
+ "base64 0.21.4",
+ "bnum",
  "cosmwasm-crypto",
  "cosmwasm-derive",
  "derivative",
@@ -371,14 +384,13 @@ dependencies = [
  "serde-json-wasm 0.5.1",
  "sha2 0.10.8",
  "thiserror",
- "uint",
 ]
 
 [[package]]
 name = "cosmwasm-storage"
-version = "1.2.2"
+version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e719b9895ef880f172bfe698c975aa6ce5712abb2d0162148d51f346706df80"
+checksum = "54a1c574d30feffe4b8121e61e839c231a5ce21901221d2fb4d5c945968a4f00"
 dependencies = [
  "cosmwasm-std",
  "serde",
@@ -484,7 +496,7 @@ dependencies = [
  "cw-icon-light-client",
  "cw-multi-test",
  "cw-storage-plus 1.1.0 (git+https://github.com/icon-project/cw-storage-plus.git?branch=fix-raw)",
- "cw2 1.1.0",
+ "cw2 1.1.1",
  "debug_print",
  "getrandom",
  "hex",
@@ -510,8 +522,8 @@ dependencies = [
  "cosmwasm-std",
  "cw-common",
  "cw-light-client-common",
- "cw-storage-plus 0.15.1",
- "cw2 1.1.0",
+ "cw-storage-plus 1.1.0 (git+https://github.com/icon-project/cw-storage-plus.git?branch=fix-raw)",
+ "cw2 1.1.1",
  "debug_print",
  "getrandom",
  "hex",
@@ -562,7 +574,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-common",
- "cw-storage-plus 0.15.1",
+ "cw-storage-plus 1.1.0 (git+https://github.com/icon-project/cw-storage-plus.git?branch=fix-raw)",
  "debug_print",
  "getrandom",
  "hex",
@@ -578,14 +590,14 @@ dependencies = [
 [[package]]
 name = "cw-mock-dapp"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#06b15102a9eabd2c6f5813dfd917605a82fca489"
+source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#b9be4b32443ba222e809ca6a18d55c606c3e8907"
 dependencies = [
  "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=feat/cw-wasm-light-client)",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0 (git+https://github.com/icon-project/cw-storage-plus.git?branch=fix-raw)",
  "cw-xcall-lib",
- "cw2 1.1.0",
+ "cw2 1.1.1",
  "schemars 0.8.15",
  "serde",
  "serde-json-wasm 0.5.1",
@@ -595,14 +607,14 @@ dependencies = [
 [[package]]
 name = "cw-mock-dapp-multi"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#06b15102a9eabd2c6f5813dfd917605a82fca489"
+source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#b9be4b32443ba222e809ca6a18d55c606c3e8907"
 dependencies = [
  "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=feat/cw-wasm-light-client)",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0 (git+https://github.com/icon-project/cw-storage-plus.git?branch=fix-raw)",
  "cw-xcall-lib",
- "cw2 1.1.0",
+ "cw2 1.1.1",
  "schemars 0.8.15",
  "serde",
  "serde-json-wasm 0.5.1",
@@ -621,7 +633,7 @@ dependencies = [
  "cw-storage-plus 1.1.0 (git+https://github.com/icon-project/cw-storage-plus.git?branch=fix-raw)",
  "cw-xcall",
  "cw-xcall-lib",
- "cw2 1.1.0",
+ "cw2 1.1.1",
  "debug_print",
  "getrandom",
  "hex",
@@ -640,7 +652,7 @@ dependencies = [
  "cw-common",
  "cw-storage-plus 1.1.0 (git+https://github.com/icon-project/cw-storage-plus.git?branch=fix-raw)",
  "cw-xcall",
- "cw2 1.1.0",
+ "cw2 1.1.1",
  "getrandom",
  "hex",
  "schemars 0.8.15",
@@ -658,7 +670,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-common",
  "cw-storage-plus 1.1.0 (git+https://github.com/icon-project/cw-storage-plus.git?branch=fix-raw)",
- "cw2 1.1.0",
+ "cw2 1.1.1",
  "debug_print",
  "getrandom",
  "hex",
@@ -745,7 +757,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-common",
  "cw-light-client-common",
- "cw2 1.1.0",
+ "cw2 1.1.1",
  "debug_print",
  "getrandom",
  "hex",
@@ -768,14 +780,14 @@ dependencies = [
 [[package]]
 name = "cw-xcall"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#06b15102a9eabd2c6f5813dfd917605a82fca489"
+source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#b9be4b32443ba222e809ca6a18d55c606c3e8907"
 dependencies = [
  "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=feat/cw-wasm-light-client)",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0 (git+https://github.com/icon-project/cw-storage-plus.git?branch=fix-raw)",
  "cw-xcall-lib",
- "cw2 1.1.0",
+ "cw2 1.1.1",
  "debug_print",
  "schemars 0.8.15",
  "serde",
@@ -794,7 +806,7 @@ dependencies = [
  "cw-storage-plus 1.1.0 (git+https://github.com/icon-project/cw-storage-plus.git?branch=fix-raw)",
  "cw-xcall",
  "cw-xcall-lib",
- "cw2 1.1.0",
+ "cw2 1.1.1",
  "debug_print",
  "getrandom",
  "hex",
@@ -806,12 +818,12 @@ dependencies = [
 [[package]]
 name = "cw-xcall-lib"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#06b15102a9eabd2c6f5813dfd917605a82fca489"
+source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#b9be4b32443ba222e809ca6a18d55c606c3e8907"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 1.1.0 (git+https://github.com/icon-project/cw-storage-plus.git?branch=fix-raw)",
- "cw2 1.1.0",
+ "cw2 1.1.1",
  "debug_print",
  "schemars 0.8.15",
  "serde",
@@ -833,9 +845,9 @@ dependencies = [
 
 [[package]]
 name = "cw2"
-version = "1.1.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29ac2dc7a55ad64173ca1e0a46697c31b7a5c51342f55a1e84a724da4eb99908"
+checksum = "9431d14f64f49e41c6ef5561ed11a5391c417d0cb16455dea8cdcb9037a8d197"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",

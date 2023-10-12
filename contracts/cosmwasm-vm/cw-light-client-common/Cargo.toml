@@ -9,7 +9,7 @@ edition = "2021"
 cosmwasm-schema = {workspace=true}
 cosmwasm-std = {workspace=true}
 #cosmwasm-storage = {workspace=true}
-cw-storage-plus = "0.15.1"
+cw-storage-plus ={workspace=true}
 thiserror = { workspace=true}
 prost = { workspace=true}
 hex ={workspace=true }
