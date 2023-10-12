@@ -1,20 +1,18 @@
 use crate::setup::TestContext;
-use common::{icon::icon::types::v1::SignedHeader, traits::AnyTypes};
+use common::icon::icon::types::v1::SignedHeader;
 use cosmwasm_std::{
     testing::{mock_dependencies, mock_env, mock_info},
     Coin,
 };
-use cw_common::raw_types::Any;
-use cw_wasm_light_client::{traits::IQueryHandler, utils::to_wasm_header};
+
 use cw_wasm_light_client::{
     constants::CLIENT_ID,
     contract::execute,
     msg::{ExecuteMsg, UpdateStateMsgRaw},
     query_handler::QueryHandler,
-    utils::to_ibc_height,
 };
-use ics07_tendermint_cw::ics23::FakeInner;
-use prost::Message;
+use cw_wasm_light_client::{traits::IQueryHandler, utils::to_wasm_header};
+
 use test_utils::{get_test_headers, get_test_signed_headers};
 mod setup;
 

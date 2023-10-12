@@ -33,8 +33,8 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 [dependencies]
 cosmwasm-schema = {workspace=true}
 cosmwasm-std = {workspace=true}
-cosmwasm-storage = {workspace=true}
-cw-storage-plus = {workspace=true}
+#cosmwasm-storage = {workspace=true}
+cw-storage-plus = "0.15.1"
 cw2 = {workspace=true}
 schemars = {workspace=true}
 serde = { workspace=true}

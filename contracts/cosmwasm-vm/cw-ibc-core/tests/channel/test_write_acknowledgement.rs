@@ -58,12 +58,7 @@ pub fn setup_test(
     );
 
     contract
-        .store_channel_end(
-            &mut deps.storage,
-            &dst_port.clone(),
-            &dst_channel.clone(),
-            &chan_end_on_b,
-        )
+        .store_channel_end(&mut deps.storage, &dst_port, &dst_channel, &chan_end_on_b)
         .unwrap();
     let conn_id_on_b = &chan_end_on_b.connection_hops()[0];
     contract
@@ -137,7 +132,7 @@ fn test_write_acknowledgement() {
     test_context.init_receive_packet(deps.as_mut().storage, &contract);
     mock_lightclient_query(test_context.mock_queries, &mut deps);
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
-    println!("{:?}", res);
+    println!("{res:?}");
     assert!(res.is_ok());
     assert_eq!(
         res.unwrap().messages[0].id,
@@ -164,7 +159,7 @@ pub fn test_write_acknowledgement_fails_unauthorized() {
     test_context.init_receive_packet(deps.as_mut().storage, &contract);
     mock_lightclient_query(test_context.mock_queries, &mut deps);
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
-    println!("{:?}", res);
+    println!("{res:?}");
     assert!(res.is_ok());
     assert_eq!(
         res.unwrap().messages[0].id,
@@ -192,7 +187,7 @@ pub fn test_write_acknowledgement_fails_invalid_ack() {
     mock_lightclient_query(test_context.mock_queries, &mut deps);
 
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
-    println!("{:?}", res);
+    println!("{res:?}");
     assert!(res.is_ok());
     assert_eq!(
         res.unwrap().messages[0].id,
@@ -222,7 +217,7 @@ pub fn test_write_acknowledgement_fails_invalid_channel_state() {
     test_context.init_receive_packet(deps.as_mut().storage, &contract);
     mock_lightclient_query(test_context.mock_queries.clone(), &mut deps);
     let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
-    println!("{:?}", res);
+    println!("{res:?}");
     assert!(res.is_ok());
     assert_eq!(
         res.unwrap().messages[0].id,

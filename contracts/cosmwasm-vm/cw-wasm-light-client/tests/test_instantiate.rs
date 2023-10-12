@@ -19,7 +19,7 @@ pub fn instantiate_success() {
     context.init(deps.as_mut().storage, header);
     let msg = InstantiateMsg {};
     let result = instantiate(deps.as_mut(), env, info, msg);
-    println!("{:?}", result);
+    println!("{result:?}");
     assert!(result.is_ok())
 }
 

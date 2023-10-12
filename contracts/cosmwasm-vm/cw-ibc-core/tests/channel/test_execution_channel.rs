@@ -40,7 +40,7 @@ fn test_for_channel_open_init_execution_message() {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
-    println!("{:?}", res);
+    println!("{res:?}");
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, 41);
 }
@@ -74,7 +74,7 @@ fn test_for_channel_open_try_execution_message() {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
-    println!("{:?}", res);
+    println!("{res:?}");
 
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0].id, EXECUTE_ON_CHANNEL_OPEN_TRY);
@@ -106,7 +106,7 @@ fn test_for_channel_open_ack_execution() {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
-    println!("{:?}", res);
+    println!("{res:?}");
 
     assert!(res.is_ok());
     assert_eq!(
@@ -147,7 +147,7 @@ fn test_for_channel_open_confirm() {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
-    println!("{:?}", res);
+    println!("{res:?}");
 
     assert!(res.is_ok());
     assert_eq!(
@@ -185,7 +185,7 @@ fn test_for_channel_close_init() {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
-    println!("{:?}", res);
+    println!("{res:?}");
 
     assert!(res.is_ok());
     assert_eq!(res.as_ref().unwrap().messages[0].id, 45);
@@ -216,7 +216,7 @@ fn test_for_channel_close_confirm() {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
-    println!("{:?}", res);
+    println!("{res:?}");
 
     assert!(res.is_ok());
     assert_eq!(
@@ -266,7 +266,7 @@ fn test_for_packet_send() {
             packet: HexString::from_bytes(&raw.encode_to_vec()),
         },
     );
-    println!("{:?},", res);
+    println!("{res:?},");
     assert!(res.is_ok());
     assert_eq!(res.as_ref().unwrap().attributes[0].value, "send_packet");
     assert_eq!(res.unwrap().events[0].ty, "send_packet")
@@ -298,7 +298,7 @@ fn test_for_recieve_packet() {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
-    println!("{:?}", res);
+    println!("{res:?}");
     assert!(res.is_ok());
     assert_eq!(
         res.unwrap().messages[0].id,
@@ -324,7 +324,7 @@ fn test_for_recieve_packet() {
         }),
     };
     let response = contract.reply(deps.as_mut(), env, reply_message);
-    println!("{:?}", response);
+    println!("{response:?}");
     assert!(response.is_ok());
     assert_eq!(response.unwrap().events[0].ty, "write_acknowledgement");
 }
@@ -356,7 +356,7 @@ fn test_for_ack_execute() {
             msg: HexString::from_bytes(&msg.encode_to_vec()),
         },
     );
-    println!("{:?}", res);
+    println!("{res:?}");
 
     assert!(res.is_ok());
     assert_eq!(

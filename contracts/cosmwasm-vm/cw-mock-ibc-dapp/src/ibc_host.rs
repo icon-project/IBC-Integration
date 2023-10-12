@@ -114,7 +114,7 @@ mod tests {
         let packet = RawPacket::default();
 
         let res = connection.call_host_send_message(deps.as_mut(), info, packet.clone());
-        println!("{:?}", res);
+        println!("{res:?}");
         assert!(res.is_ok());
 
         let expected_ibc_host = connection

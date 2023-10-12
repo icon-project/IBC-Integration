@@ -9,7 +9,7 @@ edition = "2021"
 [dependencies]
 cosmwasm-schema = {workspace=true}
 cosmwasm-std = {workspace=true}
-cosmwasm-storage = {workspace=true}
+#cosmwasm-storage = {workspace=true}
 cw-storage-plus = {workspace=true}
 cw-common={path="../cw-common"}
 common = { path="../../../libraries/rust/common", default-features = false }

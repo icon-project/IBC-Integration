@@ -95,10 +95,8 @@ impl<'a> CwIbcConnection<'a> {
             return Err(ContractError::AdminAddressCannotBeNull {});
         }
 
-        if !new_admin.to_string().chars().all(|x| x.is_alphanumeric()) {
-            return Err(ContractError::InvalidAddress {
-                address: new_admin.to_string(),
-            });
+        if !new_admin.chars().all(|x| x.is_alphanumeric()) {
+            return Err(ContractError::InvalidAddress { address: new_admin });
         }
 
         self.ensure_owner(store, &info)?;

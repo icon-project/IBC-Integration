@@ -237,7 +237,7 @@ impl<'a> CwIbcCoreContext<'a> {
             to_vec(&counterparty_prefix)?,
             msg.proof_consensus,
             consensus_state_path_on_b,
-            consensus_state.clone().as_bytes(),
+            consensus_state.as_bytes(),
         );
         let payload = VerifyConnectionPayload {
             client_id: client_id.to_string(),

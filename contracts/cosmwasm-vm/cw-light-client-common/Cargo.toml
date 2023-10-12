@@ -8,8 +8,8 @@ edition = "2021"
 [dependencies]
 cosmwasm-schema = {workspace=true}
 cosmwasm-std = {workspace=true}
-cosmwasm-storage = {workspace=true}
-cw-storage-plus = {workspace=true}
+#cosmwasm-storage = {workspace=true}
+cw-storage-plus = "0.15.1"
 thiserror = { workspace=true}
 prost = { workspace=true}
 hex ={workspace=true }

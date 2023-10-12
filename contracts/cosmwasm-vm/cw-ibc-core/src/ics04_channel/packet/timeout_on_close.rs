@@ -121,7 +121,7 @@ impl<'a> CwIbcCoreContext<'a> {
             proof_height: proof_height.to_string(),
             counterparty_prefix: prefix_on_b.clone().into_vec(),
             proof: msg.proof_close.clone(),
-            root: consensus_state_of_b_on_a.clone().root().into_vec(),
+            root: consensus_state_of_b_on_a.root().into_vec(),
             counterparty_chan_end_path: chan_end_path_on_b,
             expected_counterparty_channel_end: vector.unwrap(),
             client_id: connection_end.client_id().to_string(),

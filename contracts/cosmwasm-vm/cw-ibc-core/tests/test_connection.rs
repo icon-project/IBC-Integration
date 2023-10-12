@@ -215,7 +215,7 @@ fn connection_open_init() {
         .unwrap();
 
     let res = contract.connection_open_init(deps.as_mut(), res_msg);
-    println!("{:?}", res);
+    println!("{res:?}");
     assert!(res.is_ok());
 }
 
@@ -450,7 +450,7 @@ fn connection_open_ack_validate() {
     mock_lightclient_query(test_context.mock_queries, &mut deps);
 
     let res = contract.connection_open_ack(deps.as_mut(), info, env, message);
-    println!("{:?}", res);
+    println!("{res:?}");
     assert!(res.is_ok())
 }
 

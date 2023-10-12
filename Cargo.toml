@@ -13,16 +13,21 @@ repository = "https://github.com/icon-project/ibc-integration.git"
 version="0.1.0"
 
 [workspace.dependencies]
-cosmwasm-std = {version="1.2.2",default-features = false,features = ["iterator", "ibc3","staking"]}
-cosmwasm-storage = "1.2.2"
-cosmwasm-schema = "1.2.2"
-schemars = "0.8.12"
+#cosmwasm-std = {version="1.2.2",default-features = false,features = ["iterator", "ibc3","staking"]}
+#cosmwasm-storage = "1.2.2"
+#cosmwasm-schema = "1.2.2"
+#schemars = "0.8.12"
+cosmwasm-schema = "1.1.3"
+cosmwasm-std = {version=">=1.1.3",default-features = false}
+schemars = "0.8.10"
+serde = { version = "1.0.145", default-features = false, features = ["derive"] }
+thiserror = { version = "1.0.31" }
 cw-storage-plus = {git="https://github.com/icon-project/cw-storage-plus.git", branch="fix-raw"}
 cw-xcall-lib={package="cw-xcall-lib", git="https://github.com/icon-project/xCall.git", branch="main"}
 cw-xcall = {package="cw-xcall", git="https://github.com/icon-project/xCall.git", branch="main"}
 cw-mock-dapp = { git="https://github.com/icon-project/xCall.git", branch="main" }
 cw-mock-dapp-multi = { git="https://github.com/icon-project/xCall.git", branch="main" }
-cw2 = "1.0.1"
+cw2 = {version="1.0.1",default-features = false}
 
 ibc-proto = { version = "0.26.0", default-features = false}
 
@@ -30,10 +35,10 @@ prost = { version = "0.11.8", default-features = false,features=["prost-derive"]
 
 serde-json-wasm = {version="0.5.0", default-features = false}
 serde_json = "1.0.96"
-serde = { version = "1.0.154", default-features = false, features = ["derive"] }
+#serde = { version = "1.0.154", default-features = false, features = ["derive"] }
 
 bytes = { version = "1.4.0", default-features = false }
-thiserror = { version = "1.0.39" }
+#thiserror = { version = "1.0.39" }
 hex ={ version = "0.4.3", default-features = false }
 debug_print = "1.0.0"
 

@@ -49,6 +49,7 @@ done
 cosmwasm-check artifacts/archway/cw_ibc_core.wasm
 cosmwasm-check artifacts/archway/cw_icon_light_client.wasm
 cosmwasm-check artifacts/archway/cw_xcall_ibc_connection.wasm
+cosmwasm-check artifacts/archway/cw_wasm_light_client.wasm
 
 
 # Update version

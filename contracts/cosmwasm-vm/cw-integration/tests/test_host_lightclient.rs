@@ -440,7 +440,7 @@ fn test_icon_to_arcway_handshake() -> TestContext {
     assert!(response.is_ok());
     println!("Create Client OK");
     let client_id = get_client_id(&response.unwrap());
-    println!("Clientid is {}", client_id);
+    println!("Clientid is {client_id}");
 
     let result = call_connection_open_try(&mut ctx);
     println!("Conn Open Try Ok {:?}", &result);
@@ -494,7 +494,7 @@ fn test_archway_to_icon_handshake() -> TestContext {
     assert!(response.is_ok());
     println!("Create Client OK");
     let client_id = get_client_id(&response.unwrap());
-    println!("Clientid is {}", client_id);
+    println!("Clientid is {client_id}");
 
     let result = call_connection_open_init(&mut ctx);
 
