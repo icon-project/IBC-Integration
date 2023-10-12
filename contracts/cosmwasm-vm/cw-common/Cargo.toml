@@ -18,7 +18,7 @@ serde_json = {workspace=true}
 hex-buffer-serde = "0.4.0"
 schemars = {workspace=true}
 hex = { workspace=true}
-common = { path="../../../libraries/rust/common" }
+common = { workspace=true }
 ibc-proto = { workspace=true}
 prost = { workspace=true}
 serde-json-wasm = {workspace=true}

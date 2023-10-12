@@ -17,8 +17,8 @@ schemars = {workspace=true}
 serde = { workspace=true}
 serde-json-wasm = {workspace=true}
 debug_print = {workspace=true}
-cw-common = { path="../cw-common",default-features = false }
-common = { path="../../../libraries/rust/common", default-features = false }
+cw-common = { workspace=true,default-features = false }
+common = { workspace=true, default-features = false }
 
 [dev-dependencies]
 cosmwasm = "0.7.2"

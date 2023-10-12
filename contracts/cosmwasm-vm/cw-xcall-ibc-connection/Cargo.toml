@@ -38,8 +38,8 @@ cw2 = {workspace=true}
 schemars = {workspace=true}
 serde = { workspace=true}
 thiserror = { workspace=true}
-common = { path="../../../libraries/rust/common" }
-cw-common = { path="../cw-common" }
+common = { workspace=true }
+cw-common = { workspace=true }
 hex={workspace=true}
 debug_print={workspace=true}
 cw-xcall-lib={workspace=true}
