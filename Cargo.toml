@@ -41,6 +41,7 @@ serde_json = "1.0.96"
 bytes = { version = "1.4.0", default-features = false }
 #thiserror = { version = "1.0.39" }
 hex ={ version = "0.4.3", default-features = false }
+hex-literal={version ="*"}
 debug_print = "1.0.0"
 
 [profile.release]
