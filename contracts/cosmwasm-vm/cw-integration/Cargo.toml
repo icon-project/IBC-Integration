@@ -20,7 +20,7 @@ strum_macros = "0.24"
 
 [dev-dependencies]
 hex = "0.4.3"
-cw-multi-test = "0.16.4"
+cw-multi-test = "0.15.1"
 cw-xcall-ibc-connection = { path="../cw-xcall-ibc-connection" }
 cw-mock-ibc-core = { path="../cw-mock-ibc-core" }
 cw-mock-dapp = { workspace=true}

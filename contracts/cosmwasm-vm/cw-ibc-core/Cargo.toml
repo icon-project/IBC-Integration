@@ -50,7 +50,7 @@ debug_print = {workspace=true}
 
 [dev-dependencies]
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}
-cw-multi-test = "0.16.4"
+cw-multi-test = "0.15.1"
 cw-icon-light-client = { path="../cw-icon-light-client",default-features = false }
 anyhow="1.0.71"
 test-utils={path="../../../libraries/rust/test-utils"}
