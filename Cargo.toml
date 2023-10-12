@@ -17,17 +17,17 @@ version="0.1.0"
 #cosmwasm-storage = "1.2.2"
 #cosmwasm-schema = "1.2.2"
 #schemars = "0.8.12"
-cosmwasm-schema = "1.1.3"
-cosmwasm-std = {version="=1.1.6",default-features = false}
-schemars = "0.8.10"
+cosmwasm-schema = {version="1.2.2",default-features = false}
+cosmwasm-std = {version="1.2.2",default-features = false,features = ["ibc3"]}
+schemars = {version="0.8.10",default-features = false}
 serde = { version = "1.0.145", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
-cw-storage-plus = {git="https://github.com/icon-project/cw-storage-plus.git", branch="fix-raw"}
+cw-storage-plus = {git="https://github.com/icon-project/cw-storage-plus.git", branch="fix-raw",default-features = false}
 
-cw-xcall-lib={package="cw-xcall-lib", git="https://github.com/icon-project/xCall.git", branch="fix/cosmwasm-1.3"}
-cw-xcall = {package="cw-xcall", git="https://github.com/icon-project/xCall.git", branch="fix/cosmwasm-1.3"}
-cw-mock-dapp = { git="https://github.com/icon-project/xCall.git", branch="fix/cosmwasm-1.3" }
-cw-mock-dapp-multi = { git="https://github.com/icon-project/xCall.git", branch="fix/cosmwasm-1.3" }
+cw-xcall-lib={package="cw-xcall-lib", git="https://github.com/icon-project/xCall.git", branch="fix/cosmwasm-1.3",default-features = false}
+cw-xcall = {package="cw-xcall", git="https://github.com/icon-project/xCall.git", branch="fix/cosmwasm-1.3",default-features = false}
+cw-mock-dapp = { git="https://github.com/icon-project/xCall.git", branch="fix/cosmwasm-1.3" ,default-features = false}
+cw-mock-dapp-multi = { git="https://github.com/icon-project/xCall.git", branch="fix/cosmwasm-1.3",default-features = false }
 cw2 = {version="1.0.1",default-features = false}
 
 ibc-proto = { version = "0.26.0", default-features = false}
