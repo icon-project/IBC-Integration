@@ -18,7 +18,9 @@ use setup::{
     init_xcall_app_contract, init_xcall_ibc_connection_contract, setup_context, TestContext,
     COUNTERPARTY_NID, PORT,
 };
-use test_utils::{get_event, get_event_name, load_raw_payloads};
+use test_utils::load_raw_payloads;
+
+use crate::setup::{get_event, get_event_name};
 
 fn setup_test(payload_file: &str) -> TestContext {
     let integration_data = load_raw_payloads(payload_file);

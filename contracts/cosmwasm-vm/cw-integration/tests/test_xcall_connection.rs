@@ -11,8 +11,8 @@ use setup::{
     init_mock_ibc_core_contract, init_xcall_app_contract, init_xcall_ibc_connection_contract,
     TestContext,
 };
-use test_utils::get_event;
 
+use crate::setup::get_event;
 use crate::setup::setup_context;
 const MOCK_CONTRACT_TO_ADDR: &str = "cosmoscontract";
 

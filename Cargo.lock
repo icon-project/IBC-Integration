@@ -255,7 +255,7 @@ dependencies = [
 [[package]]
 name = "common"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/IBC-Integration.git?branch=feat/cw-wasm-light-client#81a731156db25e8149fb78f78489bc21e8418334"
+source = "git+https://github.com/icon-project/IBC-Integration.git?branch=feat/cw-wasm-light-client#8fd4fbb1444975b85a8c8688e6429eff9139c475"
 dependencies = [
  "bytes",
  "cosmwasm-schema",
@@ -590,7 +590,7 @@ dependencies = [
 [[package]]
 name = "cw-mock-dapp"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#b9be4b32443ba222e809ca6a18d55c606c3e8907"
+source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#a5160ae8c87a939ad8f441cd5b5651b3888b6e7b"
 dependencies = [
  "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=feat/cw-wasm-light-client)",
  "cosmwasm-schema",
@@ -607,7 +607,7 @@ dependencies = [
 [[package]]
 name = "cw-mock-dapp-multi"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#b9be4b32443ba222e809ca6a18d55c606c3e8907"
+source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#a5160ae8c87a939ad8f441cd5b5651b3888b6e7b"
 dependencies = [
  "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=feat/cw-wasm-light-client)",
  "cosmwasm-schema",
@@ -780,7 +780,7 @@ dependencies = [
 [[package]]
 name = "cw-xcall"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#b9be4b32443ba222e809ca6a18d55c606c3e8907"
+source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#a5160ae8c87a939ad8f441cd5b5651b3888b6e7b"
 dependencies = [
  "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=feat/cw-wasm-light-client)",
  "cosmwasm-schema",
@@ -818,7 +818,7 @@ dependencies = [
 [[package]]
 name = "cw-xcall-lib"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#b9be4b32443ba222e809ca6a18d55c606c3e8907"
+source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#a5160ae8c87a939ad8f441cd5b5651b3888b6e7b"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
