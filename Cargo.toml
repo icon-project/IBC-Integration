@@ -23,10 +23,11 @@ schemars = "0.8.10"
 serde = { version = "1.0.145", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
 cw-storage-plus = {git="https://github.com/icon-project/cw-storage-plus.git", branch="fix-raw"}
-cw-xcall-lib={package="cw-xcall-lib", git="https://github.com/icon-project/xCall.git", branch="main"}
-cw-xcall = {package="cw-xcall", git="https://github.com/icon-project/xCall.git", branch="main"}
-cw-mock-dapp = { git="https://github.com/icon-project/xCall.git", branch="main" }
-cw-mock-dapp-multi = { git="https://github.com/icon-project/xCall.git", branch="main" }
+
+cw-xcall-lib={package="cw-xcall-lib", git="https://github.com/icon-project/xCall.git", branch="fix/cosmwasm-1.3"}
+cw-xcall = {package="cw-xcall", git="https://github.com/icon-project/xCall.git", branch="fix/cosmwasm-1.3"}
+cw-mock-dapp = { git="https://github.com/icon-project/xCall.git", branch="fix/cosmwasm-1.3" }
+cw-mock-dapp-multi = { git="https://github.com/icon-project/xCall.git", branch="fix/cosmwasm-1.3" }
 cw2 = {version="1.0.1",default-features = false}
 
 ibc-proto = { version = "0.26.0", default-features = false}
