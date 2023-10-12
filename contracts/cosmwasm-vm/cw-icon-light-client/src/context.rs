@@ -155,7 +155,7 @@ impl<'a> IContext for CwContext<'a> {
 
     fn ensure_ibc_host(&self, caller: &cosmwasm_std::Addr) -> Result<(), ContractError> {
         let config = self.get_config()?;
-        if caller != config.ibc_host {
+        if *caller != config.ibc_host {
             return Err(ContractError::Unauthorized {});
         }
         Ok(())

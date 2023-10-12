@@ -243,7 +243,7 @@ dependencies = [
 [[package]]
 name = "common"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/IBC-Integration.git?branch=feat/cw-wasm-light-client#98562f6fb5c315016f8c1681aa9d648bd8e3b2ec"
+source = "git+https://github.com/icon-project/IBC-Integration.git?branch=feat/cw-wasm-light-client#81a731156db25e8149fb78f78489bc21e8418334"
 dependencies = [
  "bytes",
  "cosmwasm-schema",
@@ -356,9 +356,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "1.1.6"
+version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1240e76655f4b858b3fb94befbf48e253e92c6640d9d674a1491d15f10bc4d72"
+checksum = "ecc01051aab3bb88d5efe0b90f24a6df1ca96a873b12fc21b862b17539c84ee9"
 dependencies = [
  "base64 0.13.1",
  "cosmwasm-crypto",
@@ -368,16 +368,17 @@ dependencies = [
  "hex",
  "schemars 0.8.15",
  "serde",
- "serde-json-wasm 0.4.1",
+ "serde-json-wasm 0.5.1",
+ "sha2 0.10.8",
  "thiserror",
  "uint",
 ]
 
 [[package]]
 name = "cosmwasm-storage"
-version = "1.1.6"
+version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1e4ffcc2d75f4957ec4e7e9f059b45c5de4edfac8f1ec41df5a42b962ccb6b3"
+checksum = "5e719b9895ef880f172bfe698c975aa6ce5712abb2d0162148d51f346706df80"
 dependencies = [
  "cosmwasm-std",
  "serde",
@@ -577,7 +578,7 @@ dependencies = [
 [[package]]
 name = "cw-mock-dapp"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#12179c66d5f5d0a4099ce78614f1858ad2deaab2"
+source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#06b15102a9eabd2c6f5813dfd917605a82fca489"
 dependencies = [
  "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=feat/cw-wasm-light-client)",
  "cosmwasm-schema",
@@ -594,7 +595,7 @@ dependencies = [
 [[package]]
 name = "cw-mock-dapp-multi"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#12179c66d5f5d0a4099ce78614f1858ad2deaab2"
+source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#06b15102a9eabd2c6f5813dfd917605a82fca489"
 dependencies = [
  "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=feat/cw-wasm-light-client)",
  "cosmwasm-schema",
@@ -767,7 +768,7 @@ dependencies = [
 [[package]]
 name = "cw-xcall"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#12179c66d5f5d0a4099ce78614f1858ad2deaab2"
+source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#06b15102a9eabd2c6f5813dfd917605a82fca489"
 dependencies = [
  "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=feat/cw-wasm-light-client)",
  "cosmwasm-schema",
@@ -805,7 +806,7 @@ dependencies = [
 [[package]]
 name = "cw-xcall-lib"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#12179c66d5f5d0a4099ce78614f1858ad2deaab2"
+source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#06b15102a9eabd2c6f5813dfd917605a82fca489"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -2233,15 +2234,6 @@ name = "serde-json-wasm"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77cf509484e297252a195b1338a6d45843fe11ef234259f67649e8729934f443"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "serde-json-wasm"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "479b4dbc401ca13ee8ce902851b834893251404c4f3c65370a49e047a6be09a5"
 dependencies = [
  "serde",
 ]

@@ -9,7 +9,6 @@ edition = "2021"
 [dependencies]
 cosmwasm-schema = {workspace=true}
 cosmwasm-std = {workspace=true}
-#cosmwasm-storage = {workspace=true}
 cw-storage-plus = {workspace=true}
 cw-common={path="../cw-common"}
 common = { path="../../../libraries/rust/common", default-features = false }
@@ -29,7 +28,6 @@ cw-icon-light-client = { path="../cw-icon-light-client" }
 cw-ibc-core={path="../cw-ibc-core"}
 cw-xcall-lib={workspace=true}
 cw-xcall = {workspace=true}
-#cw-xcall={path="../cw-xcall"}
 anyhow="*"
 test-utils={path="../../../libraries/rust/test-utils"}
 
