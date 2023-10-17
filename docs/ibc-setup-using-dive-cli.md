@@ -10,15 +10,15 @@
 
 ## Running Setup
 
-To setup IBC setup between Icon and Archway run the following command:
+- To setup IBC setup between Icon and Archway run the following command:
 
-```shell
-    dive bridge ibc --chainA icon --chainB archway
-```
+  ```shell
+  dive bridge ibc --chainA icon --chainB archway
+  ```
 
-- Spins icon and archway node
-- Opens Btp Network for BTP Blocks
-- Deploys the Contracts necessary for the IBC connection
-- Starts the relay
+  - Spins icon and archway node
+  - Opens Btp Network for BTP Blocks
+  - Deploys the Contracts necessary for the IBC connection
+  - Starts the relay
 
 ## End-to-End Testing
