@@ -4,25 +4,17 @@
 [![Version](https://img.shields.io/github/tag/icon-project/IBC-Integration.svg?style=flat-square)](https://github.com/icon-project/IBC-Integration)
 
 | Language                        | Code Coverage                                | Test                                            |
-|---------------------------------|----------------------------------------------|-------------------------------------------------|
+| ------------------------------- | -------------------------------------------- | ----------------------------------------------- |
 | [Java](./contracts/javascore)   | [![Java Cov][java-cov-badge]][java-cov-link] | [![Java Test][java-test-badge]][java-test-link] |
 | [Rust](./contracts/cosmwasm-vm) | [![Rust Cov][rust-cov-badge]][rust-cov-link] | [![Rust Test][rust-test-badge]][rust-test-link] |
 
-
 [java-cov-link]: https://app.codecov.io/gh/icon-project/IBC-Integration/tree/main/contracts/javascore
-
 [rust-cov-link]: https://app.codecov.io/gh/icon-project/IBC-Integration/tree/main/contracts/cosmwasm-vm
-
 [java-cov-badge]: https://codecov.io/gh/icon-project/IBC-Integration/branch/main/graph/badge.svg?token=8KX6y8aGom&flag=java
-
 [rust-cov-badge]: https://codecov.io/gh/icon-project/IBC-Integration/branch/main/graph/badge.svg?token=8KX6y8aGom&flag=rust
-
 [java-test-badge]: https://github.com/icon-project/IBC-Integration/actions/workflows/java-contracts-test.yml/badge.svg
-
 [java-test-link]: https://github.com/icon-project/IBC-Integration/actions/workflows/java-contracts-test.yml
-
 [rust-test-badge]: https://github.com/icon-project/IBC-Integration/actions/workflows/basic-rust.yml/badge.svg
-
 [rust-test-link]: https://github.com/icon-project/IBC-Integration/actions/workflows/basic-rust.yml
 
 # IBC-Integration
@@ -91,7 +83,7 @@ Make sure you have following installed on your machine to build the contracts or
 ### Project Structure
 
 | Directory                                         | Description                                                                    |
-|:--------------------------------------------------|:-------------------------------------------------------------------------------|
+| :------------------------------------------------ | :----------------------------------------------------------------------------- |
 | [/contracts/cosmwasm-vm](./contracts/cosmwasm-vm) | Includes contracts for cosmwasm based chains                                   |
 | [/contracts/evm](./contracts/evm)                 | Includes contracts for evm based chains                                        |
 | [/contracts/javascore](./contracts/javascore)     | Includes contracts for ICON chain                                              |
@@ -143,11 +135,15 @@ make optimize-build
 
 For deployment and usage follow steps provided [here](https://github.com/izyak/icon-ibc/tree/master).
 
+## Local Setup and End-to-End Testing Using Dive CLI
+
+For Setting up nodes , deploy contracts and end-to-end testing follow setps provided [here](./docs/ibc-setup-using-dive-cli.md)
+
 ## Developing IBC Dapp <a name = "developing-ibc-dapp"> </a>
 
 To build dapp that is compatible with our smart contract based IBC Host you can follow the docs provided in mock ibc dapp samples.
-Sample for cosmwasm contract  [here](./contracts/cosmwasm-vm/cw-mock-ibc-dapp/README.md).
-Sample for icon contract  [here](./contracts/javascore/modules/mockapp/src/main/java/ibc/mockapp/MockApp.java)
+Sample for cosmwasm contract [here](./contracts/cosmwasm-vm/cw-mock-ibc-dapp/README.md).
+Sample for icon contract [here](./contracts/javascore/modules/mockapp/src/main/java/ibc/mockapp/MockApp.java)
 
 ## Contributing <a name = "contributing"> </a>
 
@@ -162,6 +158,7 @@ If you encounter a bug or have an idea for a new feature, please follow these st
 1. Before submitting a bug report, search the [existing issues](https://github.com/icon-project/IBC-Integration/issues) to see if the bug has already been reported. If you find a similar issue, you can add relevant details in the comments.
 
 2. If the bug hasn't been reported yet, [open a new issue](https://github.com/icon-project/IBC-Integration/issues/new/choose) with a clear and descriptive title. Provide as much detail as possible, including:
+
    - A clear description of the bug and its impact.
    - Steps to reproduce the bug.
    - Your environment details (OS, ICON node version, etc.).
@@ -174,6 +171,7 @@ If you encounter a bug or have an idea for a new feature, please follow these st
 1. Before submitting a feature request, again, check the [existing issues](https://github.com/icon-project/IBC-Integration/issues) to ensure that the feature hasn't already been requested. If you find a similar request, you can add your insights in the comments.
 
 2. To submit a new feature request, [open a new issue](https://github.com/icon-project/IBC-Integration/issues/new/choose) and select the "Feature Request" template. Provide a clear and comprehensive description of the feature you're proposing, including:
+
    - The problem the feature aims to solve.
    - How the feature would work.
    - Any potential benefits or use cases.
