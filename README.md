@@ -95,6 +95,10 @@ Make sure you have following installed on your machine to build the contracts or
 | [/test](./test)                                   | Test Framework and Test Suite including e2e test and functional test           |
 | [/utils](./utils)                                 | Utilities used for build, setup, CI/CD                                         |
 
+## Local Setup and End-to-End Testing Using Dive CLI
+
+For Setting up nodes , deploy contracts and end-to-end testing follow setps provided [here](./docs/ibc-setup-using-dive-cli.md)
+
 ## Build <a name = "build"> </a>
 
 Run following command on root directory to build the rust contracts. The built wasm files will be available in the artifacts directory in the root.
@@ -134,10 +138,6 @@ make optimize-build
 ## Deploy <a name = "deploy"> </a>
 
 For deployment and usage follow steps provided [here](https://github.com/izyak/icon-ibc/tree/master).
-
-## Local Setup and End-to-End Testing Using Dive CLI
-
-For Setting up nodes , deploy contracts and end-to-end testing follow setps provided [here](./docs/ibc-setup-using-dive-cli.md)
 
 ## Developing IBC Dapp <a name = "developing-ibc-dapp"> </a>
 
