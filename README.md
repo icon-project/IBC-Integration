@@ -35,6 +35,7 @@ defined [here](https://github.com/icon-project/xCall/blob/main/docs/adr/xcall.md
   - [Installation](#installation--)
   - [Getting Started](#getting-started--)
     - [Prerequisite](#prerequiste)
+    - [Local Setup And Runnning Tests Using DIVE CLI](#local-setup-and-runnning-tests-using-dive-cli)
     - [Build](#build)
     - [Running the tests](#testing)
     - [Deploy](#deploy)
@@ -95,7 +96,7 @@ Make sure you have following installed on your machine to build the contracts or
 | [/test](./test)                                   | Test Framework and Test Suite including e2e test and functional test           |
 | [/utils](./utils)                                 | Utilities used for build, setup, CI/CD                                         |
 
-## Local Setup and End-to-End Testing Using Dive CLI
+## Local Setup And Runnning Tests Using DIVE CLI
 
 For Setting up nodes , deploy contracts and end-to-end testing follow setps provided [here](./docs/ibc-setup-using-dive-cli.md)
 
