@@ -1,7 +1,5 @@
 package icon 
 
-package grandpa
-
 import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 
