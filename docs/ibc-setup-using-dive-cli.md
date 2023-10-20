@@ -34,4 +34,4 @@
 
 ## End-to-End Testing
 
-To run end-to-end testing script please follow from the second setp mentioned [here](https://github.com/HugoByte/DIVE/blob/main/test/README.md#end-to-end-icon---archway-demo)
+To run end-to-end testing script please follow from the second step mentioned [here](https://github.com/HugoByte/DIVE/blob/main/test/README.md#end-to-end-icon---archway-demo)

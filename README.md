@@ -98,7 +98,7 @@ Make sure you have following installed on your machine to build the contracts or
 
 ## Local Setup And Runnning Tests Using DIVE CLI
 
-For Setting up nodes , deploy contracts and end-to-end testing follow setps provided [here](./docs/ibc-setup-using-dive-cli.md)
+For Setting up nodes , deploy contracts and end-to-end testing follow steps provided [here](./docs/ibc-setup-using-dive-cli.md)
 
 ## Build <a name = "build"> </a>
 
