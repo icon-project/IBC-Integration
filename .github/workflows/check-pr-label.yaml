@@ -1,12 +1,12 @@
 name: PR Label Checker
 on:
-  # pull_request:
-  #   types:
-  #     - opened
-  #     - synchronize
-  #     - reopened
-  #     - labeled
-  #     - unlabeled
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
   workflow_run:
     workflows:
       - auto-label
