@@ -1,0 +1,48 @@
+name: Solidity Contracts tests
+
+on:
+  pull_request:
+    branches:
+      - "**"
+    paths:
+      - "contracts/evm/**"
+      - ".github/workflows/solidity-cov.yml"
+  push:
+    branches:
+      - "**"
+
+env:
+  FOUNDRY_PROFILE: ci
+
+defaults:
+  run:
+    working-directory: contracts/evm
+
+jobs:
+  check:
+    strategy:
+      fail-fast: true
+
+    name: xCall-Multi Solidity Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Forge build
+        run: |
+          forge --version
+          forge remappings
+          forge build --sizes
+        id: build
+
+      - name: Run Forge tests
+        run: |
+          forge test -vvv
+        id: test
