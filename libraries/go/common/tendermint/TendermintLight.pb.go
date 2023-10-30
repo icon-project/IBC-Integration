@@ -9,7 +9,7 @@ import (
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
-	icon "libraries/go/common/icon"
+	icon "github.com/icon-project/ibc-integration/libraries/go/common/icon"
 	math "math"
 	math_bits "math/bits"
 )

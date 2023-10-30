@@ -3,6 +3,8 @@ package icon.proto.core.client;
 
 
 option go_package = "libraries/go/common/icon;icon";
+import "gogoproto/gogo.proto";
+
 // Height is a monotonically increasing data type
 // that can be compared against another Height for the purposes of updating and
 // freezing clients
@@ -13,6 +15,10 @@ option go_package = "libraries/go/common/icon;icon";
 // In these cases, the RevisionNumber is incremented so that height continues to
 // be monitonically increasing even as the RevisionHeight gets reset
 message Height {
+  option (gogoproto.goproto_getters) = false;
+  option (gogoproto.goproto_stringer) = false;
+
+
   // the revision that the client is currently on
   uint64 revision_number = 1;
   // the height within the given revision

@@ -6,9 +6,9 @@ import (
 	ics23 "github.com/confio/ics23/go"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	tmclient "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	"github.com/icon-project/ibc-integration/libraries/go/common/icon"
 )
 
 var _ exported.ClientState = (*ClientState)(nil)
@@ -25,8 +25,8 @@ func NewClientState(
 		TrustingPeriod:  trustingPeriod,
 		UnbondingPeriod: ubdPeriod,
 		MaxClockDrift:   maxClockDrift,
-		LatestHeight:    latestHeight,
-		FrozenHeight:    0,
+		LatestHeight:    &icon.Height{RevisionNumber: 0, RevisionHeight: uint64(latestHeight)},
+		FrozenHeight:    &icon.Height{},
 	}
 }
 
@@ -41,9 +41,7 @@ func (cs ClientState) ClientType() string {
 }
 
 func (cs ClientState) GetLatestHeight() exported.Height {
-	return types.Height{
-		RevisionHeight: uint64(cs.LatestHeight),
-	}
+	return cs.LatestHeight
 }
 
 // GetTimestampAtHeight returns the timestamp in nanoseconds of the consensus state at the given height.
