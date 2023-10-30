@@ -3,6 +3,7 @@ package tendermint.light;
 
 option go_package = "libraries/go/common/tendermint;tendermint";
 import "gogoproto/gogo.proto";
+import "core/02-client/Client.proto";
 
 message Fraction {
   uint64 numerator = 1;
@@ -34,10 +35,10 @@ message ClientState {
   // defines how much new (untrusted) header's Time can drift into the future.
   Duration max_clock_drift = 5;
   // Block height when the client was frozen due to a misbehaviour
-  //ibc.core.client.v1.Height frozen_height = 6;
-  int64 frozen_height = 6;
+  icon.proto.core.client.Height frozen_height = 6;
+  // int64 frozen_height = 6;
   // Latest height the client was updated to
-  int64 latest_height = 7;
+  icon.proto.core.client.Height latest_height = 7;
   // This flag, when set to true, will allow governance to recover a client
   // which has expired
   bool allow_update_after_expiry = 8;
