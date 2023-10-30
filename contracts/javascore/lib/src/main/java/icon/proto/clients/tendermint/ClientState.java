@@ -3,6 +3,7 @@ package icon.proto.clients.tendermint;
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Proto;
 import ibc.icon.score.util.ProtoMessage;
+import icon.proto.core.client.Height;
 import java.lang.Boolean;
 import java.lang.String;
 import java.math.BigInteger;
@@ -18,9 +19,9 @@ public class ClientState extends ProtoMessage {
 
   private Duration maxClockDrift = new Duration();
 
-  private BigInteger frozenHeight = BigInteger.ZERO;
+  private Height frozenHeight = new Height();
 
-  private BigInteger latestHeight = BigInteger.ZERO;
+  private Height latestHeight = new Height();
 
   private boolean allowUpdateAfterExpiry = false;
 
@@ -67,19 +68,19 @@ public class ClientState extends ProtoMessage {
   }
 
   public BigInteger getFrozenHeight() {
-    return this.frozenHeight;
+    return this.frozenHeight.getRevisionHeight();
   }
 
   public void setFrozenHeight(BigInteger frozenHeight) {
-    this.frozenHeight = frozenHeight;
+    this.frozenHeight = new Height(new BigInteger("1"), frozenHeight);
   }
 
   public BigInteger getLatestHeight() {
-    return this.latestHeight;
+    return this.latestHeight.getRevisionHeight();
   }
 
   public void setLatestHeight(BigInteger latestHeight) {
-    this.latestHeight = latestHeight;
+    this.latestHeight = new Height(new BigInteger("1"), latestHeight);
   }
 
   public boolean getAllowUpdateAfterExpiry() {
@@ -151,15 +152,15 @@ public class ClientState extends ProtoMessage {
             break;
         }
         case 6: {
-            Proto.DecodeResponse<BigInteger> resp = Proto.decodeVarInt(data, index);
+            Proto.DecodeResponse<byte[]> resp = Proto.decodeBytes(data, index);
             index = resp.index;
-            obj.frozenHeight = resp.res;
+            obj.frozenHeight = icon.proto.core.client.Height.decode(resp.res);
             break;
         }
         case 7: {
-            Proto.DecodeResponse<BigInteger> resp = Proto.decodeVarInt(data, index);
+            Proto.DecodeResponse<byte[]> resp = Proto.decodeBytes(data, index);
             index = resp.index;
-            obj.latestHeight = resp.res;
+            obj.latestHeight = icon.proto.core.client.Height.decode(resp.res);
             break;
         }
         case 8: {

@@ -10,6 +10,14 @@ public class Height extends ProtoMessage {
 
   private BigInteger revisionHeight = BigInteger.ZERO;
 
+  public Height(BigInteger revisionNumber, BigInteger revisionHeight){
+    this.revisionNumber=revisionNumber;
+    this.revisionHeight=revisionHeight;
+  }
+
+  public Height(){
+  }
+
   public BigInteger getRevisionNumber() {
     return this.revisionNumber;
   }
