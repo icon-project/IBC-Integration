@@ -6,7 +6,7 @@ pragma solidity >=0.8.0;
  */
 library Types {
     // The name of CallService.
-    string constant NAME = "xcall-multi";
+    string constant NAME = "xcallM";
 
     int constant CS_REQUEST = 1;
     int constant CS_RESPONSE = 2;

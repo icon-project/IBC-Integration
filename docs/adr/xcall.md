@@ -396,6 +396,7 @@ CallRequest {
 MAX_DATA_SIZE: 2048
 MAX_ROLLBACK_SIZE: 1024
 NID: <networkId>
+SVC_NAME = xcallM
 
 sn: <current send message sequence>
 reqId: <current incoming message sequence>
@@ -466,11 +467,11 @@ payable external function sendCallMessage(String _to,
     if _sources == []:
         src = defaultConnection[dst.net()]
         fee = src->getFee(dst.net(), needResponse)
-        src->sendMessage(fee, dst.net(), "xcall-multi", sendSn, msg)
+        src->sendMessage(fee, dst.net(), SVC_NAME, sendSn, msg)
     else:
         for src in sources:
             fee = src->getFee(dst.net(), needResponse)
-            src->sendMessage(fee, dst.net(), "xcall-multi", sendSn, msg)
+            src->sendMessage(fee, dst.net(), SVC_NAME, sendSn, msg)
 
 
     remaningBalance = getBalance();
@@ -629,10 +630,10 @@ external function executeCall(Integer _reqId, byte[] _data) {
             msg = CSMessage(CSMessage.RESPONSE, response.toBytes());
             if req.protocols == []:
                 protocol = defaultConnection[from.net()]
-                protocol->sendMessage(from.net(), "xcall-multi", sn, msg.toBytes())
+                protocol->sendMessage(from.net(), SVC_NAME, sn, msg.toBytes())
             else:
                 for (String protocol : req.protocols):
-                    protocol->sendMessage(from.net(), "xcall-multi", sn, msg.toBytes())
+                    protocol->sendMessage(from.net(), SVC_NAME, sn, msg.toBytes())
     }
 
 ```

@@ -56,8 +56,6 @@ contract CallServiceTest is Test {
     string[] _baseSource;
     string[] _baseDestination;
 
-    string constant xcallMulti = "xcall-multi";
-
     event CallMessage(
         string indexed _from,
         string indexed _to,

@@ -32,7 +32,7 @@ public interface CallService {
     /**
      * The name of CallService.
      */
-    String NAME = "xcall-multi";
+    String NAME = "xcallM";
 
     /*======== At the source CALL_BSH ========*/
     /**
