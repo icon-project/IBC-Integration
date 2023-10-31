@@ -4,7 +4,7 @@ members = [
     "libraries/rust/common",
 ]
 
-exclude = ["contracts/cosmwasm-vm/archway"]
+exclude = ["contracts/cosmwasm-vm/archway","contracts/cosmwasm-vm/cw-integration"]
 
 
 [workspace.package]

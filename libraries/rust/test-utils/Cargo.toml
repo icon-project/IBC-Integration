@@ -17,5 +17,5 @@ common={workspace=true}
 
 
 [dev-dependencies]
-cw-multi-test = "0.15.1"
+#cw-multi-test = "0.15.1"
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}
