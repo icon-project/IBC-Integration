@@ -149,13 +149,13 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context, relayer ibc.Relayer)
 		})
 
 		r.T.Run("single relay packet flow chainA-chainB", func(t *testing.T) {
-			response, err := r.SendPacket(ctx, chainA, chainB, "data", 1000)
+			response, err := r.SendPacket(ctx, chainA, chainB, "data", 1000, false)
 			assert.NoErrorf(t, err, "Error while sending package from chainA-chainB")
 			assert.Truef(t, response.IsPacketSent, "The packet has not been sent to the target chain.")
 			assert.Truef(t, response.IsPacketReceiptEventFound, "The packet event has not received on the target chain.")
 		})
 		r.T.Run("single relay packet flow chainB-chainA", func(t *testing.T) {
-			response, err := r.SendPacket(ctx, chainB, chainA, "data", 1000)
+			response, err := r.SendPacket(ctx, chainB, chainA, "data", 1000, false)
 			assert.NoErrorf(t, err, "Error while sending package from chainB-chainA")
 			assert.Truef(t, response.IsPacketSent, "The packet has not been sent to the target chain.")
 			assert.Truef(t, response.IsPacketReceiptEventFound, "The packet event has not received on the target chain.")
@@ -238,14 +238,14 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context, relayer ibc.Relayer)
 		})
 
 		r.T.Run("single relay packet flow chainA-chainB", func(t *testing.T) {
-			response, err := r.SendPacket(ctx, chainA, chainB, "data", 1000)
+			response, err := r.SendPacket(ctx, chainA, chainB, "data", 1000, false)
 			assert.NoErrorf(t, err, "Error while sending package from chainA-chainB")
 			assert.Truef(t, response.IsPacketSent, "The packet has not been sent to the target chain.")
 			assert.Truef(t, response.IsPacketReceiptEventFound, "The packet event has not received on the target chain.")
 		})
 
 		r.T.Run("single relay packet flow chainB-chainA", func(t *testing.T) {
-			response, err := r.SendPacket(ctx, chainB, chainA, "data", 1000)
+			response, err := r.SendPacket(ctx, chainB, chainA, "data", 1000, false)
 			assert.NoErrorf(t, err, "Error while sending package from chainB-chainA")
 			assert.Truef(t, response.IsPacketSent, "The packet has not been sent to the target chain.")
 			assert.Truef(t, response.IsPacketReceiptEventFound, "The packet event has not received on the target chain.")
@@ -258,6 +258,20 @@ func (r *RelayerTestSuite) TestRelayer(ctx context.Context, relayer ibc.Relayer)
 		r.T.Run("ordered packet test chainB-chainA", func(t *testing.T) {
 			r.PacketFlowTest(ctx, t, chainB, chainA, ibc.Ordered)
 		})
+	})
+
+	r.T.Run("send multiple packets on same ChainA height", func(t *testing.T) {
+		chainA, chainB := r.GetChains()
+		height, err := chainA.(ibc.Chain).Height(ctx)
+		r.Require().NoError(err)
+		r.Require().NoError(r.multiplePacketsOnSameHeight(chainA, chainB, height+100, 5))
+	})
+
+	r.T.Run("send multiple packets on same ChainB height", func(t *testing.T) {
+		chainA, chainB := r.GetChains()
+		height, err := chainB.(ibc.Chain).Height(ctx)
+		r.Require().NoError(err)
+		r.Require().NoError(r.multiplePacketsOnSameHeight(chainB, chainA, height+100, 5))
 	})
 }
 
@@ -276,7 +290,7 @@ func (r *RelayerTestSuite) PacketFlowTest(ctx context.Context, t *testing.T, src
 	assert.Falsef(t, isPacketReceived, "The packet event has received on the target chain.\n%v\n", packet)
 
 	msg := "new-message"
-	response, err := r.SendPacket(ctx, src, target, msg, 1000) //new packet
+	response, err := r.SendPacket(ctx, src, target, msg, 1000, false) //new packet
 	if order == ibc.Ordered {
 		assert.Errorf(t, err, "Error on sending packet (%s): %v", msg, err)
 		assert.Falsef(t, response.IsPacketReceiptEventFound, "The packet event has been received on the target chain.")
@@ -349,7 +363,7 @@ func (r *RelayerTestSuite) handleCrashAndSendPacket(ctx context.Context, src cha
 	r.T.Logf("crashed at: %s %d", chainID, crashedHeight)
 	// send packet from src to target crashed node and check if it is received
 	var msg = fmt.Sprintf("data-%s", chainID)
-	response, _ := r.SendPacket(ctx, src, target, msg, 1000000)
+	response, _ := r.SendPacket(ctx, src, target, msg, 1000000, false)
 	packet := response.Packet
 	assert.NotEqualf(r.T, types.Packet{}, packet, "packet is empty")
 	assert.Truef(r.T, response.IsPacketSent, "The packet has not been sent to the target chain.")
@@ -380,6 +394,7 @@ func findPacket(ctx context.Context, chain chains.Chain, params map[string]inter
 		}
 	}
 }
+
 
 func (r *RelayerTestSuite) multiplePacketsOnSameHeight(ctx context.Context, src, dst chains.Chain, height uint64) (map[int]chains.PacketTransferResponse, error) {
 	var wg sync.WaitGroup

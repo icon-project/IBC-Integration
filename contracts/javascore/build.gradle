@@ -116,7 +116,9 @@ task collectOptimizedJars(type: Copy) {
 task zipOutputOptimizedJars(type: Zip) {
     dependsOn collectOptimizedJars
     from("$buildDir/output-jars") {
-        include '**/*-optimized.jar'
+        include '**/ibc-*.jar'
+        include '**/tendermint-*.jar'
+        include '**/xcall-connection-*.jar'
     }
     archiveFileName = "javascore-contracts.zip"
     destinationDirectory = file("$buildDir")

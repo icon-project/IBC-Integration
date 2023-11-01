@@ -60,7 +60,7 @@ impl<'a> CwIbcConnection<'a> {
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
         set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
+        CwIbcConnection::validate_address(deps.api, info.sender.as_str())?;
         self.init(deps.storage, info, msg)
     }
 
@@ -94,9 +94,10 @@ impl<'a> CwIbcConnection<'a> {
     ) -> Result<Response, ContractError> {
         match msg {
             ExecuteMsg::SetAdmin { address } => {
+                self.ensure_admin(deps.as_ref().storage, info.sender)?;
                 let validated_address =
                     CwIbcConnection::validate_address(deps.api, address.as_str())?;
-                self.add_admin(deps.storage, info, validated_address.to_string())
+                self.update_admin(deps.storage, validated_address)
             }
             ExecuteMsg::SendMessage { to, sn, msg } => {
                 println!("{LOG_PREFIX} Received Payload From XCall App");
@@ -301,10 +302,10 @@ impl<'a> CwIbcConnection<'a> {
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
-        let owner = info.sender.as_str().to_string();
+        let owner = info.clone().sender;
 
         self.add_owner(store, owner.clone())?;
-        self.add_admin(store, info, owner)?;
+        self.update_admin(store, owner)?;
         // self.set_timeout_height(store, msg.timeout_height)?;
         self.set_ibc_host(store, msg.ibc_host.clone())?;
         self.set_xcall_host(store, msg.xcall_address)?;

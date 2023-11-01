@@ -13,7 +13,7 @@ impl<'a> CwIbcConnection<'a> {
     ///
     /// A `Result` containing either a `String` representing the owner of the contract or a `StdError`
     /// if an error occurred while loading the owner from the storage.
-    pub fn query_owner(&self, store: &dyn Storage) -> Result<String, StdError> {
+    pub fn query_owner(&self, store: &dyn Storage) -> Result<Addr, StdError> {
         let owner = self.owner().load(store)?;
 
         Ok(owner)
@@ -37,7 +37,7 @@ impl<'a> CwIbcConnection<'a> {
     pub fn add_owner(
         &self,
         store: &mut dyn Storage,
-        owner: String,
+        owner: Addr,
     ) -> Result<Response, ContractError> {
         match self.owner().may_load(store)? {
             Some(address) => {
@@ -55,49 +55,5 @@ impl<'a> CwIbcConnection<'a> {
         Ok(Response::new()
             .add_attribute("method", "add_owner")
             .add_attribute("owner", owner.to_string()))
-    }
-
-    /// This function updates the owner of a contract if the sender is the current owner and the new
-    /// owner does not already exist.
-    ///
-    /// Arguments:
-    ///
-    /// * `store`: `store` is a mutable reference to a trait object `dyn Storage`. This is used to
-    /// interact with the contract's storage and persist data between contract executions.
-    /// * `info`: `info` is a `MessageInfo` struct that contains information about the message that
-    /// triggered the contract execution, such as the sender's address, the amount of tokens
-    /// transferred, and the message's ID. It is used to verify that the sender is the current owner of
-    /// the contract before updating the owner
-    /// * `new_owner`: A String representing the new owner that the current owner is trying to update
-    /// to.
-    ///
-    /// Returns:
-    ///
-    /// a `Result<Response, ContractError>`. If the function executes successfully, it returns a
-    /// `Response` object with some attributes added to it. If there is an error, it returns a
-    /// `ContractError`.
-    pub fn update_owner(
-        &self,
-        store: &mut dyn Storage,
-        info: MessageInfo,
-        new_owner: String,
-    ) -> Result<Response, ContractError> {
-        self.owner()
-            .update(store, |mut current_owner| -> Result<_, ContractError> {
-                if info.sender == current_owner {
-                    if current_owner == new_owner {
-                        Err(ContractError::OwnerAlreadyExist)
-                    } else {
-                        current_owner = new_owner.clone();
-                        Ok(current_owner)
-                    }
-                } else {
-                    Err(ContractError::Unauthorized {})
-                }
-            })?;
-
-        Ok(Response::new()
-            .add_attribute("action", "update owner")
-            .add_attribute("owner", new_owner.to_string()))
     }
 }

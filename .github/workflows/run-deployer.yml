@@ -1,0 +1,79 @@
+name: Setup Deployment Machine
+on:
+  workflow_dispatch:
+    inputs:
+      destroy_instance:
+        description: destroy-deployment-machine
+        required: true
+        type: choice
+        default: "false"
+        options:
+          - true
+          - false
+      root_ssh_pub_key:
+        description: root-ssh-public-key
+        required: true
+        type: string
+      deployr_ssh_pub_key:
+        description: admin-ssh-public-key
+        required: true
+        type: string
+      openssl_cipher_text:
+        description: openssl-cipher-text
+        required: true
+        type: string
+      deploy_script_branch:
+        description: deployment-script-branch 
+        type: string
+        default: "testnet"
+      
+jobs:
+  create-destroy-deployment-machine:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: configureawscredentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_STS_ROLE }}
+          role-session-name: cicd
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+      - name: Terraform Apply
+        id:   apply
+        env:
+          TF_VAR_root_ssh_pub_key:  "${{ github.event.inputs.root_ssh_pub_key }}"
+          TF_VAR_vpc_id: "${{ secrets.VPC_ID }}"
+          TF_VAR_subnet_id: "${{ secrets.SUBNET_ID }}"
+          TF_VAR_vpc_security_group_ids: "${{ secrets.SECURITY_GROUP_ID }}"
+          kms_id: "${{ secrets.KMS_ID }}"
+          deployr_ssh_pub_key: "${{ github.event.inputs.deployr_ssh_pub_key }}"
+          deploy_script_branch: "${{ github.event.inputs.deploy_script_branch }}"
+
+        run: |
+          cipher_text=$(jq -r '.inputs.openssl_cipher_text' $GITHUB_EVENT_PATH)
+          echo ::add-mask::$cipher_text
+          cd .github/deployer
+          echo "$TF_VAR_root_ssh_pub_key" > id_rsa.pub
+          sed -i "s|SSH_PUBKEY_HERE|$deployr_ssh_pub_key|g" init_script.sh
+          sed -i "s|CIPHER_TEXT_HERE|$cipher_text|g" init_script.sh
+          sed -i "s|DEPLOY_SCRIPT_BRANCH_HERE|$deploy_script_branch|g" init_script.sh
+          sed -i "s|KMS_ID_HERE|$kms_id|g" init_script.sh
+          terraform init
+          terraform validate
+          terraform plan 
+          if [[ "${{ github.event.inputs.destroy_instance }}" == "true" ]]; then
+            terraform destroy -auto-approve
+          else
+            terraform apply -auto-approve
+          fi
+
