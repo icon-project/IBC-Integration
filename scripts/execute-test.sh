@@ -85,6 +85,12 @@ if [ "$clean" = "true" ]; then
   clean_contracts
 fi
 
+
+if [ "$use_docker" = "true" ]; then
+  make build-builder-img & wait
+fi
+
+
 if [ "$build_ibc" = "true" ]; then
   echo "building IBC contracts..."
   if [ "$use_docker" = "true" ]; then

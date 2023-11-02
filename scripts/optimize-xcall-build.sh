@@ -2,7 +2,6 @@
 set -e
 mkdir -p artifacts/icon
 mkdir -p artifacts/archway
-
 LOCAL_X_CALL_REPO=".xcall-multi"
 
 clone_xCall_multi() {
