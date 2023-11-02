@@ -128,11 +128,8 @@ func (s *E2ETestSuite) GetNextConnectionSequence(ctx context.Context, chain chai
 }
 
 // SendPacket sends a packet from src to dst
-func (s *E2ETestSuite) SendPacket(ctx context.Context, src, target chains.Chain, msg string, timeout uint64, isCurrentHeight bool) (chains.PacketTransferResponse, error) {
-	var height uint64
-	if !isCurrentHeight {
-		height, _ = src.(ibc.Chain).Height(ctx)
-	}
+func (s *E2ETestSuite) SendPacket(ctx context.Context, src, target chains.Chain, msg string, timeout uint64) (chains.PacketTransferResponse, error) {
+	height, _ := src.(ibc.Chain).Height(ctx)
 	params := map[string]interface{}{
 		"msg":            chains.BufferArray(msg),
 		"timeout_height": height + timeout,
