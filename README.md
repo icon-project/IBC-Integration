@@ -41,5 +41,4 @@ For building dapps with xcall-multi see official developer [docs](https://www.xc
 ## Building a xcall-multi connection
 If xcall-multi is deployed, anyone can create a new connection contract to relay messages between xcall-multi contracts.
 To do this a connection contract has to be developed and deployed on both sides.
-
 The base design for a connection can be found in the [xcall-multi docs](./docs/adr/xcall.md#Connections)
