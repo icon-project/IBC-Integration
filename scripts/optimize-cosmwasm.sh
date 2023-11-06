@@ -33,7 +33,7 @@ cargo fmt --all
 cargo clean
 
 rustup target add wasm32-unknown-unknown
-cargo install cosmwasm-check --locked
+cargo install cosmwasm-check@1.4.1 --locked
 
 
 RUSTFLAGS='-C link-arg=-s' cargo build --workspace --exclude test-utils --release --lib --target wasm32-unknown-unknown
