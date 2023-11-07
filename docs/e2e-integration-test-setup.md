@@ -25,11 +25,11 @@ To run the demo, the following software needs to be installed.
    cd -  # Back to the root folder
    ```
 
-### Additional Images Required for Apple Silicon 
+### Additional Images required for Apple Silicon 
 
-If you are using an Apple Silicon machine, follow these additional steps to build images:
+If you are using an Apple Silicon machine, follow these additional steps to build required images:
 
-* Build an `icon-chain` image
+1. Build an `icon-chain` image
 
    ```bash
     git clone https://github.com/icon-project/goloop.git 
@@ -38,7 +38,7 @@ If you are using an Apple Silicon machine, follow these additional steps to buil
     cd -  # Back to the root folder
    ``` 
 
-* Build a `goloop` image
+2. Build a `goloop` image
 
    ```bash
     git clone https://github.com/icon-project/goloop/
@@ -47,25 +47,25 @@ If you are using an Apple Silicon machine, follow these additional steps to buil
     cd -  # Back to the root folder
    ```
 
-* Build an `archway` or `neutron` image
+3. Build an `archway` or `neutron` image
 
-  **For Archway:**
-
-   ```bash
-   git clone https://github.com/archway-network/archway/
-   cd archway
-   docker build -f Dockerfile.deprecated -t archway . --build-arg arch=aarch64
-   cd -  # Back to the root folder
-   ```
-
-  **For Neutron:**
-
-   ```bash
-   git clone https://github.com/neutron-org/neutron.git
-   cd neutron
-   make build-docker-image
-   cd -  # Back to the root folder
-   ```
+      **For Archway:**
+        
+    ```bash
+    git clone https://github.com/archway-network/archway/
+    cd archway
+    docker build -f Dockerfile.deprecated -t archway . --build-arg arch=aarch64
+    cd -  # Back to the root folder
+    ```
+    
+      **For Neutron:**
+    
+    ```bash
+    git clone https://github.com/neutron-org/neutron.git
+    cd neutron
+    make build-docker-image
+    cd -  # Back to the root folder
+    ```
 
 ## Running IBC Integration System Tests
 
