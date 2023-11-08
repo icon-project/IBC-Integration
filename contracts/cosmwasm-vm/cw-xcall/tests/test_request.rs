@@ -4,7 +4,7 @@ mod setup;
 use std::str::FromStr;
 
 use cosmwasm_std::testing::mock_env;
-use cw_xcall::state::CwCallService;
+use cw_xcall::{error::ContractError, state::CwCallService};
 use cw_xcall_lib::network_address::NetId;
 use setup::test::*;
 
@@ -159,7 +159,6 @@ fn set_request_id_without_proper_initialisation() {
         .unwrap();
 }
 
-
 #[test]
 fn invalid_network_id() {
     let mut mock_deps = deps();
@@ -181,10 +180,17 @@ fn invalid_network_id() {
         )
         .unwrap();
 
-
-    let response = contract
-        .handle_message(mock_deps.as_mut(), mock_info, NetId::from_str("nid").unwrap(), vec![]);
+    let response = contract.handle_message(
+        mock_deps.as_mut(),
+        mock_info,
+        NetId::from_str("nid").unwrap(),
+        vec![],
+    );
 
     assert!(response.is_err());
+    let error = response.err().unwrap();
+    assert_eq!(
+        error.to_string(),
+        ContractError::ProtocolsMismatch.to_string()
+    );
 }
-
