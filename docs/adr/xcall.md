@@ -490,6 +490,7 @@ payable external function sendCallMessage(String _to,
 ```javascript
 external function handleMessage(String _fromNid, bytes _msg) {
     msg = CSMessage.decode(_msg);
+    assert _fromNid != nid
     switch (msg.type) :
         case CSMessage.REQUEST:
             handleRequest(_fromNid, msg.data);

@@ -19,7 +19,7 @@ buildscript {
 // apply plugin: 'io.github.gradle-nexus.publish-plugin'
 
 group = findProperty("GROUP") ?: System.getenv("OSSRH_GROUP")
-version = '0.1.1'
+version = '0.2.0'
 
 def scoreIntegrationTest = new HashMap<String, String>()
 

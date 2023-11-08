@@ -1,7 +1,11 @@
 mod account;
 mod setup;
 
+use std::str::FromStr;
+
+use cosmwasm_std::testing::mock_env;
 use cw_xcall::state::CwCallService;
+use cw_xcall_lib::network_address::NetId;
 use setup::test::*;
 
 #[test]
@@ -154,3 +158,33 @@ fn set_request_id_without_proper_initialisation() {
         .set_last_request_id(mock_deps.as_mut().storage, 20)
         .unwrap();
 }
+
+
+#[test]
+fn invalid_network_id() {
+    let mut mock_deps = deps();
+
+    let mock_info = create_mock_info("test", "umlg", 2000);
+
+    let env = mock_env();
+
+    let contract = CwCallService::default();
+    contract
+        .instantiate(
+            mock_deps.as_mut(),
+            env,
+            mock_info.clone(),
+            cw_xcall::msg::InstantiateMsg {
+                network_id: "nid".to_string(),
+                denom: "arch".to_string(),
+            },
+        )
+        .unwrap();
+
+
+    let response = contract
+        .handle_message(mock_deps.as_mut(), mock_info, NetId::from_str("nid").unwrap(), vec![]);
+
+    assert!(response.is_err());
+}
+

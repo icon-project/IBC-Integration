@@ -263,6 +263,7 @@ public class CallServiceImpl implements CallService, FeeManage {
     @External
     public void handleMessage(String _fromNid, byte[] _msg) {
         CSMessage msg = CSMessage.fromBytes(_msg);
+        Context.require(!_fromNid.equals(NID), "Invalid network ID");
         switch (msg.getType()) {
             case CSMessage.REQUEST:
                 handleRequest(_fromNid, msg.getData());

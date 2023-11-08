@@ -12,6 +12,10 @@ impl<'a> CwCallService<'a> {
         message: Vec<u8>,
     ) -> Result<Response, ContractError> {
         let call_service_message: CSMessage = CSMessage::try_from(message)?;
+        let cfg = self.get_config(deps.storage).unwrap();
+        if cfg.network_id == from_nid.to_string() {
+            return Err(ContractError::ProtocolsMismatch);
+        }
 
         match call_service_message.message_type() {
             CallServiceMessageType::CallServiceRequest => {

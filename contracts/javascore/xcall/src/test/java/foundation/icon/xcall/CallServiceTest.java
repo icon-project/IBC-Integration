@@ -7,6 +7,7 @@ import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -149,7 +150,7 @@ public class CallServiceTest extends TestBase {
         assertThrows(Exception.class, ()->xcall.invoke(otherConnection, "handleBTPMessage", ethNid, CallService.NAME, BigInteger.ZERO, msg.toBytes()));
 
         // Assert
-        verify(xcallSpy, times(0)).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE, data);
+        verify(xcallSpy, times(0)).CallMessage(anyString(), anyString(), any(BigInteger.class), any(BigInteger.class), any(byte[].class));
     }
 
     @Test
@@ -180,7 +181,7 @@ public class CallServiceTest extends TestBase {
         assertThrows(Exception.class, ()-> xcall.invoke(invalidConnection, "handleBTPMessage", ethNid, CallService.NAME, BigInteger.ZERO, msg.toBytes()));
 
         // Assert
-        verify(xcallSpy, times(0)).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE, data);
+        verify(xcallSpy, times(0)).CallMessage(anyString(), anyString(), any(BigInteger.class), any(BigInteger.class), any(byte[].class));
     }
 
     @Test
@@ -196,11 +197,26 @@ public class CallServiceTest extends TestBase {
 
         // Act
         xcall.invoke(connection1.account, "handleBTPMessage", ethNid, CallService.NAME, BigInteger.ZERO, msg.toBytes());
-        verify(xcallSpy, times(0)).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE, data);
+        verify(xcallSpy, times(0)).CallMessage(anyString(), anyString(), any(BigInteger.class), any(BigInteger.class), any(byte[].class));
         xcall.invoke(connection2.account, "handleBTPMessage", ethNid, CallService.NAME, BigInteger.ZERO, msg.toBytes());
 
         // Assert
         verify(xcallSpy, times(1)).CallMessage(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, BigInteger.ONE, data);
+    }
+
+    @Test
+    public void handleRequest_same_network_id() {
+        // Arrange
+        byte[] data = "test".getBytes();
+        CSMessageRequest request = new CSMessageRequest(ethDapp.toString(), dapp.getAddress().toString(), BigInteger.ONE, false, data, new String[]{baseConnection.getAddress().toString()});
+        CSMessage msg = new CSMessage(CSMessage.REQUEST, request.toBytes());
+
+        // Act
+        assertThrows(Exception.class, ()-> xcall.invoke(baseConnection.account, "handleBTPMessage", nid, CallService.NAME, BigInteger.ZERO, msg.toBytes()));
+
+
+        // Assert
+        verify(xcallSpy, times(0)).CallMessage(anyString(), anyString(), any(BigInteger.class), any(BigInteger.class), any(byte[].class));
     }
 
     @Test
