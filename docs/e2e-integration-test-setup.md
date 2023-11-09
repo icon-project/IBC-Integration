@@ -24,12 +24,7 @@ To run the demo, the following software needs to be installed.
    docker build -t relayer .
    cd -  # Back to the root folder
    ```
-
-### Additional Images required for Apple Silicon 
-
-If you are using an Apple Silicon machine, follow these additional steps to build required images:
-
-1. Build an `icon-chain` image
+3. Build an `icon-chain` image
 
    ```bash
     git clone https://github.com/icon-project/goloop.git 
@@ -38,7 +33,11 @@ If you are using an Apple Silicon machine, follow these additional steps to buil
     cd -  # Back to the root folder
    ``` 
 
-2. Build a `goloop` image
+### Additional Images required for Apple Silicon 
+
+If you are using an Apple Silicon machine, follow these additional steps to build required images:
+
+1. Build a `goloop` image
 
    ```bash
     git clone https://github.com/icon-project/goloop/
@@ -47,7 +46,7 @@ If you are using an Apple Silicon machine, follow these additional steps to buil
     cd -  # Back to the root folder
    ```
 
-3. Build an `archway` or `neutron` image
+2. Build an `archway` or `neutron` image
 
       **For Archway:**
         
