@@ -131,7 +131,7 @@ fn process_message(
             }
             crate::msg::ClientMessageRaw::Misbehaviour(_) => {
                 Ok(to_binary(&ContractResult::success()).map_err(ContractError::Std)?)
-            },
+            }
         },
         ExecuteMsg::UpdateState(msg) => {
             cw_println!(deps_mut.api, "Received Header {:?}", &msg);
