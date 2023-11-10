@@ -1,4 +1,4 @@
-use cosmwasm_std::{Addr, Api, MessageInfo, Response, Storage};
+use cosmwasm_std::{Addr, Api, Response, Storage};
 
 use crate::{error::ContractError, state::CwIbcConnection};
 
@@ -42,11 +42,10 @@ impl<'a> CwIbcConnection<'a> {
     /// a `Result<Response, ContractError>`. If the `admin` parameter is empty, it returns an `Err` with
     /// the `ContractError::AdminAddressCannotBeNull` variant. If the `info.sender` is not the owner, it
     /// returns an `Err` with the `ContractError::Unauthorized` variant. If an admin already exists, it
-    /// returns an `Err` with
-    pub fn add_admin(
+    /// returns an `Err`
+    pub fn update_admin(
         &self,
         store: &mut dyn Storage,
-        _info: MessageInfo,
         admin: Addr,
     ) -> Result<Response, ContractError> {
         self.admin().save(store, &admin)?;

@@ -1,8 +1,12 @@
 #!/bin/bash
 set -e
-echo "Generating optimized cosmwasm for Archway contracts..."
-sh ./scripts/optimize-cosmwasm.sh
-echo "Generating optimized cosmwasm (xCall) for icon contracts..."
-sh ./scripts/build-xcall.sh
-echo "Generating optimized jar for icon contracts..."
-sh ./scripts/optimize-jar.sh
+build_ibc_contracts() {
+  echo "Generating optimized cosmwasm for Archway contracts..."
+  bash ./scripts/optimize-cosmwasm.sh
+  echo "Generating optimized jar for icon contracts..."
+  bash ./scripts/optimize-jar.sh
+}
+
+if [ "$1" = "build" ]; then
+  build_ibc_contracts
+fi

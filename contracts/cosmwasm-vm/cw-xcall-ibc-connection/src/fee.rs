@@ -14,7 +14,7 @@ impl<'a> CwIbcConnection<'a> {
         nid: NetId,
         address: String,
     ) -> Result<SubMsg, ContractError> {
-        let caller = info.sender.clone();
+        let caller = info.sender;
         let fees = self.get_unclaimed_packet_fee(deps.as_ref().storage, &nid, caller.as_ref());
         if fees == 0 {
             return Err(ContractError::NoFeesAccrued);
@@ -31,7 +31,7 @@ impl<'a> CwIbcConnection<'a> {
         let timeout_height =
             self.query_timeout_height(deps.as_ref(), &ibc_config.src_endpoint().channel_id)?;
         let packet = self.create_packet(ibc_config, timeout_height, sequence_no, message);
-        let sub_msg = self.call_host_send_message(deps, info, packet)?;
+        let sub_msg = self.call_host_send_message(deps, packet)?;
         Ok(sub_msg)
     }
 

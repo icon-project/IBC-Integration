@@ -6,14 +6,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	interchaintest "github.com/icon-project/ibc-integration/test"
-	"github.com/icza/dyno"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	interchaintest "github.com/icon-project/ibc-integration/test"
+	"github.com/icza/dyno"
 
 	"github.com/icon-project/ibc-integration/test/chains"
 
@@ -37,6 +38,18 @@ const (
 	GOLOOP_IMAGE_TAG_ENV = "GOLOOP_IMAGE_TAG"
 	GOLOOP_IMAGE_TAG     = "latest"
 )
+
+var ContainerEnvs = [9]string{
+	"GOCHAIN_CONFIG=/goloop/data/config.json",
+	"GOCHAIN_GENESIS=/goloop/data/genesis.json",
+	"GOCHAIN_DATA=/goloop/chain/iconee",
+	"GOCHAIN_LOGFILE=/goloop/chain/iconee.log",
+	"GOCHAIN_DB_TYPE=rocksdb",
+	"GOCHAIN_CLEAN_DATA=true",
+	"JAVAEE_BIN=/goloop/execman/bin/execman",
+	"PYEE_VERIFY_PACKAGE=true",
+	"ICON_CONFIG=/goloop/data/icon_config.json",
+}
 
 type IconNode struct {
 	VolumeName   string
@@ -79,6 +92,7 @@ func (in *IconNode) CreateNodeContainer(ctx context.Context, additionalGenesisWa
 		Config: &container.Config{
 			Image:    imageRef,
 			Hostname: in.HostName(),
+			Env:      ContainerEnvs[:],
 			Labels:   map[string]string{dockerutil.CleanupLabel: in.TestName},
 		},
 
@@ -106,8 +120,21 @@ func (in *IconNode) CreateNodeContainer(ctx context.Context, additionalGenesisWa
 		return err
 	}
 
+	in.CopyConfig(ctx, err, cc)
+
 	in.ContainerID = cc.ID
 	return nil
+}
+
+func (in *IconNode) CopyConfig(ctx context.Context, err error, cc container.CreateResponse) {
+	fileName := fmt.Sprintf("%s/test/chains/icon/data/config.json", os.Getenv(chains.BASE_PATH))
+
+	config, err := interchaintest.GetLocalFileContent(fileName)
+
+	header := map[string]string{
+		"name": "config.json",
+	}
+	err = in.CopyFileToContainer(context.WithValue(ctx, "file-header", header), config, cc.ID, "/goloop/data/")
 }
 func (in *IconNode) CopyFileToContainer(ctx context.Context, content []byte, containerID, target string) error {
 	header := ctx.Value("file-header").(map[string]string)

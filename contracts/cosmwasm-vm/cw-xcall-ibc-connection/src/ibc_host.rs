@@ -1,7 +1,7 @@
 use crate::state::IbcConfig;
 use crate::types::LOG_PREFIX;
 use common::ibc::Height;
-use cosmwasm_std::{to_binary, CosmosMsg, Deps, DepsMut, MessageInfo, Storage, SubMsg, WasmMsg};
+use cosmwasm_std::{to_binary, CosmosMsg, Deps, DepsMut, Storage, SubMsg, WasmMsg};
 use cw_common::cw_types::CwPacket;
 use cw_common::query_helpers::build_smart_query;
 use cw_common::{hex_string::HexString, raw_types::channel::RawPacket, ProstMessage};
@@ -45,7 +45,6 @@ impl<'a> CwIbcConnection<'a> {
     pub fn call_host_send_message(
         &self,
         deps: DepsMut,
-        info: MessageInfo,
         packet: RawPacket,
     ) -> Result<SubMsg, ContractError> {
         let message = cw_common::core_msg::ExecuteMsg::SendPacket {
@@ -57,7 +56,7 @@ impl<'a> CwIbcConnection<'a> {
             msg: CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: ibc_host.to_string(),
                 msg: to_binary(&message).map_err(ContractError::Std)?,
-                funds: info.funds,
+                funds: vec![],
             }),
             gas_limit: None,
             reply_on: cosmwasm_std::ReplyOn::Always,
@@ -111,14 +110,13 @@ impl<'a> CwIbcConnection<'a> {
 
 #[cfg(test)]
 mod tests {
+    use crate::state::{CwIbcConnection, HOST_SEND_MESSAGE_REPLY_ID};
     use cosmwasm_std::{
         coin,
         testing::{mock_dependencies_with_balance, mock_env},
-        to_binary, Addr, CosmosMsg, MessageInfo, SubMsg, WasmMsg,
+        to_binary, Addr, CosmosMsg, SubMsg, WasmMsg,
     };
     use cw_common::{hex_string::HexString, raw_types::channel::RawPacket, ProstMessage};
-
-    use crate::state::{CwIbcConnection, HOST_SEND_MESSAGE_REPLY_ID};
 
     #[test]
     fn test_call_host_send_message() {
@@ -131,15 +129,12 @@ mod tests {
         connection
             .set_ibc_host(store, Addr::unchecked("ibc-host"))
             .unwrap();
-        let env = mock_env();
-        let info = MessageInfo {
-            sender: env.contract.address,
-            funds: vec![coin(100, "ATOM")],
-        };
+        let _env = mock_env();
+
         let packet = RawPacket::default();
 
-        let res = connection.call_host_send_message(deps.as_mut(), info, packet.clone());
-        println!("{res:?}");
+        let res = connection.call_host_send_message(deps.as_mut(), packet.clone());
+        println!("{:?}", res);
         assert!(res.is_ok());
 
         let expected_ibc_host = connection
@@ -154,7 +149,7 @@ mod tests {
             msg: CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: expected_ibc_host,
                 msg: to_binary(&expected_message).unwrap(),
-                funds: vec![coin(100, "ATOM")],
+                funds: vec![],
             }),
             gas_limit: None,
             reply_on: cosmwasm_std::ReplyOn::Always,

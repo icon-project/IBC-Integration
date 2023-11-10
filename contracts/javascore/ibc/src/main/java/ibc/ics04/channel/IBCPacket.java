@@ -44,9 +44,9 @@ public class IBCPacket extends IBCChannelHandshake {
         Context.require(packet.getTimeoutTimestamp().equals(BigInteger.ZERO),
                 "Timeout timestamps are not available, use timeout height instead");
 
-
         DictDB<String, BigInteger> nextSequenceSourcePort = nextSequenceSends.at(packet.getSourcePort());
-        BigInteger nextSequenceSend = nextSequenceSourcePort.getOrDefault(packet.getSourceChannel(), BigInteger.ZERO);
+        BigInteger nextSequenceSend = nextSequenceSourcePort.getOrDefault(packet.getSourceChannel(),
+                BigInteger.ZERO);
         Context.require(
                 packet.getSequence().equals(nextSequenceSend),
                 "packet sequence != next send sequence");
@@ -59,14 +59,16 @@ public class IBCPacket extends IBCChannelHandshake {
 
         byte[] packetCommitment = createPacketCommitment(packet);
         commitments.set(packetCommitmentKey, packetCommitment);
-        packetHeights.at(packet.getSourcePort()).at(packet.getSourceChannel()).set(packet.getSequence(), Context.getBlockHeight());
+        packetHeights.at(packet.getSourcePort()).at(packet.getSourceChannel()).set(packet.getSequence(),
+                Context.getBlockHeight());
 
         sendBTPMessage(connection.getClientId(),
                 ByteUtil.join(packetCommitmentKey, packetCommitment));
     }
 
     public void _recvPacket(Packet packet, byte[] proof, byte[] proofHeight) {
-        Channel channel = Channel.decode(channels.at(packet.getDestinationPort()).get(packet.getDestinationChannel()));
+        Channel channel = Channel
+                .decode(channels.at(packet.getDestinationPort()).get(packet.getDestinationChannel()));
         Context.require(channel.getState() == Channel.State.STATE_OPEN, "channel state must be OPEN");
 
         Context.require(
@@ -85,7 +87,8 @@ public class IBCPacket extends IBCChannelHandshake {
         Context.require(
                 packet.getTimeoutHeight().getRevisionHeight().equals(BigInteger.ZERO)
                         || BigInteger.valueOf(Context.getBlockHeight())
-                        .compareTo(packet.getTimeoutHeight().getRevisionHeight()) < 0,
+                        .compareTo(packet.getTimeoutHeight()
+                                .getRevisionHeight()) < 0,
                 "block height >= packet timeout height");
         Context.require(
                 packet.getTimeoutTimestamp().equals(BigInteger.ZERO)
@@ -114,12 +117,14 @@ public class IBCPacket extends IBCChannelHandshake {
         } else if (channel.getOrdering() == Channel.Order.ORDER_ORDERED) {
             DictDB<String, BigInteger> nextSequenceDestinationPort = nextSequenceReceives
                     .at(packet.getDestinationPort());
-            BigInteger nextSequenceRecv = nextSequenceDestinationPort.getOrDefault(packet.getDestinationChannel(),
+            BigInteger nextSequenceRecv = nextSequenceDestinationPort.getOrDefault(
+                    packet.getDestinationChannel(),
                     BigInteger.ZERO);
             Context.require(
                     nextSequenceRecv.equals(packet.getSequence()),
                     "packet sequence != next receive sequence");
-            nextSequenceDestinationPort.set(packet.getDestinationChannel(), nextSequenceRecv.add(BigInteger.ONE));
+            nextSequenceDestinationPort.set(packet.getDestinationChannel(),
+                    nextSequenceRecv.add(BigInteger.ONE));
         } else {
             Context.revert("unknown ordering type");
         }
@@ -141,6 +146,9 @@ public class IBCPacket extends IBCChannelHandshake {
         Context.require(commitments.get(ackCommitmentKey) == null, "acknowledgement for packet already exists");
         byte[] ackCommitment = IBCCommitment.keccak256(acknowledgement);
         commitments.set(ackCommitmentKey, ackCommitment);
+        ackHeights.at(destinationPortId).at(destinationChannel).set(sequence,
+                Context.getBlockHeight());
+
         sendBTPMessage(connection.getClientId(), ByteUtil.join(ackCommitmentKey, ackCommitment));
 
     }
@@ -216,7 +224,7 @@ public class IBCPacket extends IBCChannelHandshake {
         Context.require(connection.getState() == ConnectionEnd.State.STATE_OPEN,
                 "connection state is not OPEN");
 
-        BigInteger revisionHeight=packet.getTimeoutHeight().getRevisionHeight();
+        BigInteger revisionHeight = packet.getTimeoutHeight().getRevisionHeight();
         boolean heightTimeout = revisionHeight.compareTo(BigInteger.ZERO) > 0
                 && BigInteger.valueOf(Context.getBlockHeight())
                 .compareTo(revisionHeight) >= 0;
@@ -282,7 +290,8 @@ public class IBCPacket extends IBCChannelHandshake {
         // check that timeout height or timeout timestamp has passed on the other end
         Height height = Height.decode(proofHeight);
         boolean heightTimeout = packet.getTimeoutHeight().getRevisionHeight().compareTo(BigInteger.ZERO) > 0
-                && height.getRevisionHeight().compareTo(packet.getTimeoutHeight().getRevisionHeight()) >= 0;
+                && height.getRevisionHeight()
+                .compareTo(packet.getTimeoutHeight().getRevisionHeight()) >= 0;
         Context.require(heightTimeout, "Packet has not yet timed out");
 
         // verify we actually sent this packet, check the store
@@ -304,8 +313,7 @@ public class IBCPacket extends IBCChannelHandshake {
                     connection,
                     proofHeight,
                     proof,
-                    packetReceiptKey
-            );
+                    packetReceiptKey);
         } else if (channel.getOrdering() == Channel.Order.ORDER_ORDERED) {
             // ordered channel: check that packet has not been received
             // only allow timeout on next sequence so all sequences before the timed out
@@ -327,14 +335,16 @@ public class IBCPacket extends IBCChannelHandshake {
             channel.setState(Channel.State.STATE_CLOSED);
 
             byte[] encodedChannel = channel.encode();
-            updateChannelCommitment(connection.getClientId(), packet.getSourcePort(), packet.getSourceChannel(), encodedChannel);
+            updateChannelCommitment(connection.getClientId(), packet.getSourcePort(),
+                    packet.getSourceChannel(), encodedChannel);
             channels.at(packet.getSourcePort()).set(packet.getSourceChannel(), encodedChannel);
         } else {
             Context.revert("unknown ordering type");
         }
 
         commitments.set(packetCommitmentKey, null);
-        packetHeights.at(packet.getSourcePort()).at(packet.getSourceChannel()).set(packet.getSequence(), Context.getBlockHeight());
+        packetHeights.at(packet.getSourcePort()).at(packet.getSourceChannel()).set(packet.getSequence(),
+                Context.getBlockHeight());
 
     }
 
