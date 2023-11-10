@@ -79,7 +79,7 @@ pub fn decode_consensus_state(value: &[u8]) -> Result<ConsensusState, ContractEr
 }
 
 pub fn to_ibc_height(height: u64) -> Height {
-    Height::new(0, height)
+    Height::new(1, height)
 }
 
 pub fn any_from_byte(bytes: &[u8]) -> Result<Any, ContractError> {

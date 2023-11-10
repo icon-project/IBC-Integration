@@ -126,10 +126,12 @@ fn process_message(
                 let header_any = Any::decode(&*wasmheader.data).unwrap();
                 let header =
                     SignedHeader::from_any(header_any).map_err(ContractError::DecodeError)?;
-                client.update_client(info.sender, CLIENT_ID, header)?;
+                client.verify_header(&info.sender, CLIENT_ID, &header)?;
                 Ok(to_binary(&ContractResult::success()).map_err(ContractError::Std)?)
             }
-            crate::msg::ClientMessageRaw::Misbehaviour(_) => unimplemented!(),
+            crate::msg::ClientMessageRaw::Misbehaviour(_) => {
+                Ok(to_binary(&ContractResult::success()).map_err(ContractError::Std)?)
+            },
         },
         ExecuteMsg::UpdateState(msg) => {
             cw_println!(deps_mut.api, "Received Header {:?}", &msg);
