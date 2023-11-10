@@ -51,4 +51,9 @@ library Types {
         int code;
     }
 
+    struct PendingResponse {
+        bytes msg;
+        string targetNetwork;
+    }
+
 }

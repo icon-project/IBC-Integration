@@ -34,4 +34,16 @@ interface IConnection {
     ) external view returns (
         uint256 _fee
     );
+
+    /**
+     * @dev Set the address of the admin.
+     * @param _address The address of the admin.
+     */
+    function setAdmin(address _address) external;
+
+    /**
+     * @dev Get the address of the admin.
+     * @return (Address) The address of the admin.
+     */
+    function admin() external view returns (address);
 }

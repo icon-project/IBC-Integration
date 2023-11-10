@@ -2,12 +2,12 @@
 pragma solidity >=0.8.0;
 pragma abicoder v2;
 
-import "@xcall/contracts/xcall/interfaces/IFeeManage.sol";
+import "./interfaces/IFeeManage.sol";
+import "./interfaces/IConnection.sol";
 import "@xcall/utils/RLPDecodeStruct.sol";
 import "@xcall/utils/RLPEncodeStruct.sol";
 import "@xcall/utils/Types.sol";
 
-import "@iconfoundation/btp2-solidity-library/interfaces/IConnection.sol";
 import "@iconfoundation/btp2-solidity-library/interfaces/IBSH.sol";
 import "@iconfoundation/btp2-solidity-library/interfaces/ICallService.sol";
 import "@iconfoundation/btp2-solidity-library/interfaces/ICallServiceReceiver.sol";

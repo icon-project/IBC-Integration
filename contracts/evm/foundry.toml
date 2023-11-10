@@ -4,8 +4,6 @@ out = "out"
 libs = ["lib"]
 test = "test"
 
-remappings = ["@xcall/contracts=./contracts", "@iconfoundation/btp2-solidity-library=./library/btp2", "@xcall/utils=./library/utils"]
-
 
 [rpc_endpoints]
 binance_testnet = "${BINANCE_TESTNET_RPC_URL}"

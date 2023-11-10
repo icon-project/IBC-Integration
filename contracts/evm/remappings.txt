@@ -1,0 +1,14 @@
+@xcall/contracts/=./contracts/
+@iconfoundation/btp2-solidity-library/=./library/btp2/
+@xcall/utils/=./library/utils/
+ds-test/=lib/forge-std/lib/ds-test/src/
+erc4626-tests/=lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests/
+forge-std/=lib/forge-std/src/
+@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
+@openzeppelin/contracts/=lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/
+openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/
+openzeppelin-contracts/=lib/openzeppelin-contracts/
+openzeppelin/=lib/openzeppelin-contracts-upgradeable/contracts/
+wormhole-solidity-sdk/=lib/wormhole-solidity-sdk/src/
+@lz-contracts/=lib/solidity-examples/contracts/lzApp/
+@lz-contracts/utils/=lib/solidity-examples/contracts/libraries/
