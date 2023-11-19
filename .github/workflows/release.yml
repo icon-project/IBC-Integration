@@ -1,0 +1,142 @@
+name: Pre-release
+on:
+  push:
+    tags:
+      - '*'
+permissions:
+  contents: write
+  packages: write
+  repository-projects: write
+
+jobs:
+  build_javascore:
+    name: Build Javascore Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Build Javascore Contracts
+        working-directory: contracts/javascore
+        run: |
+          ./gradlew clean build
+          ./gradlew optimizedJar
+          ./gradlew zipOutputOptimizedJars
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: javascore-contracts
+          path: ./contracts/javascore/build/javascore-contracts.zip
+  build_wasm:
+    name: Build Cosmwasm Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.69.0
+          target: wasm32-unknown-unknown
+          override: true
+          profile: minimal
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+      - name: Compile WASM
+        run: |
+          rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
+          rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu     
+          bash ./scripts/optimize-cosmwasm.sh
+          cd artifacts/archway && zip -r ../../cosmwasm-contracts.zip . -j
+          
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: cosmwasm-contracts
+          path: cosmwasm-contracts.zip
+  release:
+    name: Release and Publish
+    runs-on: ubuntu-latest
+    needs:
+      - build_javascore
+      - build_wasm
+    steps:
+      # - name: Initialize variables
+      #   id: vars
+      #   run: |
+      #     echo «::set-output name=date::$(date +'%Y-%m-%d')»
+      #     echo «::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)»
+      - name: Download Javascore Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: javascore-contracts
+          path: javascore-contracts
+
+      - name: Download Cosmwasm Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: cosmwasm-contracts
+          path: cosmwasm-contracts
+
+      - name: Unzip Javascore Artifacts
+        run: unzip javascore-contracts/javascore-contracts.zip -d javascore-contracts && rm -rf javascore-contracts/javascore-contracts.zip
+
+      - name: Unzip Cosmwasm Artifacts
+        run: unzip cosmwasm-contracts/cosmwasm-contracts.zip -d cosmwasm-contracts && rm -rf cosmwasm-contracts/cosmwasm-contracts.zip
+
+      - name: Changelog
+        uses: scottbrenner/generate-changelog-action@master
+        id: Changelog
+        env:
+          REPO: ${{ github.repository }}
+
+      # - name: Create Release
+      #   id: create_release
+      #   uses: actions/create-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      #   with:
+      #     tag_name: ${{ github.ref }}
+      #     release_name: Prerelease ${{ github.ref }}
+      #     body: |
+      #       ${{ steps.Changelog.outputs.changelog }}
+      #     draft: false
+      #     prerelease: false
+
+      - uses: google-github-actions/release-please-action@v3
+        id: release-please
+        with:
+          # release-type: python
+          # extra-files: |
+          #   tackle/__init__.py
+          changelog-types: |
+            [
+              {"type":"feat","section":"Features","hidden":false},
+              {"type":"fix","section":"Bug Fixes","hidden":false},
+              {"type":"perf","section":"Performance Improvements","hidden":false},
+              {"type":"refactor","section":"Refactors","hidden":false},
+              {"type":"revert","section":"Reversions","hidden":false},
+              {"type":"provider","section":"Provider Changes","hidden":false}
+            ]
+
+      - name: Upload Javascore contracts to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./javascore-contracts/*
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
+
+      - name: Upload Cosmwasm contracts to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./cosmwasm-contracts/*
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
