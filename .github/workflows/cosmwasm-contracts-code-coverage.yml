@@ -16,6 +16,9 @@ defaults:
   run:
     working-directory: contracts/cosmwasm-vm
 
+env:
+  RUSTC_VERSION: '1.72.1'
+
 jobs:
   code-coverage:
     runs-on: ubuntu-latest
@@ -27,7 +30,7 @@ jobs:
         with:
           submodules: true
       - name: Install Rust
-        run: rustup update stable
+        run: rustup install "$RUSTC_VERSION"
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
       - name: Install cargo-llvm-cov
