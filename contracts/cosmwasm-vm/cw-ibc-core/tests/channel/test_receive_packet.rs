@@ -237,6 +237,9 @@ fn test_receive_packet_fails_on_invalid_counterparty() {
     );
 }
 
+#[should_panic(
+    expected = "IbcPacketError { error: Other(\"Already Received\") }"
+)]
 #[test]
 fn test_receive_packet_no_op_on_packet_already_received() {
     let contract = CwIbcCoreContext::default();
@@ -264,12 +267,9 @@ fn test_receive_packet_no_op_on_packet_already_received() {
 
     mock_lightclient_query(test_context.mock_queries, &mut deps);
 
-    let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg);
+    let res = contract.validate_receive_packet(deps.as_mut(), info, env, &msg).unwrap();
 
-    assert_eq!(
-        res.unwrap().attributes[0].value,
-        "Packet already received".to_string()
-    )
+   
 }
 #[test]
 fn execute_receive_packet() {
