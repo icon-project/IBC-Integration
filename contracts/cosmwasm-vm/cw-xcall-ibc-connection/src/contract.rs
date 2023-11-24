@@ -302,7 +302,7 @@ impl<'a> CwIbcConnection<'a> {
         info: MessageInfo,
         msg: InstantiateMsg,
     ) -> Result<Response, ContractError> {
-        let owner = info.clone().sender;
+        let owner = info.sender;
 
         self.add_owner(store, owner.clone())?;
         self.update_admin(store, owner)?;
