@@ -28,10 +28,10 @@ jobs:
 
       - name: Install Rust
         run: |
-        rustup install "$RUSTC_VERSION"
-        rustup default "$RUSTC_TOOLCHAIN"
-        rustup component add clippy
-        rustup component add rustfmt
+          rustup install "$RUSTC_VERSION"
+          rustup default "$RUSTC_TOOLCHAIN"
+          rustup component add clippy
+          rustup component add rustfmt
 
 
       - name: Cache Rust dependencies
