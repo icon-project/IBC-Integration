@@ -53,6 +53,7 @@ If you are using an Apple Silicon machine, follow these additional steps to buil
     ```bash
     git clone https://github.com/archway-network/archway/
     cd archway
+    git checkout -b v0.5.1 v0.5.1
     docker build -f Dockerfile.deprecated -t archway . --build-arg arch=aarch64
     cd -  # Back to the root folder
     ```
