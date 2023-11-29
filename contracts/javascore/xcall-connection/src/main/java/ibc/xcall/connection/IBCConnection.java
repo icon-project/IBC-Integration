@@ -60,10 +60,54 @@ public class IBCConnection {
     protected final BranchDB<String, DictDB<Address, BigInteger>> unclaimedPacketFees = Context.newBranchDB("unclaimedPacketFees", BigInteger.class);
 
     public IBCConnection(Address _xCall, Address _ibc, String _port) {
+        PORT = _port;
+        if( ibc.get() == null) {
         ibc.set(_ibc);
         xCall.set(_xCall);
         admin.set(Context.getCaller());
-        PORT = _port;
+        } else {
+            String oldNeutronNid = "neutron";
+            String newNeutronNid = "neutron-1";
+            String oldArchwayNid = "archway";
+            String newArchwayNid = "archway-1";
+
+            Context.require(configuredNetworkIds.at("connection-2").get("xcall").equals(oldNeutronNid));
+            configuredNetworkIds.at("connection-2").set("xcall", newNeutronNid);
+
+            Context.require(configuredNetworkIds.at("connection-0").get("xcall").equals(oldArchwayNid));
+            configuredNetworkIds.at("connection-0").set("xcall", newArchwayNid);
+
+            String neutronChannel = channels.get(oldNeutronNid);
+            String archwayChannel = channels.get(oldArchwayNid);
+
+            Context.require(neutronChannel.equals("channel-1"));
+            Context.require(archwayChannel.equals("channel-0"));
+
+            channels.set(oldNeutronNid, null);
+            channels.set(oldArchwayNid, null);
+
+            channels.set(newNeutronNid, neutronChannel);
+            channels.set(newArchwayNid, archwayChannel);
+
+            networkIds.set(neutronChannel, newNeutronNid);
+            networkIds.set(archwayChannel, newArchwayNid);
+
+            BigInteger oldPacketFeeNeutron = sendPacketFee.get(oldNeutronNid);
+            BigInteger oldAckFeeNeutron = ackFee.get(oldNeutronNid);
+            sendPacketFee.set(newNeutronNid, oldPacketFeeNeutron);
+            ackFee.set(newNeutronNid, oldAckFeeNeutron);
+
+            sendPacketFee.set(oldNeutronNid, null);
+            ackFee.set(oldNeutronNid, null);
+
+            BigInteger oldPacketFeeArchway = sendPacketFee.get(oldArchwayNid);
+            BigInteger oldAckFeeArchway = ackFee.get(oldArchwayNid);
+            sendPacketFee.set(newArchwayNid, oldPacketFeeArchway);
+            ackFee.set(newArchwayNid, oldAckFeeArchway);
+
+            sendPacketFee.set(oldArchwayNid, null);
+            ackFee.set(oldArchwayNid, null);
+        }
     }
 
     private void checkCallerOrThrow(Address caller, String errMsg) {
