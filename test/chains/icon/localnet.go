@@ -381,14 +381,36 @@ func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Co
 	c.IBCAddresses = contracts.ContractAddress
 
 	params := `{"name": "test","country": "KOR","city": "Seoul","email": "prep@icon.foundation.com","website": "https://icon.kokoa.com","details": "https://icon.kokoa.com/json/details.json","p2pEndpoint": "localhost:9080"}`
-	_, _ = c.executeContract(ctx, "cx0000000000000000000000000000000000000000", interchaintest.IBCOwnerAccount, "registerPRep", params)
+	ctx, err = c.executeContract(ctx, "cx0000000000000000000000000000000000000000", interchaintest.IBCOwnerAccount, "registerPRep", params)
+	if err != nil {
+		c.log.Error("Error on registerPRep",
+			zap.Error(err),
+		)
+		panic(err)
+	}
 	params = `{"pubKey":"0x04b3d972e61b4e8bf796c00e84030d22414a94d1830be528586e921584daadf934f74bd4a93146e5c3d34dc3af0e6dbcfe842318e939f8cc467707d6f4295d57e5"}`
-	_, _ = c.executeContract(ctx, "cx0000000000000000000000000000000000000000", interchaintest.IBCOwnerAccount, "setPRepNodePublicKey", params)
+	ctx, err = c.executeContract(ctx, "cx0000000000000000000000000000000000000000", interchaintest.IBCOwnerAccount, "setPRepNodePublicKey", params)
+	if err != nil {
+		c.log.Error("Error on setPRepNodePublicKey",
+			zap.Error(err),
+		)
+		panic(err)
+	}
 	params = `{"networkTypeName":"eth", "name":"testNetwork", "owner":"` + ibcAddress + `"}`
-	ctx, _ = c.executeContract(ctx, "cx0000000000000000000000000000000000000001", interchaintest.IBCOwnerAccount, "openBTPNetwork", params)
-	//height, _ := ctx.Value("txResult").(icontypes.TransactionResult).BlockHeight.Int()
-	id := ctx.Value("txResult").(*icontypes.TransactionResult).EventLogs[1].Indexed[2]
-	typeId := ctx.Value("txResult").(*icontypes.TransactionResult).EventLogs[1].Indexed[1]
+	ctx, err = c.executeContract(ctx, "cx0000000000000000000000000000000000000001", interchaintest.IBCOwnerAccount, "openBTPNetwork", params)
+	if err != nil {
+		c.log.Error("Error on openBTPNetwork",
+			zap.Error(err),
+		)
+		panic(err)
+	}
+	txResult := ctx.Value("txResult").(*icontypes.TransactionResult)
+	if txResult == nil {
+		c.log.Error("txResult is nil")
+	}
+	event := txResult.EventLogs[1]
+	id := event.Indexed[2]
+	typeId := event.Indexed[1]
 	btpNetworkId, _ := icontypes.HexInt(id).Int()
 	btpNetworkTypeId, _ := icontypes.HexInt(typeId).Int()
 
@@ -776,8 +798,8 @@ func (c *IconLocalnet) executeContract(ctx context.Context, contractAddress, key
 		return nil, fmt.Errorf("error when executing contract %v ", err)
 	}
 	_, res, err := c.getFullNode().Client.WaitForResults(ctx, &icontypes.TransactionHashParam{Hash: icontypes.NewHexBytes(txHashByte)})
-	if err != nil {
-		return nil, err
+	if err != nil || res == nil {
+		return context.WithValue(ctx, "txResult", icontypes.TransactionResult{}), err
 	}
 	if res.Status == "0x1" {
 		return context.WithValue(ctx, "txResult", res), nil
@@ -787,8 +809,17 @@ func (c *IconLocalnet) executeContract(ctx context.Context, contractAddress, key
 	if err == nil {
 		logs, _ := json.Marshal(trace.Logs)
 		fmt.Printf("---------debug trace start-----------\n%s\n---------debug trace end-----------\n", string(logs))
+	} else {
+		c.log.Error("Attempting to retrieve the tx result once again.",
+			zap.String("txHash", hash),
+		)
+		_, res, err = c.getFullNode().Client.WaitForResults(ctx, &icontypes.TransactionHashParam{Hash: icontypes.NewHexBytes(txHashByte)})
+		if res.Status == "0x1" {
+			return context.WithValue(ctx, "txResult", res), nil
+		}
 	}
-	return ctx, fmt.Errorf("%s", res.Failure.MessageValue)
+
+	return context.WithValue(ctx, "txResult", icontypes.TransactionResult{}), fmt.Errorf("%s", res.Failure.MessageValue)
 }
 
 func (c *IconLocalnet) ExecuteContract(ctx context.Context, contractAddress, keyName, methodName string, params map[string]interface{}) (context.Context, error) {
