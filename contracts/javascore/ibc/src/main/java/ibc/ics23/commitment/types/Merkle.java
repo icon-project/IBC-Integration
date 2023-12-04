@@ -3,7 +3,7 @@ package ibc.ics23.commitment.types;
 import ibc.icon.score.util.StringUtil;
 import ibc.ics23.commitment.Ics23;
 import ibc.ics23.commitment.Proof;
-import icon.proto.clients.tendermint.MerkleRoot;
+import ibc.core.commitment.v1.MerkleRoot;
 import icon.proto.core.commitment.*;
 import score.UserRevertedException;
 import scorex.util.ArrayList;

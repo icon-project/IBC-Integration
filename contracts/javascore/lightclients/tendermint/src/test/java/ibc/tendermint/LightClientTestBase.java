@@ -8,7 +8,7 @@ import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
 import foundation.icon.ee.util.Crypto;
-import ibc.tendermint.light.TendermintLight.*;
+import ibc.lightclients.tendermint.v1.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,10 +40,21 @@ import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
 
-import ibc.tendermint.light.TendermintLight.*;
-import icon.proto.core.client.Height;
+import com.google.protobuf.Timestamp;
+import com.google.protobuf.Duration;
 import score.Context;
 import foundation.icon.ee.util.Crypto;
+
+import com.ibc.lightclients.tendermint.v1.*;
+import com.ibc.lightclients.tendermint.v1.ConsensusState;
+import com.ibc.lightclients.tendermint.v1.ClientState;
+import com.ibc.lightclients.tendermint.v1.Header;
+import com.tendermint.types.*;
+import com.tendermint.crypto.*;
+import com.ibc.lightclients.tendermint.v1.Fraction;
+import com.ibc.core.client.v1.Height;
+import com.ibc.core.commitment.v1.MerkleRoot;
+import com.tendermint.version.Consensus;
 
 import static org.mockito.Mockito.spy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -130,38 +141,38 @@ public class LightClientTestBase extends TestBase {
     }
 
     protected void initializeClient(int blockOrder) throws Exception {
-        TmHeader tmHeader = TmHeader.newBuilder()
+        Header header = Header.newBuilder()
                 .setSignedHeader(parseSignedHeader(blockOrder))
                 .setValidatorSet(parseValidatorSet(blockOrder)).build();
 
         ClientState clientState = ClientState.newBuilder()
-                .setChainId(tmHeader.getSignedHeader().getHeader().getChainId())
+                .setChainId(header.getSignedHeader().getHeader().getChainId())
                 .setTrustLevel(trustLevel)
                 .setTrustingPeriod(trustingPeriod)
                 .setMaxClockDrift(maxClockDrift)
-                .setLatestHeight(tmHeader.getSignedHeader().getHeader().getHeight())
+                .setLatestHeight(Height.newBuilder().setRevisionHeight(header.getSignedHeader().getHeader().getHeight()))
                 .setAllowUpdateAfterExpiry(allowUpdateAfterExpiry)
                 .setAllowUpdateAfterMisbehaviour(allowUpdateAfterMisbehaviour).build();
 
         MerkleRoot root = MerkleRoot.newBuilder()
-                .setHash(tmHeader.getSignedHeader().getHeader().getAppHash()).build();
+                .setHash(header.getSignedHeader().getHeader().getAppHash()).build();
 
         ConsensusState consensusState = ConsensusState.newBuilder()
-                .setTimestamp(tmHeader.getSignedHeader().getHeader().getTime())
+                .setTimestamp(header.getSignedHeader().getHeader().getTime())
                 .setRoot(root)
-                .setNextValidatorsHash(tmHeader.getSignedHeader().getHeader().getNextValidatorsHash()).build();
+                .setNextValidatorsHash(header.getSignedHeader().getHeader().getNextValidatorsHash()).build();
 
         client.invoke(ibcHandler, "createClient", clientId, clientState.toByteArray(),
                 consensusState.toByteArray(), new byte[0]);
     }
 
     protected void updateClient(int blockOrder, int referenceBlock) throws Exception {
-        TmHeader tmHeader = createHeader(blockOrder, referenceBlock);
-        client.invoke(ibcHandler, "updateClient", clientId, tmHeader.toByteArray());
+        Header header = createHeader(blockOrder, referenceBlock);
+        client.invoke(ibcHandler, "updateClient", clientId, header.toByteArray());
     }
 
     protected ConsensusState getConsensusState(Height height) throws Exception {
-        return ConsensusState.parseFrom((byte[]) client.call("getConsensusState", clientId, height.encode()));
+        return ConsensusState.parseFrom((byte[]) client.call("getConsensusState", clientId, height.toByteArray()));
     }
 
     protected ClientState getClientState() throws Exception {
@@ -169,21 +180,20 @@ public class LightClientTestBase extends TestBase {
     }
 
     protected void assertConsensusState(SignedHeader header) throws Exception {
-        Height height = new Height();
-        height.setRevisionHeight(BigInteger.valueOf(header.getHeader().getHeight()));
+        Height height = Height.newBuilder().setRevisionHeight(header.getHeader().getHeight()).build();
         ConsensusState consensusState = getConsensusState(height);
         assertEquals(header.getHeader().getNextValidatorsHash(), consensusState.getNextValidatorsHash());
         assertEquals(header.getHeader().getAppHash(), consensusState.getRoot().getHash());
         assertEquals(header.getHeader().getTime(), consensusState.getTimestamp());
     }
 
-    protected TmHeader createHeader(int blockOrder, int referenceBlock) throws Exception {
-        TmHeader tmHeader = TmHeader.newBuilder()
+    protected Header createHeader(int blockOrder, int referenceBlock) throws Exception {
+        Header header = Header.newBuilder()
                 .setSignedHeader(parseSignedHeader(blockOrder))
                 .setValidatorSet(parseValidatorSet(blockOrder))
-                .setTrustedHeight(parseSignedHeader(referenceBlock).getHeader().getHeight())
+                .setTrustedHeight(Height.newBuilder().setRevisionHeight(parseSignedHeader(referenceBlock).getHeader().getHeight()))
                 .setTrustedValidators(parseValidatorSet(referenceBlock)).build();
-        return tmHeader;
+        return header;
     }
 
     protected SignedHeader parseSignedHeader(int blockOrder) throws Exception {
@@ -198,7 +208,7 @@ public class LightClientTestBase extends TestBase {
         Consensus version = Consensus.newBuilder()
                 .setBlock(jsonHeader.get("version").get("block").asInt()).build();
 
-        LightHeader lightHeader = LightHeader.newBuilder()
+        com.tendermint.types.Header lightHeader = com.tendermint.types.Header.newBuilder()
                 .setVersion(version)
                 .setChainId(jsonHeader.get("chain_id").asText())
                 .setHeight(jsonHeader.get("height").asInt())

@@ -4,7 +4,9 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 import ibc.icon.score.util.Proto;
-import icon.proto.clients.tendermint.*;
+import tendermint.types.*;
+import google.protobuf.*;
+import ibc.lightclients.tendermint.v1.*;
 import score.Context;
 
 import static ibc.tendermint.TendermintHelper.*;
