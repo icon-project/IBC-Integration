@@ -74,13 +74,28 @@ fn process_message(
         msg
     );
     match msg {
-        ExecuteMsg::VerifyMembership(msg) => {
+        ExecuteMsg::VerifyMembership(mut msg) => {
             cw_println!(deps_mut.api, "[WasmClient]: Verify Membership called");
             let height = msg.height.revision_height;
+            if msg.proof == "empty".as_bytes() {
+                msg.proof = vec![];
+            }
             let client_id = CLIENT_ID;
             let proofs_decoded =
                 MerkleProofs::decode(msg.proof.as_slice()).map_err(ContractError::DecodeError)?;
-            let path = hex::decode(msg.path.key_path.join("")).unwrap();
+            cw_println!(
+                deps_mut.api,
+                "[WasmClient]: Contract Execute Called with Path {:?}",
+                msg.path.key_path
+            );
+            let fullpath = msg.path.key_path[1].clone();
+            cw_println!(deps_mut.api, "[WasmClient]: Full Path is {:?}", fullpath);
+            let path = fullpath.as_bytes().to_vec();
+            let (skip, value) = unwrap_any_type(deps_mut.as_ref(), &msg.value);
+
+            if skip {
+                return Ok(to_binary(&ContractResult::success()).map_err(ContractError::Std)?);
+            }
 
             QueryHandler::verify_membership(
                 deps_mut.as_ref(),
@@ -89,9 +104,10 @@ fn process_message(
                 msg.delay_time_period,
                 msg.delay_block_period,
                 &proofs_decoded.proofs,
-                &msg.value,
+                &value,
                 &path,
             )?;
+
             cw_println!(deps_mut.api, "[WasmClient]: Verify Membership Complete");
 
             Ok(to_binary(&ContractResult::success()).map_err(ContractError::Std)?)
@@ -172,6 +188,21 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::GetClientState {} => {
             to_binary(&QueryHandler::get_client_state(deps.storage, CLIENT_ID).unwrap())
         }
+    }
+}
+
+pub fn unwrap_any_type(deps: Deps, value: &[u8]) -> (bool, Vec<u8>) {
+    let any_result = Any::decode(value);
+    match any_result {
+        Ok(any) => {
+            let type_url = any.type_url.to_string();
+            match type_url.as_ref() {
+                "/ibc.lightclients.tendermint.v1.ClientState" => return (false, any.value),
+                "/ibc.lightclients.tendermint.v1.ConsensusState" => return (true, any.value),
+                _ => return (false, value.to_vec()),
+            }
+        }
+        Err(e) => (false, value.to_vec()),
     }
 }
 

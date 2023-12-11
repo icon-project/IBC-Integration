@@ -165,6 +165,7 @@ pub trait IQueryHandler {
         if client_state.frozen_height != 0 && height > client_state.frozen_height {
             return Err(ContractError::ClientStateFrozen(client_state.frozen_height));
         }
+        cw_println!(deps.api, "[LightClient]: value is: {:?}", value);
 
         let mut value_hash = value.to_vec();
         if !value.is_empty() {
