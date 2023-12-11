@@ -19,10 +19,13 @@ import icon.proto.core.connection.Counterparty;
 import icon.proto.core.connection.Version;
 import score.Context;
 import scorex.util.ArrayList;
+import icon.proto.core.connection.MerklePrefix;
 
 public class IBCConnection extends IBCClient {
     public static final String v1Identifier = "1";
     public static final List<String> supportedV1Features = List.of("ORDER_ORDERED", "ORDER_UNORDERED");
+    public static final byte[] commitmentPrefix = "ibc".getBytes();
+
 
     Logger logger = new Logger("ibc-core");
 
@@ -64,9 +67,13 @@ public class IBCConnection extends IBCClient {
         connection.setDelayPeriod(msg.getDelayPeriod());
         connection.setCounterparty(counterparty);
 
+        MerklePrefix prefix = new MerklePrefix();
+        prefix.setKeyPrefix(commitmentPrefix);
+
         Counterparty expectedCounterparty = new Counterparty();
         expectedCounterparty.setClientId(msg.getClientId());
         expectedCounterparty.setConnectionId("");
+        expectedCounterparty.setPrefix(prefix);
 
         ConnectionEnd expectedConnection = new ConnectionEnd();
         expectedConnection.setClientId(counterparty.getClientId());
@@ -105,9 +112,13 @@ public class IBCConnection extends IBCClient {
 
         // Skip self client validation.
 
+        MerklePrefix prefix = new MerklePrefix();
+        prefix.setKeyPrefix(commitmentPrefix);
+
         Counterparty expectedCounterparty = new Counterparty();
         expectedCounterparty.setClientId(connection.getClientId());
         expectedCounterparty.setConnectionId(msg.getConnectionId());
+        expectedCounterparty.setPrefix(prefix);
 
         ConnectionEnd expectedConnection = new ConnectionEnd();
         expectedConnection.setClientId(connection.getCounterparty().getClientId());
@@ -147,9 +158,13 @@ public class IBCConnection extends IBCClient {
         int state = connection.getState();
         Context.require(state == ConnectionEnd.State.STATE_TRYOPEN, "connection state is not TRYOPEN");
 
+        MerklePrefix prefix = new MerklePrefix();
+        prefix.setKeyPrefix(commitmentPrefix);
+
         Counterparty expectedCounterparty = new Counterparty();
         expectedCounterparty.setClientId(connection.getClientId());
         expectedCounterparty.setConnectionId(msg.getConnectionId());
+        expectedCounterparty.setPrefix(prefix);
 
         ConnectionEnd expectedConnection = new ConnectionEnd();
         expectedConnection.setClientId(connection.getCounterparty().getClientId());

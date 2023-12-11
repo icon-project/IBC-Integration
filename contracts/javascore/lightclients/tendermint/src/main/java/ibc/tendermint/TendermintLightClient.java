@@ -10,6 +10,7 @@ import google.protobuf.*;
 import tendermint.types.*;
 import ibc.lightclients.tendermint.v1.*;
 import icon.proto.core.client.Height;
+import icon.proto.core.commitment.MerklePath;
 import icon.proto.core.commitment.MerkleProof;
 import score.Address;
 import score.BranchDB;
@@ -17,9 +18,13 @@ import score.Context;
 import score.DictDB;
 import score.annotation.External;
 
+import scorex.util.ArrayList;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+
+
 
 import static ibc.ics23.commitment.types.Merkle.applyPrefix;
 import static ibc.tendermint.TendermintHelper.*;
@@ -202,8 +207,6 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
             byte[] path,
             byte[] value) {
 
-        value = IBCCommitment.keccak256(value);
-        path = ByteUtil.join(prefix, StringUtil.bytesToHex(IBCCommitment.keccak256(path)).getBytes());
 
         Height height = Height.decode(heightBytes);
         ClientState clientState = ClientState.decode(mustGetClientState(clientId));
@@ -215,7 +218,16 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
 
         var root = consensusState.getRoot();
         var merkleProof = MerkleProof.decode(proof);
-        var merklePath = applyPrefix(new String(path));
+
+
+
+        // adding merkle path
+        var merklePath = new MerklePath();
+        List<String> pathList = new ArrayList<String>();
+        pathList.add(StringUtil.bytesToHex(prefix));
+        pathList.add(StringUtil.bytesToHex(path));
+        merklePath.setKeyPath(pathList);
+
 
         Merkle.verifyMembership(merkleProof, Merkle.SDK_SPEC, root, merklePath, value);
     }

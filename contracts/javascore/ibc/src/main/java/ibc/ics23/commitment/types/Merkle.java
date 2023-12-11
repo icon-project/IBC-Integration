@@ -23,7 +23,7 @@ public class Merkle {
     public static MerklePath applyPrefix(String path) {
         var mpath = new MerklePath();
         List<String> keyPath = new ArrayList<>();
-        keyPath.add(StringUtil.bytesToHex("wasm".getBytes()));
+        keyPath.add(StringUtil.bytesToHex("ibc".getBytes()));
         keyPath.add(path);
         mpath.setKeyPath(keyPath);
         return mpath;

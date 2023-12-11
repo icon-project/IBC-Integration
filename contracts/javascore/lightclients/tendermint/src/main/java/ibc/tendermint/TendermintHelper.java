@@ -73,7 +73,7 @@ public class TendermintHelper {
     public static Height newHeight(BigInteger blockHeight) {
         Height height = new Height();
         height.setRevisionHeight(blockHeight);
-        height.setRevisionNumber(BigInteger.ZERO);
+        height.setRevisionNumber(BigInteger.ONE);
 
         return height;
     }
