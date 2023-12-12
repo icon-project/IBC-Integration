@@ -14,6 +14,7 @@ import score.DictDB;
 import score.annotation.External;
 
 import java.math.BigInteger;
+import java.util.Map;
 
 public class ICS20Transfer {
     public static String ICS20_VERSION = "ics20-1";
@@ -23,20 +24,47 @@ public class ICS20Transfer {
     public static final DictDB<String, Address> channelEscrowAddresses = Context.newDictDB("channelEscrowAddresses", Address.class);
 
 
-//    @External
-//    public byte[] onRecvPacket(byte[] packet, Address relayer) {
-//        boolean success = false;
-//        Address receiver = null;
-//        receiver, success = _decodeReceiver(packet.data.receiver)
-//
-//    }
-//
-//     _decodeReceiver(string memory receiver) internal pure virtual returns (address, bool) {
-//        return ICS20Lib.hexStringToAddress(receiver);
-//    }
+    @External
+    public byte[] onRecvPacket(byte[] packet, Address relayer) {
+//        TODO unmarshal json
+        boolean success = false;
+        Address receiver = ZERO_ADDRESS;
+        receiver, success = _decodeReceiver(packet.data.receiver);
+        if (!success) {
+           return ICS20Lib.FAILED_ACKNOWLEDGEMENT_JSON;
+        }
+
+        byte[] denomPrefix = getDenomPrefix(packet.data.sourcePort, packet.data.sourceChannel);
+        byte[] denom = packet.data.denom.getBytes();
+        if (denom.length >= denomPrefix.length) {
+//            denom slicing todo
+            success = _transferFrom(getEscrowAddress(packet.data.sourceChannel), receiver, packet.data.denom, packet.data.amount);
+        } else{
+            if(ICS20Lib.isEscapeNeededString(denom)){
+                success = false;
+            }else{
+                success = _mint(receiver, String(getDenomPrefix(packet.destination_port, packet.destination_channel), denom), packet.data.amount);
+            }
+        }
+
+        if (success) {
+            return ICS20Lib.SUCCESSFUL_ACKNOWLEDGEMENT_JSON;
+        }else{
+            return ICS20Lib.FAILED_ACKNOWLEDGEMENT_JSON;
+        }
+
+
+        return packet;
+    }
+
 
     @External
     public void onAcknowledgementPacket(byte[] calldata, byte[] acknowledgement, Address relayer) {
+        Context.println("onAcknowledgementPacket");
+//        Context.require(Context.getCaller().equals(getIBCAddress()), "caller is not handler");
+        if (acknowledgement != ICS20Lib.SUCCESSFUL_ACKNOWLEDGEMENT_JSON) {
+                refundTokens(calldata, packet.source_port, packet.source_channel);
+        }
 
     }
 
@@ -70,27 +98,28 @@ public class ICS20Transfer {
     }
 
 
-    private Address getEscrowAddress(String sourceChannel) {
+    static Address getEscrowAddress(String sourceChannel) {
         Address escorw = channelEscrowAddresses.get(sourceChannel);
         Context.require(escorw != ZERO_ADDRESS);
         return escorw;
     }
 
-    private void refundTokens(ICS20Lib.PacketData data, String sourcePort, String sourceChannel){
-        byte[] denomPrefix = getDenomPrefix(sourcePort,sourceChannel);
+    private void refundTokens(ICS20Lib.PacketData data, String sourcePort, String sourceChannel) {
+        byte[] denomPrefix = getDenomPrefix(sourcePort, sourceChannel);
         byte[] denom = data.denom.getBytes();
 
-        if (denom.length>= denomPrefix.length){
+        if (denom.length >= denomPrefix.length) {
+
             Context.println("if");
-        }else {
+        } else {
             Context.println("else");
         }
 
 
-
     }
-    private byte[] getDenomPrefix(String port, String channel){
-        return  StringUtil.encodePacked(port,"/",channel,"/");
+
+    public static byte[] getDenomPrefix(String port, String channel) {
+        return StringUtil.encodePacked(port, "/", channel, "/");
     }
 
     protected boolean _transferFrom(Address sender, Address receiver, String denom, BigInteger amount) {
@@ -116,11 +145,10 @@ public class ICS20Transfer {
 
     /**
      * @dev _encodeSender encodes an address to a hex string.
-     *      The encoded sender is used as `sender` field in the packet data.
+     * The encoded sender is used as `sender` field in the packet data.
      */
-    protected String _encodeSender(Address sender) {
-//        return ICS20Lib.addressToHexString(sender);
-        return "Something";
+    protected static String _encodeSender(Address sender) {
+        return ICS20Lib.addressToHexString(sender.toString());
     }
 
 
@@ -128,18 +156,24 @@ public class ICS20Transfer {
 //        Map<Address, Boolean> result = ICS20Lib.hexStringToAddress(sender);
 //        require(result.getSecond(), "invalid address");
 //        return result.getFirst();
-        return(ZERO_ADDRESS);
+        return (ZERO_ADDRESS);
     }
 
     /**
      * @dev _decodeReceiver decodes a hex string to an address.
-     *      `receiver` may be an invalid address format.
+     * `receiver` may be an invalid address format.
      */
     protected Map<Address, Boolean> _decodeReceiver(String receiver) {
-//        return ICS20Lib.hexStringToAddress(receiver);
+        boolean flag;
+        try {
+            Address.fromString(receiver);
+            flag = true;
+        } catch (Exception e) {
+            flag = false;
+
+        }
+        return Map.of(Address.fromString(receiver), flag);
     }
-
-
 
 
 }
