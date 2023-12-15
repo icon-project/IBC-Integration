@@ -1,0 +1,24 @@
+name: Update Changelog
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  generate-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Generate Changelog using github-changelog-generator
+        uses: faberNovel/github-changelog-generator-action@v1.0.0-alpha02  
+        with:
+          options: --token ${{ secrets._GITHUB_PAT }}
+      
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: Update CHANGELOG.md
+          repository: ${{ github.workspace }}
+          file_pattern: 'CHANGELOG.md'
+
