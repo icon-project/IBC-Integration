@@ -240,6 +240,34 @@ contract CallServiceTest is Test {
         callService.handleMessage(iconNid, RLPEncodeStruct.encodeCSMessage(message));
     }
 
+    function testHandleBTPMessageWithInvalidService() public {
+        bytes memory data = bytes("test");
+
+        callService.setDefaultConnection(iconNid, address(baseConnection));
+
+        Types.CSMessageRequest memory request = Types.CSMessageRequest(iconDapp, ParseAddress.toString(address(dapp)), 1, false, data, new string[](0));
+        Types.CSMessage memory message = Types.CSMessage(Types.CS_REQUEST,request.encodeCSMessageRequest());
+
+        vm.prank(address(baseConnection));
+        vm.expectRevert("InvalidServiceName");
+        callService.handleBTPMessage(iconNid, "btp", 1, RLPEncodeStruct.encodeCSMessage(message));
+    }
+
+    function testHandleBTPMessage() public {
+        bytes memory data = bytes("test");
+
+        callService.setDefaultConnection(iconNid, address(baseConnection));
+
+        Types.CSMessageRequest memory request = Types.CSMessageRequest(iconDapp, ParseAddress.toString(address(dapp)), 1, false, data, new string[](0));
+        Types.CSMessage memory message = Types.CSMessage(Types.CS_REQUEST,request.encodeCSMessageRequest());
+
+        vm.expectEmit();
+        emit CallMessage(iconDapp, ParseAddress.toString(address(dapp)), 1, 1, data);
+
+        vm.prank(address(baseConnection));
+        callService.handleBTPMessage(iconNid, "xcallM", 1, RLPEncodeStruct.encodeCSMessage(message));
+    }
+
     function testInvalidNid() public {
         bytes memory data = bytes("test");
         callService.setDefaultConnection(iconNid, address(baseConnection));
