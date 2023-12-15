@@ -49,7 +49,6 @@ library NetworkAddress {
         uint256 i = 0;
         for (; i < _bytes.length; i++) {
             if (_bytes[i] == DELIMITER[0]) {
-                require(i > 6 && i < (_bytes.length -1), REVERT);
                 return i;
             }
         }
