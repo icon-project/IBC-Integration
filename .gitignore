@@ -199,3 +199,5 @@ vendor/**
 scripts/download_buf.sh
 
 cache/
+
+broadcast/

@@ -7,6 +7,9 @@
 [submodule "contracts/evm/xcall/lib/openzeppelin-contracts"]
 	path = contracts/evm/lib/openzeppelin-contracts
 	url = https://github.com/Openzeppelin/openzeppelin-contracts
+[submodule "contracts/evm/lib/openzeppelin-foundry-upgrades"]
+	path = contracts/evm/lib/openzeppelin-foundry-upgrades
+	url = https://github.com/OpenZeppelin/openzeppelin-foundry-upgrades
 [submodule "contracts/evm/lib/wormhole-solidity-sdk"]
 	path = contracts/evm/lib/wormhole-solidity-sdk
 	url = https://github.com/wormhole-foundation/wormhole-solidity-sdk

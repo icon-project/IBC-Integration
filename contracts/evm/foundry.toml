@@ -1,4 +1,6 @@
 [profile.default]
+build_info = true
+extra_output = ["storageLayout"]
 src = "contracts"
 out = "out"
 libs = ["lib"]
@@ -6,4 +8,32 @@ test = "test"
 
 
 [rpc_endpoints]
-binance_testnet = "${BINANCE_TESTNET_RPC_URL}"
+local = "${LOCAL_RPC_URL}" 
+sepolia = "${SEPOLIA_RPC_URL}"
+bsc_testnet = "${BSC_TESTNET_RPC_URL}"
+fuji = "${FUJI_RPC_URL}"
+arbitrum_goerli = "${ARBITRUM_GOERLI_RPC_URL}"
+optimism_goerli = "${OPTIMISM_GOERLI_RPC_URL}"
+base_goerli = "${BASE_GOERLI_RPC_URL}"
+
+# ethereum=
+# binance=
+# avalanche=
+# arbitrum=
+# optimism=
+# base=
+
+[etherscan]
+sepolia = { key = "${ETHERSCAN_API_KEY}"}
+binance_testnet = { key = "${BSCSCAN_API_KEY}"}
+fuji = { key = "${SNOWSCAN_API_KEY}"}
+arbitrum_goerli = { key = "${ARBITRUMSCAN_API_KEY}"}
+optimism_goerli = { key = "${OPTIMISMSCAN_API_KEY}"}
+base_goerli = { key = "${BASESCAN_API_KEY}"}
+
+# ethereum=
+# binance=
+# avalanche=
+# arbitrum=
+# optimism=
+# base=
