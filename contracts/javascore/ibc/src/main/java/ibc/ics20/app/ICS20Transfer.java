@@ -11,6 +11,7 @@ import icon.proto.core.channel.Packet;
 import score.Address;
 import score.Context;
 import score.DictDB;
+import score.VarDB;
 import score.annotation.External;
 
 import java.math.BigInteger;
@@ -23,11 +24,29 @@ public class ICS20Transfer {
 
     public static final DictDB<String, Address> channelEscrowAddresses = Context.newDictDB("channelEscrowAddresses", Address.class);
 
+    private static final VarDB<Address> IBC_ADDRESS = Context.newVarDB("IBC_ADDRESS", Address.class);
+
+    public ICS20Transfer(Address ibcAddress) {
+        Context.println("ICS20Transfer");
+        IBC_ADDRESS.set(ibcAddress);
+    }
+
+    @External
+    public void setIBCAddress(Address ibcAddress) {
+        Context.require(Context.getCaller().equals(Context.getOwner()), "Only owner can set up the address");
+        IBC_ADDRESS.set(ibcAddress);
+    }
+
+    @External(readonly = true)
+    public Address getIBCAddress() {
+        return IBC_ADDRESS.get();
+    }
+
 
     @External
     public byte[] onRecvPacket(byte[] packet, Address relayer) {
 //        TODO unmarshal json
-        boolean success = false;
+        boolean success;
         Address receiver = ZERO_ADDRESS;
         receiver, success = _decodeReceiver(packet.data.receiver);
         if (!success) {
@@ -61,7 +80,7 @@ public class ICS20Transfer {
     @External
     public void onAcknowledgementPacket(byte[] calldata, byte[] acknowledgement, Address relayer) {
         Context.println("onAcknowledgementPacket");
-//        Context.require(Context.getCaller().equals(getIBCAddress()), "caller is not handler");
+        Context.require(Context.getCaller().equals(getIBCAddress()), "caller is not handler");
         if (acknowledgement != ICS20Lib.SUCCESSFUL_ACKNOWLEDGEMENT_JSON) {
                 refundTokens(calldata, packet.source_port, packet.source_channel);
         }
@@ -70,11 +89,6 @@ public class ICS20Transfer {
 
     @External
     public String onChanOpenInit(IIBCModule.onChanOpenInit msg) {
-//        srcChan.set(channelId);
-//        srcPort.set(portId);
-//        Channel.Counterparty counterparty = Channel.Counterparty.decode(counterpartyPb);
-//        dstPort.set(counterparty.getPortId());
-//        Context.println("onChanOpenInit");
         return ICS20_VERSION;
     }
 
@@ -95,6 +109,7 @@ public class ICS20Transfer {
 
     @External
     public void onTimeoutPacket(Packet packet, byte[] proofHeight, byte[] proof, BigInteger nextSequenceRecv) {
+        refundTokens(packet.data, packet.source_port, packet.source_channel);
     }
 
 
