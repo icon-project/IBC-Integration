@@ -55,6 +55,7 @@ public class ICS20Bank {
         Context.require(to != ICS20Transfer.ZERO_ADDRESS, "ICS20Bank: balance query for the zero address");
         Address caller = Context.getCaller();
         Context.require(from.equals(caller) || hasRole(OPERATOR_ROLE_ID, caller), "ICS20Bank: caller is not owner nor approved");
+        Context.require(from.equals(to), "ICS20Bank: sender and receiver is same");
         BigInteger fromBalance = balanceOf(from, denom);
         Context.require(amount.compareTo(BigInteger.ZERO) > 0, "ICS20Bank: transfer amount must be greater than zero");
         Context.require(fromBalance.compareTo(amount) >= 0, "ICS20Bank: insufficient balance for transfer");
@@ -73,30 +74,30 @@ public class ICS20Bank {
 
     @External
     public void burn(Address account, String denom, BigInteger amount) {
-        Context.require(hasRole(OPERATOR_ROLE_ID, Context.getCaller()), "ICS20Bank: must have minter role to mint");
-        Context.require(amount.compareTo(BigInteger.ZERO) > 0, "ICS20Bank: mint amount must be greater than zero");
+        Context.require(hasRole(OPERATOR_ROLE_ID, Context.getCaller()), "ICS20Bank: must have burn role to mint");
+        Context.require(amount.compareTo(BigInteger.ZERO) > 0, "ICS20Bank: burn amount must be greater than zero");
         _burn(account, denom, amount);
     }
 
     @External
-    public void deposit(Address tokenContract, BigInteger amount, Address receiver){
+    public void deposit(Address tokenContract, BigInteger amount, Address receiver) {
         Context.require(tokenContract.isContract(), "ICS20Bank: tokenContract is not a contract");
         Context.call(tokenContract, "transferFrom", Context.getCaller(), Context.getAddress(), amount);
         _mint(receiver, tokenContract.toString(), amount);
     }
 
     @External
-    public void withdraw(Address tokenContract, BigInteger amount, Address receiver){
+    public void withdraw(Address tokenContract, BigInteger amount, Address receiver) {
         Context.require(tokenContract.isContract(), "ICS20Bank: tokenContract is not a contract");
         _burn(receiver, tokenContract.toString(), amount);
         Context.call(tokenContract, "transfer", receiver, amount);
     }
 
-    private void _mint(Address account, String denom,  BigInteger amount){
+    private void _mint(Address account, String denom, BigInteger amount) {
         balances.at(denom).set(account, balanceOf(account, denom).add(amount));
     }
 
-    private void _burn(Address account, String denom,  BigInteger amount){
+    private void _burn(Address account, String denom, BigInteger amount) {
         BigInteger accountBalance = balanceOf(account, denom);
         Context.require(accountBalance.compareTo(amount) >= 0, "ICS20Bank: burn amount exceeds balance");
         balances.at(denom).set(account, accountBalance.subtract(amount));
