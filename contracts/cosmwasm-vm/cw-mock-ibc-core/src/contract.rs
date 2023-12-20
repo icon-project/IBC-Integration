@@ -167,6 +167,9 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             let state = STATE.load(deps.storage).unwrap();
 
             Ok(to_binary(&state.sequence).unwrap())
+        },
+        QueryMsg::GetLatestHeight { client_id }=>{
+            Ok(to_binary(&100000_u64).unwrap())
         }
         _ => Err(cosmwasm_std::StdError::NotFound {
             kind: "Query Not Found".to_string(),
