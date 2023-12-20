@@ -10,7 +10,7 @@ import score.annotation.External;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-public class ICS20TransferBank {
+public class ICS20TransferBank{
     IIBCHandler ibcHandler;
     IICS20Bank bank;
 
@@ -30,36 +30,37 @@ public class ICS20TransferBank {
         }
 
         byte[] packetData = ICS20Lib.marshalJson(denom,amount, ICS20Transfer._encodeSender(caller),receiver);
+        Height height = new Height();
+        height.setRevisionNumber(BigInteger.ZERO);
+        height.setRevisionHeight(timeoutHeight);
+        Context.call((Address) ibcHandler, "sendPacket", sourcePort, sourceChannel, height, 0, packetData);
 
-
-//        ibcHandler.sendPacket(sourcePort, sourceChannel, Height., timeoutHeight);
     }
 
     private boolean _transferFrom(Address sender, Address receiver, String denom, BigInteger amount) {
         try {
             bank.transferFrom(sender, receiver, denom, amount);
+            return true;
         } catch (Exception e) {
             return false;
         }
-        return false;
     }
 
     private boolean _mint(Address account, String denom, BigInteger amount) {
         try {
             bank.mint(account, denom, amount);
+            return true;
         } catch (Exception e) {
             return false;
         }
-        return false;
     }
 
     private boolean _burn(Address account, String denom, BigInteger amount) {
         try {
             bank.burn(account, denom, amount);
+            return true;
         } catch (Exception e) {
             return false;
         }
-        return false;
     }
-
 }
