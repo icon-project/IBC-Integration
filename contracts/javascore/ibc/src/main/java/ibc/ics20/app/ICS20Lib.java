@@ -1,6 +1,6 @@
 package ibc.ics20.app;
 
-import score.Address;
+import ibc.ics24.host.IBCCommitment;
 import score.Context;
 
 import java.math.BigInteger;
@@ -18,9 +18,7 @@ public class ICS20Lib {
 
     public static final byte[] SUCCESSFUL_ACKNOWLEDGEMENT_JSON = "{\"result\":\"AQ==\"}".getBytes();
     public static final byte[] FAILED_ACKNOWLEDGEMENT_JSON = "{\"error\":\"failed\"}".getBytes();
-//    bytes32 public constant KECCAK256_SUCCESSFUL_ACKNOWLEDGEMENT_JSON = keccak256(SUCCESSFUL_ACKNOWLEDGEMENT_JSON);
-
-//    public static final Integer CHAR_DOUBLE_QUOTE = 0x22;
+    public static final byte[] KECCAK256_SUCCESSFUL_ACKNOWLEDGEMENT_JSON = IBCCommitment.keccak256(SUCCESSFUL_ACKNOWLEDGEMENT_JSON);
     public static final Integer CHAR_SLASH = 0x2f;
     public static final Integer CHAR_BACKSLASH = 0x5c;
     public static final Integer CHAR_F = 0x66;
@@ -60,6 +58,19 @@ public class ICS20Lib {
 
         return jsonString.getBytes();
     }
+
+    // write a code do unmarshalJSON function in java with above params
+    public static PacketData unmarshalJSON(byte[] packet) {
+        String jsonString = new String(packet);
+        PacketData data = new PacketData();
+        data.amount = new BigInteger(jsonString.substring(jsonString.indexOf("amount") + 9, jsonString.indexOf("receiver") - 3));
+        data.denom = jsonString.substring(jsonString.indexOf("denom") + 8, jsonString.indexOf("amount") - 3);
+        data.memo = jsonString.substring(jsonString.indexOf("memo") + 8, jsonString.indexOf("memo") - 3);
+        data.receiver = jsonString.substring(jsonString.indexOf("receiver") + 11, jsonString.indexOf("sender") - 3);
+        data.sender = jsonString.substring(jsonString.indexOf("sender") + 9, jsonString.indexOf("}") - 1);
+        return data;
+    }
+
 
     static String addressToHexString(String addr) {
         StringBuilder hexString = new StringBuilder("0x");

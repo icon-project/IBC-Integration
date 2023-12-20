@@ -18,7 +18,7 @@ public interface IIBCClient {
     /**
      * {@code @dev} registerClient registers a new client type into the client registry
      * @param clientType  Type of client
-     * @param lightClient Light client contract address
+     * @param client Light client contract address
      */
     void registerClient(String clientType, Address client);
 

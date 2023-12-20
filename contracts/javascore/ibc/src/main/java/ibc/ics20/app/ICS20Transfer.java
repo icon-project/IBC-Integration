@@ -1,10 +1,8 @@
 package ibc.ics20.app;
 
 import ibc.icon.interfaces.IIBCModule;
-import ibc.icon.score.util.Logger;
 import ibc.icon.score.util.StringUtil;
-import ibc.ics05.port.ModuleManager;
-import ibc.ics25.handler.IBCHandler;
+import ibc.ics24.host.IBCCommitment;
 
 import icon.proto.core.channel.Channel;
 import icon.proto.core.channel.Packet;
@@ -15,91 +13,78 @@ import score.VarDB;
 import score.annotation.External;
 
 import java.math.BigInteger;
-import java.util.Map;
+import java.util.Arrays;
 
-public class ICS20Transfer {
-    public static String ICS20_VERSION = "ics20-1";
-    public static Address ZERO_ADDRESS = Address.fromString("hx0000000000000000000000000000000000000000");
-
+public abstract class ICS20Transfer extends IBCAppBase {
+    public static final String ICS20_VERSION = "ics20-1";
+    public static final Address ZERO_ADDRESS = Address.fromString("hx0000000000000000000000000000000000000000");
 
     public static final DictDB<String, Address> channelEscrowAddresses = Context.newDictDB("channelEscrowAddresses", Address.class);
 
-    private static final VarDB<Address> IBC_ADDRESS = Context.newVarDB("IBC_ADDRESS", Address.class);
-
-    public ICS20Transfer(Address ibcAddress) {
-        Context.println("ICS20Transfer");
-        IBC_ADDRESS.set(ibcAddress);
-    }
-
-    @External
-    public void setIBCAddress(Address ibcAddress) {
-        Context.require(Context.getCaller().equals(Context.getOwner()), "Only owner can set up the address");
-        IBC_ADDRESS.set(ibcAddress);
-    }
-
-    @External(readonly = true)
-    public Address getIBCAddress() {
-        return IBC_ADDRESS.get();
-    }
-
-
     @External
     public byte[] onRecvPacket(byte[] packet, Address relayer) {
-//        TODO unmarshal json
-        boolean success;
-        Address receiver = ZERO_ADDRESS;
-        receiver, success = _decodeReceiver(packet.data.receiver);
+        onlyIBC();
+        Packet packetDb = Packet.decode(packet);
+        ICS20Lib.PacketData data = ICS20Lib.unmarshalJSON(packetDb.getData());
+        boolean success = _decodeReceiver(data.receiver);
         if (!success) {
-           return ICS20Lib.FAILED_ACKNOWLEDGEMENT_JSON;
+            return ICS20Lib.FAILED_ACKNOWLEDGEMENT_JSON;
         }
+        Address receiver = Address.fromString(data.receiver);
 
-        byte[] denomPrefix = getDenomPrefix(packet.data.sourcePort, packet.data.sourceChannel);
-        byte[] denom = packet.data.denom.getBytes();
-        if (denom.length >= denomPrefix.length) {
-//            denom slicing todo
-            success = _transferFrom(getEscrowAddress(packet.data.sourceChannel), receiver, packet.data.denom, packet.data.amount);
-        } else{
-            if(ICS20Lib.isEscapeNeededString(denom)){
+        byte[] denomPrefix = getDenomPrefix(packetDb.getSourcePort(), packetDb.getSourceChannel());
+        byte[] denom = data.denom.getBytes();
+        if (denom.length >= denomPrefix.length && Arrays.equals(denom, 0, denomPrefix.length, denomPrefix, 0, denomPrefix.length)) {
+            byte[] unprefixedDenom = Arrays.copyOfRange(denom, denomPrefix.length, denom.length);
+            success = _transferFrom(getEscrowAddress(packetDb.getDestinationChannel()), receiver, Arrays.toString(unprefixedDenom), data.amount);
+        } else {
+            if (ICS20Lib.isEscapeNeededString(denom)) {
                 success = false;
-            }else{
-                success = _mint(receiver, String(getDenomPrefix(packet.destination_port, packet.destination_channel), denom), packet.data.amount);
+            } else {
+
+                success = _mint(receiver, StringUtil.encodePacked(getDenomPrefix(packetDb.getDestinationPort(), packetDb.getDestinationChannel()), denom).toString(), data.amount);
             }
         }
 
         if (success) {
             return ICS20Lib.SUCCESSFUL_ACKNOWLEDGEMENT_JSON;
-        }else{
+        } else {
             return ICS20Lib.FAILED_ACKNOWLEDGEMENT_JSON;
         }
 
-
-        return packet;
     }
 
 
     @External
-    public void onAcknowledgementPacket(byte[] calldata, byte[] acknowledgement, Address relayer) {
-        Context.println("onAcknowledgementPacket");
-        Context.require(Context.getCaller().equals(getIBCAddress()), "caller is not handler");
-        if (acknowledgement != ICS20Lib.SUCCESSFUL_ACKNOWLEDGEMENT_JSON) {
-                refundTokens(calldata, packet.source_port, packet.source_channel);
+    public void onAcknowledgementPacket(byte[] packet, byte[] acknowledgement, Address relayer) {
+        onlyIBC();
+        Packet packetDb = Packet.decode(packet);
+        if (acknowledgement != ICS20Lib.KECCAK256_SUCCESSFUL_ACKNOWLEDGEMENT_JSON) {
+            refundTokens(ICS20Lib.unmarshalJSON(packet), packetDb.getSourcePort(), packetDb.getSourceChannel());
         }
 
     }
 
     @External
     public String onChanOpenInit(IIBCModule.onChanOpenInit msg) {
+        Context.require(msg.order == Channel.Order.ORDER_UNORDERED, "must be unordered");
+        byte[] versionBytes = msg.version.getBytes();
+        Context.require(versionBytes.length == 0 || IBCCommitment.keccak256(versionBytes) == IBCCommitment.keccak256(ICS20_VERSION.getBytes()), "version cannot be empty");
+        channelEscrowAddresses.set(msg.channelId, Context.getAddress());
         return ICS20_VERSION;
     }
 
     @External
     public String onChanOpenTry(IIBCModule.onChanOpenTry msg) {
+        Context.require(msg.order == Channel.Order.ORDER_UNORDERED, "must be unordered");
+        Context.require(IBCCommitment.keccak256(msg.counterPartyVersion.getBytes()) == IBCCommitment.keccak256(ICS20_VERSION.getBytes()), "version should be same with ICS20_VERSION");
+        channelEscrowAddresses.set(msg.channelId, Context.getAddress());
         return ICS20_VERSION;
     }
 
     @External
     public void onChanOpenAck(IIBCModule.MsgOnChanOpenAck msg) {
-
+        Context.require(IBCCommitment.keccak256(msg.counterPartyVersion.getBytes()) == IBCCommitment.keccak256(ICS20_VERSION.getBytes()), "version should be same with ICS20_VERSION");
     }
 
     @External
@@ -108,8 +93,10 @@ public class ICS20Transfer {
     }
 
     @External
-    public void onTimeoutPacket(Packet packet, byte[] proofHeight, byte[] proof, BigInteger nextSequenceRecv) {
-        refundTokens(packet.data, packet.source_port, packet.source_channel);
+    public void onTimeoutPacket(byte[] packet, Address relayer) {
+        Packet packetDb = Packet.decode(packet);
+        ICS20Lib.PacketData data = ICS20Lib.unmarshalJSON(packetDb.getData());
+        refundTokens(data, packetDb.getSourcePort(), packetDb.getSourceChannel());
     }
 
 
@@ -168,17 +155,16 @@ public class ICS20Transfer {
 
 
     protected Address _decodeSender(String sender) {
-//        Map<Address, Boolean> result = ICS20Lib.hexStringToAddress(sender);
-//        require(result.getSecond(), "invalid address");
-//        return result.getFirst();
-        return (ZERO_ADDRESS);
+        boolean ok = _decodeReceiver(sender);
+        Context.require(ok, "invalid address");
+        return Address.fromString(sender);
     }
 
     /**
      * @dev _decodeReceiver decodes a hex string to an address.
      * `receiver` may be an invalid address format.
      */
-    protected Map<Address, Boolean> _decodeReceiver(String receiver) {
+    protected boolean _decodeReceiver(String receiver) {
         boolean flag;
         try {
             Address.fromString(receiver);
@@ -187,7 +173,7 @@ public class ICS20Transfer {
             flag = false;
 
         }
-        return Map.of(Address.fromString(receiver), flag);
+        return flag;
     }
 
 
