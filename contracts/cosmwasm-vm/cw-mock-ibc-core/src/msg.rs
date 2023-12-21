@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, IbcPacket};
 use cw_common::cw_types::CwChannelConnectMsg;
 use cw_common::hex_string::HexString;
 
@@ -12,4 +12,8 @@ pub enum ExecuteMsg {
     ReceivePacket { message: String },
     RegisterXcall { address: Addr },
     IbcConfig { msg: CwChannelConnectMsg },
+    WriteAcknowledgement {
+        packet: IbcPacket,
+        acknowledgement: HexString,
+    },
 }

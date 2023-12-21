@@ -4,9 +4,10 @@ use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, IbcEndpoint, IbcPacket,
     IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock, MessageInfo, Reply, Response, StdResult,
-    SubMsg, Timestamp, WasmMsg,
+    SubMsg, Timestamp, WasmMsg, Event,
 };
 use cw2::set_contract_version;
+use cw_common::hex_string::HexString;
 use cw_common::ibc_types::IbcHeight;
 use cw_common::raw_types::channel::RawPacket;
 use cw_common::ProstMessage;
@@ -153,8 +154,16 @@ pub fn execute(
                 .add_submessage(sub_message.clone())
                 .add_attribute("method", "ibc_config")
                 .add_attribute("data", to_binary(&sub_message).unwrap().to_base64()))
+        },
+        ExecuteMsg::WriteAcknowledgement { packet, acknowledgement }=>{
+
+            Ok(Response::new().add_event(event_ack(acknowledgement)))
         }
     }
+}
+
+pub fn event_ack(ack:HexString)->Event{
+    return Event::new("write_acknowledgement").add_attribute("data", hex::encode(ack.to_bytes().unwrap()));
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

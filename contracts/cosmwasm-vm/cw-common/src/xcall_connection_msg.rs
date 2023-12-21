@@ -91,3 +91,5 @@ pub enum QueryMsg {
     #[returns(ConfigResponse)]
     GetIbcConfig { nid: NetId },
 }
+
+
