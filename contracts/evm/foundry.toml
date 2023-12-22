@@ -16,8 +16,8 @@ arbitrum_goerli = "${ARBITRUM_GOERLI_RPC_URL}"
 optimism_goerli = "${OPTIMISM_GOERLI_RPC_URL}"
 base_goerli = "${BASE_GOERLI_RPC_URL}"
 
-# ethereum=
-# binance=
+ethereum= "${ETHEREUM_RPC_URL}"
+binance= "${BSC_RPC_URL}"
 # avalanche=
 # arbitrum=
 # optimism=
@@ -25,14 +25,14 @@ base_goerli = "${BASE_GOERLI_RPC_URL}"
 
 [etherscan]
 sepolia = { key = "${ETHERSCAN_API_KEY}"}
-binance_testnet = { key = "${BSCSCAN_API_KEY}"}
+bsc_testnet = { key = "${BSCSCAN_API_KEY}", chain="bsc-testnet"}
 fuji = { key = "${SNOWSCAN_API_KEY}"}
 arbitrum_goerli = { key = "${ARBITRUMSCAN_API_KEY}"}
 optimism_goerli = { key = "${OPTIMISMSCAN_API_KEY}"}
 base_goerli = { key = "${BASESCAN_API_KEY}"}
 
-# ethereum=
-# binance=
+ethereum={ key = "${ETHERSCAN_API_KEY}", chain="mainnet"}
+binance={ key = "${BSCSCAN_API_KEY}", chain="bsc"}
 # avalanche=
 # arbitrum=
 # optimism=
