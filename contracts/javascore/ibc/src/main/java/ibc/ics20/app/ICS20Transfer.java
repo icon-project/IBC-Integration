@@ -108,11 +108,10 @@ public abstract class ICS20Transfer extends IBCAppBase {
         byte[] denomPrefix = getDenomPrefix(sourcePort, sourceChannel);
         byte[] denom = data.denom.getBytes();
 
-        if (denom.length >= denomPrefix.length) {
-
-            Context.println("if");
+        if (denom.length >= denomPrefix.length && Arrays.equals(denom, 0, denomPrefix.length, denomPrefix, 0, denomPrefix.length)) {
+            Context.require(_mint(Address.fromString(data.sender), data.denom, data.amount), "ICS20: mint failed");
         } else {
-            Context.println("else");
+            Context.require(_transferFrom(getEscrowAddress(sourceChannel), Address.fromString(data.sender), data.denom, data.amount), "ICS20: transfer failed");
         }
 
 
