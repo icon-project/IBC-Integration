@@ -1,4 +1,4 @@
-package ibc.ics20.app;
+package ibc.ics20bank;
 
 import ibc.ics24.host.IBCCommitment;
 import score.Address;
@@ -10,6 +10,10 @@ import score.annotation.External;
 import java.math.BigInteger;
 
 public class ICS20Bank {
+
+    public static final String ICS20_VERSION = "ics20-1";
+    public static final Address ZERO_ADDRESS = Address.fromString("hx0000000000000000000000000000000000000000");
+
 
     private static final byte[] ADMIN_ROLE = IBCCommitment.keccak256("ADMIN_ROLE".getBytes());
     private static final byte[] OPERATOR_ROLE = IBCCommitment.keccak256("OPERATOR_ROLE".getBytes());
@@ -24,7 +28,8 @@ public class ICS20Bank {
 
 
     public ICS20Bank() {
-        setupRole(ADMIN_ROLE_ID, Context.getCaller());
+        roles.set(account, ADMIN_ROLE_ID);
+        // setupRole(ADMIN_ROLE_ID, Context.getCaller());
     }
 
     @External
@@ -32,10 +37,12 @@ public class ICS20Bank {
         Context.require(Context.getCaller().equals(Context.getOwner()), "Only owner can set up role");
         roles.set(account, role);
     }
+    
 
     @External
     public void setupOperator(Address account) {
-        setupRole(OPERATOR_ROLE_ID, account);
+        roles.set(account, OPERATOR_ROLE);
+        // setupRole(OPERATOR_ROLE_ID, account);
     }
 
     private boolean hasRole(Integer role, Address account) {
@@ -44,7 +51,7 @@ public class ICS20Bank {
 
     @External(readonly = true)
     public BigInteger balanceOf(Address account, String denom) {
-        Context.require(account != ICS20Transfer.ZERO_ADDRESS, "ICS20Bank: balance query for the zero address");
+        Context.require(account != ZERO_ADDRESS, "ICS20Bank: balance query for the zero address");
 
         // Assuming the denomination is a valid key in the balances mapping
         return balances.at(denom).getOrDefault(account, BigInteger.ZERO);
@@ -52,7 +59,7 @@ public class ICS20Bank {
 
     @External
     public void transferFrom(Address from, Address to, String denom, BigInteger amount) {
-        Context.require(to != ICS20Transfer.ZERO_ADDRESS, "ICS20Bank: balance query for the zero address");
+        Context.require(to != ZERO_ADDRESS, "ICS20Bank: balance query for the zero address");
         Address caller = Context.getCaller();
         Context.require(from.equals(caller) || hasRole(OPERATOR_ROLE_ID, caller), "ICS20Bank: caller is not owner nor approved");
         Context.require(from.equals(to), "ICS20Bank: sender and receiver is same");
@@ -67,7 +74,7 @@ public class ICS20Bank {
     @External
     public void mint(Address account, String denom, BigInteger amount) {
         Context.require(hasRole(OPERATOR_ROLE_ID, Context.getCaller()), "ICS20Bank: must have minter role to mint");
-        Context.require(account != ICS20Transfer.ZERO_ADDRESS, "ICS20Bank: mint to the zero address");
+        Context.require(account != ZERO_ADDRESS, "ICS20Bank: mint to the zero address");
         Context.require(amount.compareTo(BigInteger.ZERO) > 0, "ICS20Bank: mint amount must be greater than zero");
         _mint(account, denom, amount);
     }

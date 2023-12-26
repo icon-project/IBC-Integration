@@ -1,4 +1,4 @@
-package ibc.ics20.app;
+package ibc.ics20app;
 
 import ibc.icon.interfaces.IIBCModule;
 import ibc.icon.score.util.StringUtil;

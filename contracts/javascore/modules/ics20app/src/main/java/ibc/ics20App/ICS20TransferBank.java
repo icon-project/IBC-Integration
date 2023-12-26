@@ -1,4 +1,4 @@
-package ibc.ics20.app;
+package ibc.ics20app;
 
 import ibc.icon.interfaces.IIBCHandler;
 import ibc.icon.interfaces.IICS20Bank;
@@ -10,7 +10,7 @@ import score.annotation.External;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-public class ICS20TransferBank{
+public class ICS20TransferBank {
     IIBCHandler ibcHandler;
     IICS20Bank bank;
 

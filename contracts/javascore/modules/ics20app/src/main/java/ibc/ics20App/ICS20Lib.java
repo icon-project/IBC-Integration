@@ -1,4 +1,4 @@
-package ibc.ics20.app;
+package ibc.ics20app;
 
 import ibc.ics24.host.IBCCommitment;
 import score.Context;
