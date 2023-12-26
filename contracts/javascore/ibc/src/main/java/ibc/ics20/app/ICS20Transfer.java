@@ -9,7 +9,6 @@ import icon.proto.core.channel.Packet;
 import score.Address;
 import score.Context;
 import score.DictDB;
-import score.VarDB;
 import score.annotation.External;
 
 import java.math.BigInteger;
@@ -41,7 +40,6 @@ public abstract class ICS20Transfer extends IBCAppBase {
             if (ICS20Lib.isEscapeNeededString(denom)) {
                 success = false;
             } else {
-
                 success = _mint(receiver, StringUtil.encodePacked(getDenomPrefix(packetDb.getDestinationPort(), packetDb.getDestinationChannel()), denom).toString(), data.amount);
             }
         }
