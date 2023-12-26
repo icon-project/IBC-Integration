@@ -64,8 +64,8 @@ public abstract class ICS20Transfer extends IBCAppBase {
     }
 
     @External
-    public String onChanOpenInit(IIBCModule.onChanOpenInit msg) {
-        Context.require(msg.order == Channel.Order.ORDER_UNORDERED, "must be unordered");
+    public String onChanOpenInit(IIBCModule.MsgOnChanOpenInit msg) {
+        Context.require(msg.order.equals(Channel.Order.ORDER_UNORDERED), "must be unordered");
         byte[] versionBytes = msg.version.getBytes();
         Context.require(versionBytes.length == 0 || IBCCommitment.keccak256(versionBytes) == IBCCommitment.keccak256(ICS20_VERSION.getBytes()), "version cannot be empty");
         channelEscrowAddresses.set(msg.channelId, Context.getAddress());
@@ -73,8 +73,8 @@ public abstract class ICS20Transfer extends IBCAppBase {
     }
 
     @External
-    public String onChanOpenTry(IIBCModule.onChanOpenTry msg) {
-        Context.require(msg.order == Channel.Order.ORDER_UNORDERED, "must be unordered");
+    public String onChanOpenTry(IIBCModule.MsgOnChanOpenTry msg) {
+        Context.require(msg.order.equals(Channel.Order.ORDER_UNORDERED), "must be unordered");
         Context.require(IBCCommitment.keccak256(msg.counterPartyVersion.getBytes()) == IBCCommitment.keccak256(ICS20_VERSION.getBytes()), "version should be same with ICS20_VERSION");
         channelEscrowAddresses.set(msg.channelId, Context.getAddress());
         return ICS20_VERSION;
