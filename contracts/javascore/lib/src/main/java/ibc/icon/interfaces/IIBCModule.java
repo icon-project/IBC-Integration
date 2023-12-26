@@ -33,13 +33,13 @@ public interface IIBCModule {
     }
 
     public class MsgOnChanOpenConfirm {
-        String portId;
-        String channelId;
+        public String portId;
+        public String channelId;
     }
 
     public class MsgOnChanCloseInit {
-        String portId;
-        String channelId;
+        public String portId;
+        public String channelId;
     }
 
     public class MsgOnChanCloseConfirm {
