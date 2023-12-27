@@ -68,7 +68,6 @@ public abstract class ICS20Transfer implements IIBCModule{
         } else {
             return ICS20Lib.FAILED_ACKNOWLEDGEMENT_JSON;
         }
-
     }
 
 
@@ -116,6 +115,15 @@ public abstract class ICS20Transfer implements IIBCModule{
         ICS20Lib.PacketData data = ICS20Lib.unmarshalJSON(packetDb.getData());
         refundTokens(data, packetDb.getSourcePort(), packetDb.getSourceChannel());
     }
+
+    @External
+    public void onChanCloseConfirm(String portId, String channelId) {
+        Context.println("onChanCloseConfirm");
+    }@External
+    public void onChanOpenConfirm(String portId, String channelId) {
+        Context.println("onChanCloseConfirm");
+    }
+
 
 
     static Address getEscrowAddress(String sourceChannel) {
