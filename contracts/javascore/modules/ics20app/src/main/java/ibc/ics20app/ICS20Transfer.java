@@ -2,6 +2,7 @@ package ibc.ics20app;
 
 import ibc.icon.interfaces.IIBCModule;
 import ibc.icon.score.util.StringUtil;
+import ibc.ics23.commitment.Ops;
 import ibc.ics24.host.IBCCommitment;
 
 import icon.proto.core.channel.Channel;
@@ -9,16 +10,33 @@ import icon.proto.core.channel.Packet;
 import score.Address;
 import score.Context;
 import score.DictDB;
+import score.VarDB;
 import score.annotation.External;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 
-public abstract class ICS20Transfer extends IBCAppBase {
+public abstract class ICS20Transfer implements IIBCModule{
     public static final String ICS20_VERSION = "ics20-1";
     public static final Address ZERO_ADDRESS = Address.fromString("hx0000000000000000000000000000000000000000");
-
     public static final DictDB<String, Address> channelEscrowAddresses = Context.newDictDB("channelEscrowAddresses", Address.class);
+
+    private static final VarDB<Address> IBC_ADDRESS = Context.newVarDB("IBC_ADDRESS", Address.class);
+
+    @External
+    public void setIBCAddress(Address ibcAddress) {
+        Context.require(Context.getCaller().equals(Context.getOwner()), "Only owner can set up the address");
+        IBC_ADDRESS.set(ibcAddress);
+    }
+
+    @External(readonly = true)
+    public Address getIBCAddress() {
+        return IBC_ADDRESS.getOrDefault(ZERO_ADDRESS);
+    }
+
+    public void onlyIBC() {
+        Context.require(Context.getCaller().equals(getIBCAddress()), "ICS20App: Caller is not IBC Contract");
+    }
 
     @External
     public byte[] onRecvPacket(byte[] packet, Address relayer) {
@@ -33,9 +51,10 @@ public abstract class ICS20Transfer extends IBCAppBase {
 
         byte[] denomPrefix = getDenomPrefix(packetDb.getSourcePort(), packetDb.getSourceChannel());
         byte[] denom = data.denom.getBytes();
-        if (denom.length >= denomPrefix.length && Arrays.equals(denom, 0, denomPrefix.length, denomPrefix, 0, denomPrefix.length)) {
+
+        if (denom.length >= denomPrefix.length && Ops.hasPrefix(denom, denomPrefix)) {
             byte[] unprefixedDenom = Arrays.copyOfRange(denom, denomPrefix.length, denom.length);
-            success = _transferFrom(getEscrowAddress(packetDb.getDestinationChannel()), receiver, Arrays.toString(unprefixedDenom), data.amount);
+            success = _transferFrom(getEscrowAddress(packetDb.getDestinationChannel()), receiver, unprefixedDenom.toString(), data.amount);
         } else {
             if (ICS20Lib.isEscapeNeededString(denom)) {
                 success = false;
@@ -64,29 +83,30 @@ public abstract class ICS20Transfer extends IBCAppBase {
     }
 
     @External
-    public String onChanOpenInit(IIBCModule.MsgOnChanOpenInit msg) {
-        Context.require(msg.order.equals(Channel.Order.ORDER_UNORDERED), "must be unordered");
-        byte[] versionBytes = msg.version.getBytes();
+    public void onChanOpenInit(int order, String[] connectionHops, String portId, String channelId,
+                                 byte[] counterpartyPb, String version) {
+        Context.require(order == Channel.Order.ORDER_UNORDERED, "must be unordered");
+        byte[] versionBytes = version.getBytes();
         Context.require(versionBytes.length == 0 || IBCCommitment.keccak256(versionBytes) == IBCCommitment.keccak256(ICS20_VERSION.getBytes()), "version cannot be empty");
-        channelEscrowAddresses.set(msg.channelId, Context.getAddress());
-        return ICS20_VERSION;
+        channelEscrowAddresses.set(channelId, Context.getAddress());
     }
 
     @External
-    public String onChanOpenTry(IIBCModule.MsgOnChanOpenTry msg) {
-        Context.require(msg.order.equals(Channel.Order.ORDER_UNORDERED), "must be unordered");
-        Context.require(IBCCommitment.keccak256(msg.counterPartyVersion.getBytes()) == IBCCommitment.keccak256(ICS20_VERSION.getBytes()), "version should be same with ICS20_VERSION");
-        channelEscrowAddresses.set(msg.channelId, Context.getAddress());
-        return ICS20_VERSION;
+    public void onChanOpenTry(int order, String[] connectionHops, String portId, String channelId,
+                                byte[] counterpartyPb, String version, String counterPartyVersion) {
+        Context.require(order == Channel.Order.ORDER_UNORDERED, "must be unordered");
+        Context.require(IBCCommitment.keccak256(counterPartyVersion.getBytes()) == IBCCommitment.keccak256(ICS20_VERSION.getBytes()), "version should be same with ICS20_VERSION");
+        channelEscrowAddresses.set(channelId, Context.getAddress());
     }
 
     @External
-    public void onChanOpenAck(IIBCModule.MsgOnChanOpenAck msg) {
-        Context.require(IBCCommitment.keccak256(msg.counterPartyVersion.getBytes()) == IBCCommitment.keccak256(ICS20_VERSION.getBytes()), "version should be same with ICS20_VERSION");
+    public void onChanOpenAck(String portId, String channelId, String counterpartyChannelId, String counterPartyVersion) {
+        Context.require(IBCCommitment.keccak256(counterPartyVersion.getBytes()) == IBCCommitment.keccak256(ICS20_VERSION.getBytes()), "version should be same with ICS20_VERSION");
+
     }
 
     @External
-    public void onChanCloseInit(IIBCModule.MsgOnChanCloseInit msg) {
+    public void onChanCloseInit(String portId, String channelId) {
         Context.revert("Not Allowed");
     }
 
@@ -108,26 +128,24 @@ public abstract class ICS20Transfer extends IBCAppBase {
         byte[] denomPrefix = getDenomPrefix(sourcePort, sourceChannel);
         byte[] denom = data.denom.getBytes();
 
-        if (denom.length >= denomPrefix.length && Arrays.equals(denom, 0, denomPrefix.length, denomPrefix, 0, denomPrefix.length)) {
+        if (denom.length >= denomPrefix.length && Ops.hasPrefix(denom, denomPrefix)) {
             Context.require(_mint(Address.fromString(data.sender), data.denom, data.amount), "ICS20: mint failed");
         } else {
             Context.require(_transferFrom(getEscrowAddress(sourceChannel), Address.fromString(data.sender), data.denom, data.amount), "ICS20: transfer failed");
         }
-
-
     }
 
     public static byte[] getDenomPrefix(String port, String channel) {
         return StringUtil.encodePacked(port, "/", channel, "/");
     }
 
-    protected boolean _transferFrom(Address sender, Address receiver, String denom, BigInteger amount) {
+    private boolean _transferFrom(Address sender, Address receiver, String denom, BigInteger amount) {
         // Implementation goes here
         // Return true if minting is successful, false otherwise
         return true;
     }
 
-    protected boolean _mint(Address account, String denom, BigInteger amount) {
+    private boolean _mint(Address account, String denom, BigInteger amount) {
         // Implementation goes here
         // Return true if minting is successful, false otherwise
         return true;
@@ -136,7 +154,7 @@ public abstract class ICS20Transfer extends IBCAppBase {
     /**
      * @dev _burn burns tokens from `account` in the bank.
      */
-    protected boolean _burn(Address account, String denom, BigInteger amount) {
+    private boolean _burn(Address account, String denom, BigInteger amount) {
         // Implementation goes here
         // Return true if burning is successful, false otherwise
         return true;
