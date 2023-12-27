@@ -28,25 +28,23 @@ public class ICS20Bank {
 
 
     public ICS20Bank() {
-        roles.set(account, ADMIN_ROLE_ID);
-        // setupRole(ADMIN_ROLE_ID, Context.getCaller());
+        setupRole(ADMIN_ROLE_ID, Context.getCaller());
     }
 
     @External
-    public void setupRole(Integer role, Address account) {
+    public void setupRole(int role, Address account) {
         Context.require(Context.getCaller().equals(Context.getOwner()), "Only owner can set up role");
         roles.set(account, role);
     }
-    
+
 
     @External
     public void setupOperator(Address account) {
-        roles.set(account, OPERATOR_ROLE);
-        // setupRole(OPERATOR_ROLE_ID, account);
+         setupRole(OPERATOR_ROLE_ID, account);
     }
 
-    private boolean hasRole(Integer role, Address account) {
-        return (role == roles.getOrDefault(account, 0));
+    private boolean hasRole(int role, Address account) {
+        return (roles.getOrDefault(account, 0) == role);
     }
 
     @External(readonly = true)
