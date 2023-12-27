@@ -10,9 +10,8 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 public class ICS20TransferBank extends ICS20Transfer {
-    private final VarDB<Address> ibcHandler = Context.newVarDB("ibcHandler_ADDRESS", Address.class);
-    private final VarDB<Address> bank = Context.newVarDB("bank_ADDRESS", Address.class);
-
+    private final VarDB<Address> ibcHandler = Context.newVarDB("ibcHandler", Address.class);
+    private final VarDB<Address> bank = Context.newVarDB("bank", Address.class);
 
     public ICS20TransferBank(Address ibcHandler, Address bank) {
         this.ibcHandler.set(ibcHandler);
