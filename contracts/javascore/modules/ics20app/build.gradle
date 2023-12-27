@@ -7,7 +7,6 @@ dependencies {
     implementation project(':score-util')
     implementation project(':ibc')
 
-
     testImplementation 'com.google.protobuf:protobuf-javalite:3.13.0'
     testImplementation 'foundation.icon:javaee-rt:0.9.3'
     testImplementation("org.mockito:mockito-core:$mockitoCoreVersion")
@@ -44,7 +43,7 @@ tasks.named('compileJava') {
 }
 
 optimizedJar {
-    mainClassName = 'ibc.ics20app.IBCAppBase'
+    mainClassName = 'ibc.ics20app.ICS20Transfer'
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
