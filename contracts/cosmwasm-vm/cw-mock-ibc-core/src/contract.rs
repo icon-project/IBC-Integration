@@ -2,11 +2,12 @@ use common::ibc::core::ics04_channel::timeout::TimeoutHeight;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, IbcEndpoint, IbcPacket,
+    to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, Event, IbcEndpoint, IbcPacket,
     IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock, MessageInfo, Reply, Response, StdResult,
     SubMsg, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
+use cw_common::hex_string::HexString;
 use cw_common::ibc_types::IbcHeight;
 use cw_common::raw_types::channel::RawPacket;
 use cw_common::ProstMessage;
@@ -154,7 +155,15 @@ pub fn execute(
                 .add_attribute("method", "ibc_config")
                 .add_attribute("data", to_binary(&sub_message).unwrap().to_base64()))
         }
+        ExecuteMsg::WriteAcknowledgement {
+            packet: _,
+            acknowledgement,
+        } => Ok(Response::new().add_event(event_ack(acknowledgement))),
     }
+}
+
+pub fn event_ack(ack: HexString) -> Event {
+    Event::new("write_acknowledgement").add_attribute("data", hex::encode(ack.to_bytes().unwrap()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -168,6 +177,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 
             Ok(to_binary(&state.sequence).unwrap())
         }
+        QueryMsg::GetLatestHeight { client_id: _ } => Ok(to_binary(&100000_u64).unwrap()),
         _ => Err(cosmwasm_std::StdError::NotFound {
             kind: "Query Not Found".to_string(),
         }),
