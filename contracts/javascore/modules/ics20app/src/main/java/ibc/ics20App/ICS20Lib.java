@@ -77,13 +77,25 @@ public class ICS20Lib {
 
     public static PacketData unmarshalJSON(byte[] packet) {
         String jsonString = new String(packet);
+        String[] jsonParts = StringUtil.split(jsonString, ',');
+
         PacketData data = new PacketData();
-        data.amount = new BigInteger(jsonString.substring(jsonString.indexOf("amount") + 9, jsonString.indexOf("receiver") - 3));
-        data.denom = jsonString.substring(jsonString.indexOf("denom") + 8, jsonString.indexOf("amount") - 3);
-        data.memo = jsonString.substring(jsonString.indexOf("memo") + 8, jsonString.indexOf("memo") - 3);
-        data.receiver = jsonString.substring(jsonString.indexOf("receiver") + 11, jsonString.indexOf("sender") - 3);
-        data.sender = jsonString.substring(jsonString.indexOf("sender") + 9, jsonString.indexOf("}") - 1);
+
+        data.amount = new BigInteger(getValue(jsonParts[0]));
+        data.denom = getValue(jsonParts[1]);
+        data.receiver = getValue(jsonParts[2]);
+        data.sender = getValue(jsonParts[3]);
+        if (jsonParts.length > 4) {
+            data.memo = getValue(jsonParts[4]);
+        } else {
+            data.memo = "";
+        }
+
         return data;
+    }
+
+    private static String getValue(String keyValue) {
+        return StringUtil.split(keyValue, ':')[1].trim();
     }
 
 
