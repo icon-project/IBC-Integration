@@ -77,6 +77,7 @@ public abstract class ICS20Transfer implements IIBCModule {
     @External
     public void onChanOpenInit(int order, String[] connectionHops, String portId, String channelId,
                                byte[] counterpartyPb, String version) {
+        onlyIBC();
         Context.require(order == Channel.Order.ORDER_UNORDERED, "must be unordered");
         Context.require(version.equals(ICS20_VERSION), "version should be same with ICS20_VERSION");
         Channel.Counterparty counterparty = Channel.Counterparty.decode(counterpartyPb);
@@ -87,6 +88,7 @@ public abstract class ICS20Transfer implements IIBCModule {
     @External
     public void onChanOpenTry(int order, String[] connectionHops, String portId, String channelId,
                               byte[] counterpartyPb, String version, String counterPartyVersion) {
+        onlyIBC();
         Context.require(order == Channel.Order.ORDER_UNORDERED, "must be unordered");
         Context.require(counterPartyVersion.equals(ICS20_VERSION), "version should be same with ICS20_VERSION");
         Channel.Counterparty counterparty = Channel.Counterparty.decode(counterpartyPb);
@@ -97,6 +99,7 @@ public abstract class ICS20Transfer implements IIBCModule {
 
     @External
     public void onChanOpenAck(String portId, String channelId, String counterpartyChannelId, String counterPartyVersion) {
+        onlyIBC();
         Context.require(counterPartyVersion.equals(ICS20_VERSION), "version should be same with ICS20_VERSION");
 
     }
@@ -115,11 +118,13 @@ public abstract class ICS20Transfer implements IIBCModule {
 
     @External
     public void onChanCloseConfirm(String portId, String channelId) {
+        onlyIBC();
         Context.println("onChanCloseConfirm");
     }
 
     @External
     public void onChanOpenConfirm(String portId, String channelId) {
+        onlyIBC();
         Context.println("onChanCloseConfirm");
     }
 
