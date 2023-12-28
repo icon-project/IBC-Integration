@@ -15,7 +15,7 @@ import score.annotation.External;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-public abstract class ICS20Transfer implements IIBCModule{
+public abstract class ICS20Transfer implements IIBCModule {
     public static final String ICS20_VERSION = "ics20-1";
     public static final Address ZERO_ADDRESS = Address.fromString("hx0000000000000000000000000000000000000000");
     public static final DictDB<String, Address> channelEscrowAddresses = Context.newDictDB("channelEscrowAddresses", Address.class);
@@ -26,6 +26,7 @@ public abstract class ICS20Transfer implements IIBCModule{
     public Address getIBCAddress() {
         return ICS20TransferBank.ibcHandler.getOrDefault(ZERO_ADDRESS);
     }
+
     public void onlyIBC() {
         Context.require(Context.getCaller().equals(getIBCAddress()), "ICS20App: Caller is not IBC Contract");
     }
@@ -75,10 +76,9 @@ public abstract class ICS20Transfer implements IIBCModule{
 
     @External
     public void onChanOpenInit(int order, String[] connectionHops, String portId, String channelId,
-                                 byte[] counterpartyPb, String version) {
+                               byte[] counterpartyPb, String version) {
         Context.require(order == Channel.Order.ORDER_UNORDERED, "must be unordered");
-        byte[] versionBytes = version.getBytes();
-        Context.require(versionBytes.length == 0 || IBCCommitment.keccak256(versionBytes) == IBCCommitment.keccak256(ICS20_VERSION.getBytes()), "version cannot be empty");
+        Context.require(version.equals(ICS20_VERSION), "version should be same with ICS20_VERSION");
         Channel.Counterparty counterparty = Channel.Counterparty.decode(counterpartyPb);
         destinationPort.set(channelId, counterparty.getPortId());
         channelEscrowAddresses.set(channelId, Context.getAddress());
@@ -86,9 +86,9 @@ public abstract class ICS20Transfer implements IIBCModule{
 
     @External
     public void onChanOpenTry(int order, String[] connectionHops, String portId, String channelId,
-                                byte[] counterpartyPb, String version, String counterPartyVersion) {
+                              byte[] counterpartyPb, String version, String counterPartyVersion) {
         Context.require(order == Channel.Order.ORDER_UNORDERED, "must be unordered");
-        Context.require(IBCCommitment.keccak256(counterPartyVersion.getBytes()) == IBCCommitment.keccak256(ICS20_VERSION.getBytes()), "version should be same with ICS20_VERSION");
+        Context.require(counterPartyVersion.equals(ICS20_VERSION), "version should be same with ICS20_VERSION");
         Channel.Counterparty counterparty = Channel.Counterparty.decode(counterpartyPb);
         destinationPort.set(channelId, counterparty.getPortId());
         destinationChannel.set(channelId, counterparty.getChannelId());
@@ -97,7 +97,7 @@ public abstract class ICS20Transfer implements IIBCModule{
 
     @External
     public void onChanOpenAck(String portId, String channelId, String counterpartyChannelId, String counterPartyVersion) {
-        Context.require(IBCCommitment.keccak256(counterPartyVersion.getBytes()) == IBCCommitment.keccak256(ICS20_VERSION.getBytes()), "version should be same with ICS20_VERSION");
+        Context.require(counterPartyVersion.equals(ICS20_VERSION), "version should be same with ICS20_VERSION");
 
     }
 
@@ -116,11 +116,12 @@ public abstract class ICS20Transfer implements IIBCModule{
     @External
     public void onChanCloseConfirm(String portId, String channelId) {
         Context.println("onChanCloseConfirm");
-    }@External
+    }
+
+    @External
     public void onChanOpenConfirm(String portId, String channelId) {
         Context.println("onChanCloseConfirm");
     }
-
 
 
     static Address getEscrowAddress(String sourceChannel) {
