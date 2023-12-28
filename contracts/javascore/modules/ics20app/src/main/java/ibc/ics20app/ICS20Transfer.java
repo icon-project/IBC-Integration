@@ -10,7 +10,6 @@ import icon.proto.core.channel.Packet;
 import score.Address;
 import score.Context;
 import score.DictDB;
-import score.VarDB;
 import score.annotation.External;
 
 import java.math.BigInteger;
@@ -21,19 +20,10 @@ public abstract class ICS20Transfer implements IIBCModule{
     public static final Address ZERO_ADDRESS = Address.fromString("hx0000000000000000000000000000000000000000");
     public static final DictDB<String, Address> channelEscrowAddresses = Context.newDictDB("channelEscrowAddresses", Address.class);
 
-    private static final VarDB<Address> IBC_ADDRESS = Context.newVarDB("IBC_ADDRESS", Address.class);
-
-    @External
-    public void setIBCAddress(Address ibcAddress) {
-        Context.require(Context.getCaller().equals(Context.getOwner()), "Only owner can set up the address");
-        IBC_ADDRESS.set(ibcAddress);
-    }
-
     @External(readonly = true)
     public Address getIBCAddress() {
-        return IBC_ADDRESS.getOrDefault(ZERO_ADDRESS);
+        return ICS20TransferBank.ibcHandler.getOrDefault(ZERO_ADDRESS);
     }
-
     public void onlyIBC() {
         Context.require(Context.getCaller().equals(getIBCAddress()), "ICS20App: Caller is not IBC Contract");
     }
