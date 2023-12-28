@@ -1,6 +1,7 @@
 package ibc.ics20app;
 
 import ibc.ics24.host.IBCCommitment;
+import ibc.icon.score.util.StringUtil;
 import score.Context;
 
 import java.math.BigInteger;
@@ -32,10 +33,9 @@ public class ICS20Lib {
 
     private static final int CHAR_DOUBLE_QUOTE = '"';
 
-    // Function to check if escape is needed for a byte array in Java
     static boolean isEscapeNeededString(byte[] bz) {
-        for (int i = 0; i < bz.length; i++) {
-            int c = bz[i] & 0xFF; // Convert to unsigned int
+        for (byte b : bz) {
+            int c = b & 0xFF;
             if (c == CHAR_DOUBLE_QUOTE) {
                 return true;
             }
