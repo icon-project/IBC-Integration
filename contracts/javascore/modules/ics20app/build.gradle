@@ -43,7 +43,7 @@ tasks.named('compileJava') {
 }
 
 optimizedJar {
-    mainClassName = 'ibc.ics20app.ICS20Transfer'
+    mainClassName = 'ibc.ics20app.ICS20TransferBank'
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
@@ -60,6 +60,7 @@ deployJar {
         lisbon {
             uri = 'https://lisbon.net.solidwallet.io/api/v3'
             nid = 0x2
+            to = "$ics20App"?:null
         }
         local {
             uri = 'http://localhost:9082/api/v3'
@@ -74,6 +75,7 @@ deployJar {
     keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''
     password = rootProject.hasProperty('keystorePass') ? "$keystorePass" : ''
     parameters {
-        arg('ibcHandler', "$ibcCore")
+        arg('_ibcHandler', "$ibcCore"?:null)
+        arg("_bank","$ics20Bank"?:null)
     }
 }
