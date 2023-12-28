@@ -47,6 +47,22 @@ optimize-cosmwasm:
 	@echo "Generating optimized cosmwasm for Archway contracts"
 	sh ./scripts/optimize-cosmwasm.sh
 
+build-solidity:
+	@echo "Build solidity contracts"
+	sh ./scripts/optimize-solc.sh build
+
+build-solidity-docker:
+	@echo "Build solidity contracts"
+	docker-compose -f ./scripts/docker-compose.yml up solidity
+
+build-java-docker:
+	@echo "Build java contracts"
+	docker-compose -f ./scripts/docker-compose.yml up java
+
+build-wasm-docker:
+	@echo "Build java contracts"
+	docker-compose -f ./scripts/docker-compose.yml up wasm
+
 gobuild:
 	go build .
 

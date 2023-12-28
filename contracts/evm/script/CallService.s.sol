@@ -8,6 +8,7 @@ import "@xcall/contracts/xcall/CallService.sol";
 import "@xcall/contracts/mocks/multi-protocol-dapp/MultiProtocolSampleDapp.sol";
 import "@xcall/contracts/adapters/WormholeAdapter.sol";
 import "@xcall/contracts/adapters/LayerZeroAdapter.sol";
+import "@xcall/contracts/adapters/CentralizedConnection.sol";
 
 contract DeployCallService is Script {
     CallService private proxyXcall;
@@ -96,16 +97,16 @@ contract DeployCallService is Script {
             );
         } else if (contractA.compareTo("centralized")) {
             address xcall = vm.envAddress(chain.concat("_XCALL"));
-            address wormholeRelayer = vm.envAddress(
-                chain.concat("_WORMHOLE_RELAYER")
+            address centralizedRelayer = vm.envAddress(
+                chain.concat("_CENTRALIZED_RELAYER")
             );
 
             address proxy = Upgrades.deployTransparentProxy(
-                "WormholeAdapter.sol",
+                "CentralizedConnection.sol",
                 msg.sender,
                 abi.encodeCall(
-                    WormholeAdapter.initialize,
-                    (wormholeRelayer, xcall)
+                    CentralizedConnection.initialize,
+                    (centralizedRelayer, xcall)
                 )
             );
         } else if(contractA.compareTo("mock")) {
@@ -143,7 +144,7 @@ contract DeployCallService is Script {
             Upgrades.upgradeProxy(proxy, contractName, "");
         } else if (contractA.compareTo("centralized")) {
             address proxy = vm.envAddress(
-                capitalizeString(chain).concat("_XCALL")
+                capitalizeString(chain).concat("_CENTRALIZED_ADAPTER")
             );
             Upgrades.upgradeProxy(proxy, contractName, "");
         }

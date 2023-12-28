@@ -2,7 +2,8 @@ rootProject.name = 'xcall-multi'
 include(
         'test-lib',
         'xcall',
-        'xcall-lib'
+        'xcall-lib',
+        'centralized-connection'
 )
 
 include(':dapp-simple')

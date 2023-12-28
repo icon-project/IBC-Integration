@@ -4,7 +4,7 @@ set -e
 mkdir -p artifacts/icon
 
 cd contracts/javascore
-./gradlew clean optimizedJar
+./gradlew clean build optimizedJar
 cd -
 
 for jar in $(find . -type f -name "*optimized.jar" | grep  /build/libs/); do

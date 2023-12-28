@@ -1,0 +1,27 @@
+version: '3'
+services:
+  java:
+    container_name: java-builder
+    image: adoptopenjdk/openjdk11
+    volumes:
+      - ../:/usr/local/src
+    working_dir: /usr/local/src
+    entrypoint: ["sh","./scripts/optimize-jar.sh"]
+  wasm:
+    container_name: wasm-builder
+    image: wasm-builder
+    build:
+      context: ../
+      dockerfile: wasm-builder.Dockerfile
+    volumes:
+      - ../:/usr/local/src
+    working_dir: /usr/local/src
+    command: ["bash","./scripts/optimize-cosmwasm.sh"]
+  solidity:
+    container_name: solidity-builder
+    image: ghcr.io/foundry-rs/foundry
+    platform: linux/amd64
+    volumes:
+      - ../:/usr/local/src
+    working_dir: /usr/local/src
+    entrypoint: ["sh","-c","apk update && apk add bash && bash ./scripts/optimize-solidity.sh"]
