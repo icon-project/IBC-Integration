@@ -3,7 +3,6 @@ package ibc.ics20app;
 import ibc.icon.interfaces.IIBCModule;
 import ibc.icon.score.util.StringUtil;
 import ibc.ics23.commitment.Ops;
-import ibc.ics24.host.IBCCommitment;
 
 import icon.proto.core.channel.Channel;
 import icon.proto.core.channel.Packet;
