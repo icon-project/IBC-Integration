@@ -43,23 +43,38 @@ public class ICS20Lib {
         return false;
     }
 
+    public byte[] marshalUnsafeJSON(PacketData data) {
+        if (data.memo.isEmpty()) {
+            return marshalJson(data.denom, data.amount, data.sender, data.receiver);
+        } else {
+            return marshalJson(data.denom, data.amount, data.sender, data.receiver, data.memo);
+        }
+    }
 
 
     public static byte[] marshalJson(String escapedDenom, BigInteger amount, String escapedSender, String escapedReceiver) {
-        String jsonString = "{\"amount\":\"" +
-                amount.toString() +
-                "\",\"denom\":\"" +
-                escapedDenom +
-                "\",\"receiver\":\"" +
-                escapedReceiver +
-                "\",\"sender\":\"" +
-                escapedSender +
-                "\"}";
+        String jsonString = "{" +
+                "\"amount\":\"" + amount.toString() + "\"," +
+                "\"denom\":\"" + escapedDenom + "\"," +
+                "\"receiver\":\"" + escapedReceiver + "\"," +
+                "\"sender\":\"" + escapedSender + "\"" +
+                "}";
 
         return jsonString.getBytes();
     }
 
-    // write a code do unmarshalJSON function in java with above params
+    public static byte[] marshalJson(String escapedDenom, BigInteger amount, String escapedSender, String escapedReceiver, String escapedMemo) {
+        String jsonString = "{" +
+                "\"amount\":\"" + amount.toString() + "\"," +
+                "\"denom\":\"" + escapedDenom + "\"," +
+                "\"receiver\":\"" + escapedReceiver + "\"," +
+                "\"sender\":\"" + escapedSender + "\"," +
+                "\"memo\":\"" + escapedMemo + "\"" +
+                "}";
+
+        return jsonString.getBytes();
+    }
+
     public static PacketData unmarshalJSON(byte[] packet) {
         String jsonString = new String(packet);
         PacketData data = new PacketData();
@@ -87,9 +102,5 @@ public class ICS20Lib {
 
         return hexString.toString();
     }
-
-
-
-
 
 }
