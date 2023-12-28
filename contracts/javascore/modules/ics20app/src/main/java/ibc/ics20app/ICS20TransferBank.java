@@ -1,5 +1,6 @@
 package ibc.ics20app;
 
+import icon.proto.core.channel.Packet;
 import icon.proto.core.client.Height;
 import score.Address;
 import score.Context;
@@ -20,7 +21,7 @@ public class ICS20TransferBank extends ICS20Transfer {
     }
 
     @External
-    public void sendTransfer(String denom, BigInteger amount, String receiver, String sourcePort, String sourceChannel, BigInteger timeoutHeight) {
+    public void sendTransfer(String denom, BigInteger amount, String receiver, String sourcePort, String sourceChannel, BigInteger timeoutHeight, BigInteger timeoutRevisionNumber) {
         byte[] denomPrefix = ICS20Transfer.getDenomPrefix(sourcePort, sourceChannel);
         Address caller = Context.getCaller();
         if (!denom.startsWith(denomPrefix.toString())) {
@@ -29,11 +30,25 @@ public class ICS20TransferBank extends ICS20Transfer {
             Context.require(_burn(caller, denom, amount), "burn failed");
         }
 
-        byte[] packetData = ICS20Lib.marshalJson(denom, amount, ICS20Transfer._encodeSender(caller), receiver);
         Height height = new Height();
-        height.setRevisionNumber(BigInteger.ZERO);
+        height.setRevisionNumber(timeoutRevisionNumber);
         height.setRevisionHeight(timeoutHeight);
-        Context.call(ibcHandler.get(), "sendPacket", sourcePort, sourceChannel, height, 0, packetData);
+
+        byte[] data = ICS20Lib.marshalJson(denom, amount, caller.toString(), receiver);
+
+        BigInteger seq = (BigInteger) Context.call(ibcHandler.get(), "getNextSequenceSend", sourcePort, sourceChannel);
+        Packet newPacket = new Packet();
+        newPacket.setSequence(seq);
+        newPacket.setSourcePort(sourcePort);
+        newPacket.setSourceChannel(sourceChannel);
+        newPacket.setDestinationPort(destinationPort.get(sourceChannel));
+        newPacket.setDestinationChannel(destinationChannel.get(sourceChannel));
+        newPacket.setTimeoutHeight(height);
+        newPacket.setTimeoutTimestamp(BigInteger.ZERO);
+        newPacket.setData(data);
+        newPacket.encode();
+
+        Context.call(ibcHandler.get(), "sendPacket", newPacket);
 
     }
 
