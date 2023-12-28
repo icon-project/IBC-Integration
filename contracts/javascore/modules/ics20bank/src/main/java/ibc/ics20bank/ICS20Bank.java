@@ -14,10 +14,6 @@ public class ICS20Bank {
     public static final String ICS20_VERSION = "ics20-1";
     public static final Address ZERO_ADDRESS = Address.fromString("hx0000000000000000000000000000000000000000");
 
-
-    private static final byte[] ADMIN_ROLE = IBCCommitment.keccak256("ADMIN_ROLE".getBytes());
-    private static final byte[] OPERATOR_ROLE = IBCCommitment.keccak256("OPERATOR_ROLE".getBytes());
-
     private static final Integer ADMIN_ROLE_ID = 1;
     private static final Integer OPERATOR_ROLE_ID = 2;
 
