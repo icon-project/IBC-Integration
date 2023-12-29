@@ -14,6 +14,8 @@ import score.annotation.External;
 import java.math.BigInteger;
 import java.util.Arrays;
 
+import static ibc.ics20app.ICS20TransferBank.bank;
+
 public abstract class ICS20Transfer implements IIBCModule {
     public static final String ICS20_VERSION = "ics20-1";
     public static final Address ZERO_ADDRESS = Address.fromString("hx0000000000000000000000000000000000000000");
@@ -150,14 +152,12 @@ public abstract class ICS20Transfer implements IIBCModule {
     }
 
     private boolean _transferFrom(Address sender, Address receiver, String denom, BigInteger amount) {
-        // Implementation goes here
-        // Return true if minting is successful, false otherwise
+        Context.call(bank.get(), "transferFrom", sender, receiver, denom, amount);
         return true;
     }
 
     private boolean _mint(Address account, String denom, BigInteger amount) {
-        // Implementation goes here
-        // Return true if minting is successful, false otherwise
+        Context.call(bank.get(), "mint", account, denom, amount);
         return true;
     }
 
@@ -165,8 +165,7 @@ public abstract class ICS20Transfer implements IIBCModule {
      * @dev _burn burns tokens from `account` in the bank.
      */
     private boolean _burn(Address account, String denom, BigInteger amount) {
-        // Implementation goes here
-        // Return true if burning is successful, false otherwise
+        Context.call(bank.get(), "burn", account, denom, amount);
         return true;
     }
 
