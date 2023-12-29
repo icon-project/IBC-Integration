@@ -1,13 +1,12 @@
 package ibc.ics20bank;
 
 import ibc.ics24.host.IBCCommitment;
-import score.Address;
-import score.BranchDB;
-import score.Context;
-import score.DictDB;
+import score.*;
 import score.annotation.External;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ICS20Bank {
 
@@ -22,6 +21,7 @@ public class ICS20Bank {
     private final BranchDB<String, DictDB<Address, BigInteger>> balances = Context.newBranchDB("BALANCES", BigInteger.class);
     private final DictDB<Address, BigInteger> balancesOfNew = Context.newDictDB("BALANCESOFNEW", BigInteger.class);
     private final DictDB<Address, String> denomOfBalance = Context.newDictDB("DENOM_OF_BALANCE", String.class);
+    private final ArrayDB<Address> addressOfBalances = Context.newArrayDB("addressOfBalances", Address.class);
     private final DictDB<Address, Integer> roles = Context.newDictDB("ROLES", Integer.class);
 
 
@@ -99,6 +99,7 @@ public class ICS20Bank {
         balances.at(denom).set(account, balanceOf(account, denom).add(amount));
         balancesOfNew.set(account, amount);
         denomOfBalance.set(account, denom);
+        addressOfBalances.add(account);
     }
 
     private void _burn(Address account, String denom, BigInteger amount) {
@@ -116,6 +117,17 @@ public class ICS20Bank {
     @External(readonly = true)
     public String getDenomOfAccount(Address account) {
         return denomOfBalance.getOrDefault(account, "");
+    }
+
+    @External(readonly = true)
+    public Map<Address, BigInteger> getBalancesofAddresses() {
+        Map<Address, BigInteger> balancesOfAddresses = new HashMap<>();
+        for (int i = 0; i < addressOfBalances.size(); i++) {
+            Address address = addressOfBalances.get(i);
+            balancesOfAddresses.put(address, getBalanceOfNew(address));
+        }
+
+        return balancesOfAddresses;
     }
 
 
