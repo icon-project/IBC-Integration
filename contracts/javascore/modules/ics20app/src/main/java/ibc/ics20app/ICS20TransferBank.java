@@ -11,12 +11,12 @@ import java.math.BigInteger;
 
 public class ICS20TransferBank extends ICS20Transfer {
     public static final VarDB<Address> ibcHandler = Context.newVarDB("ibcHandler", Address.class);
-    public final VarDB<Address> bank = Context.newVarDB("bank", Address.class);
+    public static final VarDB<Address> bank = Context.newVarDB("bank", Address.class);
 
     public ICS20TransferBank(Address _ibcHandler, Address _bank) {
         if (ibcHandler.get() == null) {
             ibcHandler.set(_ibcHandler);
-            this.bank.set(_bank);
+            bank.set(_bank);
         }
     }
 
