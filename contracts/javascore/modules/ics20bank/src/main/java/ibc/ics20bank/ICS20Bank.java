@@ -20,6 +20,8 @@ public class ICS20Bank {
 
     // Mapping from token ID to account balances
     private final BranchDB<String, DictDB<Address, BigInteger>> balances = Context.newBranchDB("BALANCES", BigInteger.class);
+    private final DictDB<Address, BigInteger> balancesOfNew = Context.newDictDB("BALANCESOFNEW", BigInteger.class);
+    private final DictDB<Address, String> denomOfBalance = Context.newDictDB("DENOM_OF_BALANCE", String.class);
     private final DictDB<Address, Integer> roles = Context.newDictDB("ROLES", Integer.class);
 
 
@@ -32,7 +34,6 @@ public class ICS20Bank {
         Context.require(Context.getCaller().equals(Context.getOwner()), "Only owner can set up role");
         roles.set(account, role);
     }
-
 
     @External
     public void setupOperator(Address account) {
@@ -96,11 +97,26 @@ public class ICS20Bank {
 
     private void _mint(Address account, String denom, BigInteger amount) {
         balances.at(denom).set(account, balanceOf(account, denom).add(amount));
+        balancesOfNew.set(account, amount);
+        denomOfBalance.set(account, denom);
     }
 
     private void _burn(Address account, String denom, BigInteger amount) {
         BigInteger accountBalance = balanceOf(account, denom);
         Context.require(accountBalance.compareTo(amount) >= 0, "ICS20Bank: burn amount exceeds balance");
-        balances.at(denom).set(account, accountBalance.subtract(amount));
+        BigInteger newBalance = accountBalance.subtract(amount);
+        balances.at(denom).set(account, newBalance);
+        balancesOfNew.set(account, newBalance);
     }
+
+    @External(readonly = true)
+    public BigInteger getBalanceOfNew(Address account) {
+        return balancesOfNew.getOrDefault(account, BigInteger.ZERO);
+    }
+    @External(readonly = true)
+    public String getDenomOfAccount(Address account) {
+        return denomOfBalance.getOrDefault(account, "");
+    }
+
+
 }
