@@ -2,8 +2,10 @@ package ibc.ics20app;
 
 import ibc.ics24.host.IBCCommitment;
 import ibc.icon.score.util.StringUtil;
+import score.ByteArrayObjectWriter;
 import score.Context;
 
+import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 
 public class ICS20Lib {
@@ -76,12 +78,22 @@ public class ICS20Lib {
     }
 
     public static PacketData unmarshalJSON(byte[] packet) {
+        StringBuilder sanitized = new StringBuilder();
         String jsonString = new String(packet);
+
+        for (char c : jsonString.toCharArray()){
+            if (c != '\\' && c != '\"'){
+                sanitized.append(c);
+            }
+        }
+        jsonString=sanitized.toString();
+
         String[] jsonParts = StringUtil.split(jsonString, ',');
 
         PacketData data = new PacketData();
 
         data.amount = new BigInteger(getValue(jsonParts[0]));
+
         data.denom = getValue(jsonParts[1]);
         data.receiver = getValue(jsonParts[2]);
         data.sender = getValue(jsonParts[3]);
@@ -95,8 +107,10 @@ public class ICS20Lib {
     }
 
     private static String getValue(String keyValue) {
-        return StringUtil.split(keyValue, ':')[1].trim();
+        return  StringUtil.split(keyValue, ':')[1].trim();
+        
     }
+
 
 
     static String addressToHexString(String addr) {
