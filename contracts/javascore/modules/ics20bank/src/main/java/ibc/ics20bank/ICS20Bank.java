@@ -1,11 +1,10 @@
 package ibc.ics20bank;
 
-import ibc.ics24.host.IBCCommitment;
 import score.*;
 import score.annotation.External;
 
 import java.math.BigInteger;
-import java.util.HashMap;
+import scorex.util.HashMap;
 import java.util.Map;
 
 public class ICS20Bank {
