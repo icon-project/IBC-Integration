@@ -18,6 +18,7 @@ public class ICS20Bank {
 
     // Mapping from token ID to account balances
     private final BranchDB<String, DictDB<Address, BigInteger>> balances = Context.newBranchDB("BALANCES", BigInteger.class);
+//TODO Remove this 3
     private final DictDB<Address, BigInteger> balancesOfNew = Context.newDictDB("BALANCESOFNEW", BigInteger.class);
     private final DictDB<Address, String> denomOfBalance = Context.newDictDB("DENOM_OF_BALANCE", String.class);
     private final ArrayDB<Address> addressOfBalances = Context.newArrayDB("addressOfBalances", Address.class);
@@ -25,7 +26,9 @@ public class ICS20Bank {
 
 
     public ICS20Bank() {
-        setupRole(ADMIN_ROLE_ID, Context.getCaller());
+        if (roles.get(Context.getOwner()) == null) {
+            setupRole(ADMIN_ROLE_ID, Context.getOwner());
+        }
     }
 
     @External
