@@ -97,7 +97,7 @@ fn process_message(
                 return Ok(to_binary(&ContractResult::success()).map_err(ContractError::Std)?);
             }
 
-            QueryHandler::verify_membership(
+            let mut res = QueryHandler::verify_membership(
                 deps_mut.as_ref(),
                 client_id,
                 height,
@@ -106,7 +106,22 @@ fn process_message(
                 &proofs_decoded.proofs,
                 &value,
                 &path,
-            )?;
+                true,
+            );
+            if res.is_err() {
+                res = QueryHandler::verify_membership(
+                    deps_mut.as_ref(),
+                    client_id,
+                    height,
+                    msg.delay_time_period,
+                    msg.delay_block_period,
+                    &proofs_decoded.proofs,
+                    &value,
+                    &path,
+                    false,
+                );
+            }
+            res.unwrap();
 
             cw_println!(deps_mut.api, "[WasmClient]: Verify Membership Complete");
 
