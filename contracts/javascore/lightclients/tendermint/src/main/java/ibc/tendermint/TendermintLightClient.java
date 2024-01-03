@@ -41,6 +41,12 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
 
     public TendermintLightClient(Address ibcHandler) {
         this.ibcHandler = ibcHandler;
+        String neutronClient = "07-tendermint-2";
+        ClientState cs = ClientState.decode(getClientState(neutronClient));
+        Duration tp = cs.getTrustingPeriod();
+        tp.setSeconds(tp.getSeconds().multiply(BigInteger.TWO));
+        cs.setTrustingPeriod(tp);
+        clientStates.set(neutronClient, cs.encode());
     }
 
     private void onlyHandler() {
