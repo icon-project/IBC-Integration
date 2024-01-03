@@ -10,12 +10,12 @@ repository = "https://github.com/icon-project/ibc-integration.git"
 version="0.2.0"
 
 [workspace.dependencies]
-cosmwasm-std = {version="1.2.2",default-features = false,features = ["iterator", "staking"]}
+cosmwasm-std = {version="1.2.2",default-features = false}
 cw-storage-plus = {git="https://github.com/icon-project/cw-storage-plus.git", branch="fix-raw"}
-cosmwasm-storage = "1.2.2"
-cosmwasm-schema = "1.2.2"
-schemars = "0.8.12"
-cw2 = "1.0.1"
+cosmwasm-schema = {version="1.2.2",default-features = false}
+common = { git = "https://github.com/icon-project/IBC-Integration.git",branch="feat/cw-wasm-light-client" ,default-features = false}
+schemars = {version="0.8.12",default-features = false}
+cw2 = {version="1.0.1",default-features = false}
 
 prost = { version = "0.11.8", default-features = false,features=["prost-derive"]}
 
@@ -27,6 +27,8 @@ bytes = { version = "1.4.0", default-features = false }
 thiserror = { version = "1.0.39" }
 hex ={ version = "0.4.3", default-features = false }
 debug_print = "1.0.0"
+
+
 
 [profile.release]
 opt-level = 'z'

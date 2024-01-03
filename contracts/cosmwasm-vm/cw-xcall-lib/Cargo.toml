@@ -29,7 +29,6 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 [dependencies]
 cosmwasm-schema = {workspace=true}
 cosmwasm-std = {workspace=true}
-cosmwasm-storage = {workspace=true}
 cw-storage-plus = {workspace=true}
 cw2 = {workspace=true}
 schemars = {workspace=true}
@@ -44,4 +43,4 @@ cosmwasm = "0.7.2"
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}
 hex = "0.4.3"
 anyhow="*"
-test-utils={ git = "https://github.com/icon-project/IBC-Integration.git",branch="main" }
+test-utils={ git = "https://github.com/icon-project/IBC-Integration.git",branch="feat/cw-wasm-light-client",default-features = false }
