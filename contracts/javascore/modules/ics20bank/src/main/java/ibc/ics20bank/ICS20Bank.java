@@ -56,7 +56,7 @@ public class ICS20Bank {
         Context.require(to != ZERO_ADDRESS, "ICS20Bank: balance query for the zero address");
         Address caller = Context.getCaller();
         Context.require(from.equals(caller) || hasRole(OPERATOR_ROLE_ID, caller), "ICS20Bank: caller is not owner nor approved");
-        Context.require(from.equals(to), "ICS20Bank: sender and receiver is same");
+        Context.require(!from.equals(to), "ICS20Bank: sender and receiver is same");
         BigInteger fromBalance = balanceOf(from, denom);
         Context.require(amount.compareTo(BigInteger.ZERO) > 0, "ICS20Bank: transfer amount must be greater than zero");
         Context.require(fromBalance.compareTo(amount) >= 0, "ICS20Bank: insufficient balance for transfer");

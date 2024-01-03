@@ -82,7 +82,7 @@ public class ICS20Lib {
         String jsonString = new String(packet);
 
         for (char c : jsonString.toCharArray()){
-            if (c != '\\' && c != '\"'){
+            if (c != '\\' && c != '\"' && c !='{' && c!='}'){
                 sanitized.append(c);
             }
         }

@@ -32,6 +32,16 @@ public abstract class ICS20Transfer implements IIBCModule {
         Context.require(Context.getCaller().equals(getIBCAddress()), "ICS20App: Caller is not IBC Contract");
     }
 
+    @External(readonly = true)
+    public String getDestinationPort(String channelId) {
+        return destinationPort.get(channelId);
+    }
+
+    @External(readonly = true)
+    public String getDestinationChannel(String channelId) {
+        return destinationChannel.get(channelId);
+    }
+
     @External
     public byte[] onRecvPacket(byte[] packet, Address relayer) {
         onlyIBC();
@@ -53,7 +63,8 @@ public abstract class ICS20Transfer implements IIBCModule {
             if (ICS20Lib.isEscapeNeededString(denom)) {
                 success = false;
             } else {
-                success = _mint(receiver, StringUtil.encodePacked(getDenomPrefix(packetDb.getDestinationPort(), packetDb.getDestinationChannel()), denom).toString(), data.amount);
+                String denomText = new String(StringUtil.encodePacked(packetDb.getDestinationPort(), "/", packetDb.getDestinationChannel(), "/", data.denom));
+                success = _mint(receiver, denomText, data.amount);
             }
         }
 
@@ -69,8 +80,8 @@ public abstract class ICS20Transfer implements IIBCModule {
     public void onAcknowledgementPacket(byte[] packet, byte[] acknowledgement, Address relayer) {
         onlyIBC();
         Packet packetDb = Packet.decode(packet);
-        if (acknowledgement != ICS20Lib.KECCAK256_SUCCESSFUL_ACKNOWLEDGEMENT_JSON) {
-            refundTokens(ICS20Lib.unmarshalJSON(packet), packetDb.getSourcePort(), packetDb.getSourceChannel());
+        if (acknowledgement != ICS20Lib.SUCCESSFUL_ACKNOWLEDGEMENT_JSON) {
+            refundTokens(ICS20Lib.unmarshalJSON(packetDb.getData()), packetDb.getSourcePort(), packetDb.getSourceChannel());
         }
 
     }
@@ -134,6 +145,11 @@ public abstract class ICS20Transfer implements IIBCModule {
         Address escorw = channelEscrowAddresses.get(sourceChannel);
         Context.require(escorw != ZERO_ADDRESS);
         return escorw;
+    }
+
+    @External(readonly = true)
+    public Address escrowAddress(String sourceChannel){
+        return getEscrowAddress(sourceChannel);
     }
 
     private void refundTokens(ICS20Lib.PacketData data, String sourcePort, String sourceChannel) {

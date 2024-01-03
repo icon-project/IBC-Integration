@@ -46,9 +46,8 @@ public class ICS20TransferBank extends ICS20Transfer {
         newPacket.setTimeoutHeight(height);
         newPacket.setTimeoutTimestamp(BigInteger.ZERO);
         newPacket.setData(data);
-        newPacket.encode();
 
-        Context.call(ibcHandler.get(), "sendPacket", newPacket);
+        Context.call(ibcHandler.get(), "sendPacket", newPacket.encode());
 
     }
 
