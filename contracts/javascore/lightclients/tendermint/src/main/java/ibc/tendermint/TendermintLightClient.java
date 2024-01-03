@@ -14,6 +14,7 @@ import score.BranchDB;
 import score.Context;
 import score.DictDB;
 import score.annotation.External;
+import score.annotation.Optional;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -39,14 +40,17 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
     public static final BranchDB<String, DictDB<BigInteger, BigInteger>> processedHeights = Context.newBranchDB(
             PROCESSED_HEIGHTS, BigInteger.class);
 
-    public TendermintLightClient(Address ibcHandler) {
+    public TendermintLightClient(Address ibcHandler, @Optional boolean update) {
         this.ibcHandler = ibcHandler;
-        String neutronClient = "07-tendermint-2";
-        ClientState cs = ClientState.decode(getClientState(neutronClient));
-        Duration tp = cs.getTrustingPeriod();
-        tp.setSeconds(tp.getSeconds().multiply(BigInteger.TWO));
-        cs.setTrustingPeriod(tp);
-        clientStates.set(neutronClient, cs.encode());
+
+        if (update) {
+                String neutronClient = "07-tendermint-2";
+                ClientState cs = ClientState.decode(getClientState(neutronClient));
+                Duration tp = cs.getTrustingPeriod();
+                tp.setSeconds(tp.getSeconds().multiply(BigInteger.TWO));
+                cs.setTrustingPeriod(tp);
+                clientStates.set(neutronClient, cs.encode());
+        }
     }
 
     private void onlyHandler() {

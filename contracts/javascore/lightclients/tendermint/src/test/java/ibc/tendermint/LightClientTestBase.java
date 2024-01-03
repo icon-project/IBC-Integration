@@ -101,7 +101,7 @@ public class LightClientTestBase extends TestBase {
         contextMock.when(() -> Context.getBlockTimestamp())
                 .thenReturn(System.currentTimeMillis() * 1000 + (sm.getBlock().getHeight() * 2_000_000));
 
-        client = sm.deploy(owner, TendermintLightClient.class, ibcHandler.getAddress());
+        client = sm.deploy(owner, TendermintLightClient.class, ibcHandler.getAddress(), false);
 
         clientSpy = (TendermintLightClient) spy(client.getInstance());
         client.setInstance(clientSpy);
