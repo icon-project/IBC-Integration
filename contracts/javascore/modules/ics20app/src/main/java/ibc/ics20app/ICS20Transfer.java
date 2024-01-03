@@ -58,12 +58,13 @@ public abstract class ICS20Transfer implements IIBCModule {
 
         if (denom.length >= denomPrefix.length && Ops.hasPrefix(denom, denomPrefix)) {
             byte[] unprefixedDenom = Arrays.copyOfRange(denom, denomPrefix.length, denom.length);
-            success = _transferFrom(getEscrowAddress(packetDb.getDestinationChannel()), receiver, unprefixedDenom.toString(), data.amount);
+            success = _transferFrom(getEscrowAddress(packetDb.getDestinationChannel()), receiver, new String(unprefixedDenom), data.amount);
         } else {
             if (ICS20Lib.isEscapeNeededString(denom)) {
                 success = false;
             } else {
-                String denomText = new String(StringUtil.encodePacked(packetDb.getDestinationPort(), "/", packetDb.getDestinationChannel(), "/", data.denom));
+                denom = StringUtil.encodePacked(packetDb.getDestinationPort(), "/", packetDb.getDestinationChannel(), "/", data.denom);
+                String denomText = new String(denom);
                 success = _mint(receiver, denomText, data.amount);
             }
         }
@@ -137,7 +138,7 @@ public abstract class ICS20Transfer implements IIBCModule {
     @External
     public void onChanOpenConfirm(String portId, String channelId) {
         onlyIBC();
-        Context.println("onChanCloseConfirm");
+        Context.println("onChanOpenConfirm");
     }
 
 
@@ -167,7 +168,7 @@ public abstract class ICS20Transfer implements IIBCModule {
         return StringUtil.encodePacked(port, "/", channel, "/");
     }
 
-    private boolean _transferFrom(Address sender, Address receiver, String denom, BigInteger amount) {
+    boolean _transferFrom(Address sender, Address receiver, String denom, BigInteger amount) {
         Context.call(bank.get(), "transferFrom", sender, receiver, denom, amount);
         return true;
     }
@@ -177,34 +178,16 @@ public abstract class ICS20Transfer implements IIBCModule {
         return true;
     }
 
-    /**
-     * @dev _burn burns tokens from `account` in the bank.
-     */
-    private boolean _burn(Address account, String denom, BigInteger amount) {
+    boolean _burn(Address account, String denom, BigInteger amount) {
         Context.call(bank.get(), "burn", account, denom, amount);
         return true;
-    }
-
-    /**
-     * @dev _encodeSender encodes an address to a hex string.
-     * The encoded sender is used as `sender` field in the packet data.
-     */
-    protected static String _encodeSender(Address sender) {
-        return ICS20Lib.addressToHexString(sender.toString());
-    }
-
-
-    protected Address _decodeSender(String sender) {
-        boolean ok = _decodeReceiver(sender);
-        Context.require(ok, "invalid address");
-        return Address.fromString(sender);
     }
 
     /**
      * @dev _decodeReceiver decodes a hex string to an address.
      * `receiver` may be an invalid address format.
      */
-    protected boolean _decodeReceiver(String receiver) {
+    protected static boolean _decodeReceiver(String receiver) {
         boolean flag;
         try {
             Address.fromString(receiver);
