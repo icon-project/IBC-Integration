@@ -199,7 +199,7 @@ dependencies = [
 [[package]]
 name = "common"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/IBC-Integration.git?branch=feat/cw-wasm-light-client#1e5daa824b80b6653b1e53c8bd94b4c8c8710d29"
+source = "git+https://github.com/icon-project/IBC-Integration.git?branch=feat/cw-wasm-light-client#d2eb1ac6c83de203d10c0488c8c450d1017f0586"
 dependencies = [
  "bytes",
  "cosmwasm-schema",
@@ -609,8 +609,8 @@ dependencies = [
 
 [[package]]
 name = "cw-xcall"
-version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#d2a21f13e5de2d8f64780f3d9958eb62d7c9c5fa"
+version = "0.2.0"
+source = "git+https://github.com/icon-project/xCall.git?branch=main#a61aefea5e3458ba32c12d6b477dcc89984d4dc6"
 dependencies = [
  "common 0.1.0 (git+https://github.com/icon-project/IBC-Integration.git?branch=feat/cw-wasm-light-client)",
  "cosmwasm-schema",
@@ -648,7 +648,7 @@ dependencies = [
 [[package]]
 name = "cw-xcall-lib"
 version = "0.1.0"
-source = "git+https://github.com/icon-project/xCall.git?branch=fix/cosmwasm-1.3#d2a21f13e5de2d8f64780f3d9958eb62d7c9c5fa"
+source = "git+https://github.com/icon-project/xCall.git?branch=main#a61aefea5e3458ba32c12d6b477dcc89984d4dc6"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
