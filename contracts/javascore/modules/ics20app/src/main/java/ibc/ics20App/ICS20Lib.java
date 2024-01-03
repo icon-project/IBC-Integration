@@ -111,22 +111,4 @@ public class ICS20Lib {
         
     }
 
-
-
-    static String addressToHexString(String addr) {
-        StringBuilder hexString = new StringBuilder("0x");
-        long localValue = Long.parseLong(addr.substring(2), 16);
-
-        for (int i = 39; i >= 0; --i) {
-            hexString.append(HEX_DIGITS[(int) (localValue & 0xf)]);
-            localValue >>= 4;
-        }
-
-        if (localValue != 0) {
-            Context.revert("Insufficient hex length");
-        }
-
-        return hexString.toString();
-    }
-
 }
