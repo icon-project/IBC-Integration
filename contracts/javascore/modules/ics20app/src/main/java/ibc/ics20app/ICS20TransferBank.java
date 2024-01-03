@@ -20,14 +20,21 @@ public class ICS20TransferBank extends ICS20Transfer {
         }
     }
 
+    @External(readonly = true)
+    public Address getBank() {
+        return bank.getOrDefault(ZERO_ADDRESS);
+    }
+
     @External
     public void sendTransfer(String denom, BigInteger amount, String receiver, String sourcePort, String sourceChannel, BigInteger timeoutHeight, BigInteger timeoutRevisionNumber) {
         byte[] denomPrefix = ICS20Transfer.getDenomPrefix(sourcePort, sourceChannel);
         Address caller = Context.getCaller();
-        if (!denom.startsWith(denomPrefix.toString())) {
-            Context.require(_transferFrom(caller, ICS20Transfer.getEscrowAddress(sourceChannel), denom, amount), "transfer failed");
+
+        String denomText = new String(denomPrefix);
+        if (!denom.startsWith(denomText)) {
+            Context.require(_transferFrom(caller, ICS20Transfer.getEscrowAddress(sourceChannel), denom, amount), "ICS20App: transfer failed");
         } else {
-            Context.require(_burn(caller, denom, amount), "burn failed");
+            Context.require(_burn(caller, denom, amount), "ICS20App: Burn failed");
         }
 
         Height height = new Height();
@@ -48,33 +55,5 @@ public class ICS20TransferBank extends ICS20Transfer {
         newPacket.setData(data);
 
         Context.call(ibcHandler.get(), "sendPacket", newPacket.encode());
-
-    }
-
-    private boolean _transferFrom(Address sender, Address receiver, String denom, BigInteger amount) {
-        try {
-            Context.call(bank.get(), "transferFrom", sender, receiver, denom, amount);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private boolean _mint(Address account, String denom, BigInteger amount) {
-        try {
-            Context.call(bank.get(), "mint", account, denom, amount);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private boolean _burn(Address account, String denom, BigInteger amount) {
-        try {
-            Context.call(bank.get(), "burn", account, denom, amount);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
     }
 }
