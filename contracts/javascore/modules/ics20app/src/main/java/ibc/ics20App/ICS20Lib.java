@@ -2,10 +2,6 @@ package ibc.ics20app;
 
 import ibc.ics24.host.IBCCommitment;
 import ibc.icon.score.util.StringUtil;
-import score.ByteArrayObjectWriter;
-import score.Context;
-
-import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 
 public class ICS20Lib {
