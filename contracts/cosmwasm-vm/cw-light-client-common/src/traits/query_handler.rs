@@ -3,7 +3,7 @@ use common::icon::icon::lightclient::v1::ConsensusState;
 use common::icon::icon::types::v1::MerkleNode;
 use common::utils::calculate_root;
 use common::utils::keccak256;
-use common::utils::sha256;
+
 use cosmwasm_std::Deps;
 use cosmwasm_std::Order;
 use cosmwasm_std::StdResult;

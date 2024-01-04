@@ -94,7 +94,7 @@ fn process_message(
             let (skip, value) = unwrap_any_type(deps_mut.as_ref(), &msg.value);
 
             if skip {
-                return Ok(to_binary(&ContractResult::success()).map_err(ContractError::Std)?);
+                return to_binary(&ContractResult::success()).map_err(ContractError::Std);
             }
 
             let mut res = QueryHandler::verify_membership(
@@ -206,18 +206,18 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-pub fn unwrap_any_type(deps: Deps, value: &[u8]) -> (bool, Vec<u8>) {
+pub fn unwrap_any_type(_deps: Deps, value: &[u8]) -> (bool, Vec<u8>) {
     let any_result = Any::decode(value);
     match any_result {
         Ok(any) => {
             let type_url = any.type_url.to_string();
             match type_url.as_ref() {
-                "/ibc.lightclients.tendermint.v1.ClientState" => return (false, any.value),
-                "/ibc.lightclients.tendermint.v1.ConsensusState" => return (true, any.value),
-                _ => return (false, value.to_vec()),
+                "/ibc.lightclients.tendermint.v1.ClientState" => (false, any.value),
+                "/ibc.lightclients.tendermint.v1.ConsensusState" => (true, any.value),
+                _ => (false, value.to_vec()),
             }
         }
-        Err(e) => (false, value.to_vec()),
+        Err(_e) => (false, value.to_vec()),
     }
 }
 
