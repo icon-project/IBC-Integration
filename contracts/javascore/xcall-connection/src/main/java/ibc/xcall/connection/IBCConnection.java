@@ -60,10 +60,16 @@ public class IBCConnection {
     protected final BranchDB<String, DictDB<Address, BigInteger>> unclaimedPacketFees = Context.newBranchDB("unclaimedPacketFees", BigInteger.class);
 
     public IBCConnection(Address _xCall, Address _ibc, String _port) {
-        ibc.set(_ibc);
-        xCall.set(_xCall);
-        admin.set(Context.getCaller());
         PORT = _port;
+        if (ibc.get() == null ){
+            ibc.set(_ibc);
+            xCall.set(_xCall);
+            admin.set(Context.getCaller());
+        } else{
+            configuredNetworkIds.at("connection-3").set("xcall", "injective-1");
+            configuredClients.set("connection-3", "07-tendermint-3");
+            configuredTimeoutHeight.set("connection-3", new BigInteger("403200"));
+        }
     }
 
     private void checkCallerOrThrow(Address caller, String errMsg) {
