@@ -146,7 +146,6 @@ pub trait IQueryHandler {
         proof: &[MerkleNode],
         value: &[u8],
         path: &[u8],
-        use_keccak: bool,
     ) -> Result<bool, ContractError> {
         let client_state = Self::get_client_state(deps.storage, client_id)?;
         let consensus_state: ConsensusState =
@@ -171,11 +170,7 @@ pub trait IQueryHandler {
 
         let mut value_hash = value.to_vec();
         if !value.is_empty() {
-            value_hash = if use_keccak {
-                keccak256(value).to_vec()
-            } else {
-                value.to_vec()
-            };
+            value_hash = keccak256(value).to_vec();
         }
 
         // let _ =
@@ -238,7 +233,6 @@ pub trait IQueryHandler {
             proof,
             &[],
             path,
-            true,
         )
     }
 

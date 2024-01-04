@@ -1,4 +1,5 @@
 use common::traits::AnyTypes;
+use common::utils::sha256;
 use cosmwasm_schema::cw_serde;
 use cw_common::cw_println;
 
@@ -106,7 +107,6 @@ fn process_message(
                 &proofs_decoded.proofs,
                 &value,
                 &path,
-                true,
             );
             if res.is_err() {
                 res = QueryHandler::verify_membership(
@@ -116,9 +116,8 @@ fn process_message(
                     msg.delay_time_period,
                     msg.delay_block_period,
                     &proofs_decoded.proofs,
-                    &value,
+                    &sha256(value),
                     &path,
-                    false,
                 );
             }
             res.unwrap();

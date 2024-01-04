@@ -171,7 +171,6 @@ pub fn validate_channel_state(
         &proofs_decoded.proofs,
         &state.expected_counterparty_channel_end,
         &state.counterparty_chan_end_path,
-        true,
     )?;
     Ok(result)
 }
@@ -194,7 +193,6 @@ pub fn validate_connection_state(
         &proofs_decoded.proofs,
         &state.expected_counterparty_connection_end,
         &state.counterparty_conn_end_path,
-        true,
     )?;
     Ok(result)
 }
@@ -217,7 +215,6 @@ pub fn validate_client_state(
         &proofs_decoded.proofs,
         &state.expected_client_state,
         &state.client_state_path,
-        true,
     )?;
     Ok(result)
 }
@@ -239,7 +236,6 @@ pub fn validate_consensus_state(
         &proofs_decoded.proofs,
         &state.expected_conesenus_state,
         &state.conesenus_state_path,
-        true,
     )?;
     Ok(result)
 }
@@ -271,7 +267,6 @@ pub fn validate_next_seq_recv(
                 &proofs_decoded.proofs,
                 sequence.to_be_bytes().as_ref(),
                 seq_recv_path,
-                true,
             )?
         }
         LightClientPacketMessage::VerifyPacketReceiptAbsence {
@@ -358,7 +353,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
                 &proofs_decoded.proofs,
                 &message_bytes,
                 &path,
-                true,
             )
             .unwrap_or(false);
             to_binary(&result)
@@ -403,7 +397,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
                 &proofs_decoded.proofs,
                 &verify_packet_data.commitment,
                 &verify_packet_data.commitment_path,
-                true,
             )
             .unwrap_or(false);
 
@@ -426,7 +419,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
                 &proofs_decoded.proofs,
                 &verify_packet_acknowledge.ack,
                 &verify_packet_acknowledge.ack_path,
-                true,
             )
             .unwrap_or(false);
 
