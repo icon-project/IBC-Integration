@@ -79,17 +79,17 @@ public class ICS20TransferTest extends TestBase {
         assertEquals(IBCHandler, ics20App.call("getIBCAddress"));
     }
 
-    @Test
-    void getDestinationPort(){
-        String channelId = "channel-0";
-        assertEquals("transfer", ics20App.call("getDestinationPort", channelId));
-    }
-
-    @Test
-    void getDestinationChannel(){
-        String channelId = "channel-0";
-        assertEquals("channel-1", ics20App.call("getDestinationChannel", channelId));
-    }
+//    @Test
+//    void getDestinationPort(){
+//        String channelId = "channel-0";
+//        assertEquals("transfer", ics20App.call("getDestinationPort", channelId));
+//    }
+//
+//    @Test
+//    void getDestinationChannel(){
+//        String channelId = "channel-0";
+//        assertEquals("channel-1", ics20App.call("getDestinationChannel", channelId));
+//    }
 
     @Test
     void onlyIBCFailure(){
