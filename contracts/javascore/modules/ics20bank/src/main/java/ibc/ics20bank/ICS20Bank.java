@@ -47,6 +47,11 @@ public class ICS20Bank {
     }
 
     @External(readonly = true)
+    public int getRole(Address account) {
+        return roles.getOrDefault(account, 0);
+    }
+
+    @External(readonly = true)
     public BigInteger balanceOf(Address account, String denom) {
         Context.require(account != ZERO_ADDRESS, "ICS20Bank: balance query for the zero address");
 
@@ -78,7 +83,7 @@ public class ICS20Bank {
 
     @External
     public void burn(Address account, String denom, BigInteger amount) {
-        Context.require(hasRole(OPERATOR_ROLE_ID, Context.getCaller()), "ICS20Bank: must have burn role to mint");
+        Context.require(hasRole(OPERATOR_ROLE_ID, Context.getCaller()), "ICS20Bank: must have burn role to burn");
         Context.require(amount.compareTo(BigInteger.ZERO) > 0, "ICS20Bank: burn amount must be greater than zero");
         _burn(account, denom, amount);
     }
