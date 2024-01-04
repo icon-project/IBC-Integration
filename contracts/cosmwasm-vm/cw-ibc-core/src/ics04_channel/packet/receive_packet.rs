@@ -74,7 +74,9 @@ impl<'a> CwIbcCoreContext<'a> {
             packet_sequence,
         )?;
         if packet_already_received {
-            return Ok(Response::new().add_attribute("message", "Packet already received"));
+            return Err(ContractError::IbcPacketError {
+                error: PacketError::Other("Already Received".to_string()),
+            });
         }
 
         let connection_id = &channel_end.connection_hops()[0];
