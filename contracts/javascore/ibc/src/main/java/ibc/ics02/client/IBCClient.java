@@ -1,11 +1,11 @@
 package ibc.ics02.client;
 
-import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.Logger;
 import ibc.icon.score.util.NullChecker;
-import ibc.icon.structs.messages.MsgCreateClient;
-import ibc.icon.structs.messages.MsgUpdateClient;
 import ibc.ics24.host.IBCHost;
+import icon.ibc.interfaces.ILightClient;
+import icon.ibc.structs.messages.MsgCreateClient;
+import icon.ibc.structs.messages.MsgUpdateClient;
 import score.Address;
 import score.Context;
 

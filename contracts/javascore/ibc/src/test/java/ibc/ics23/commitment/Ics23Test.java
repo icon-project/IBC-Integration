@@ -1,6 +1,6 @@
 package ibc.ics23.commitment;
 
-import icon.proto.core.commitment.CommitmentProof;
+import cosmos.ics23.v1.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

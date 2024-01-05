@@ -20,9 +20,9 @@ package ibc.xcall.connection;
 import java.math.BigInteger;
 import java.util.Map;
 
+import icon.proto.core.channel.Packet;
 import icon.proto.core.channel.Channel.Counterparty;
 import icon.proto.core.channel.Channel.Order;
-import icon.proto.core.channel.Packet;
 import icon.proto.core.client.Height;
 import score.Address;
 import score.BranchDB;

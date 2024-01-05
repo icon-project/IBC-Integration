@@ -4,11 +4,13 @@ import com.iconloop.score.test.Account;
 import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
-import ibc.icon.interfaces.ILightClient;
-import ibc.icon.interfaces.ILightClientScoreInterface;
-import ibc.icon.structs.messages.MsgCreateClient;
-import ibc.icon.structs.messages.MsgUpdateClient;
+
 import ibc.icon.test.MockContract;
+import icon.ibc.interfaces.ILightClient;
+import icon.ibc.interfaces.ILightClientScoreInterface;
+import icon.ibc.structs.messages.MsgCreateClient;
+import icon.ibc.structs.messages.MsgUpdateClient;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;

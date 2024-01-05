@@ -12,9 +12,9 @@ import static org.mockito.Mockito.when;
 import com.iconloop.score.test.Account;
 import com.iconloop.score.test.ServiceManager;
 
-import ibc.icon.score.util.StringUtil;
 import icon.proto.core.channel.Packet;
 import icon.proto.core.client.Height;
+import ibc.icon.score.util.StringUtil;
 
 import java.math.BigInteger;
 import java.util.Map;

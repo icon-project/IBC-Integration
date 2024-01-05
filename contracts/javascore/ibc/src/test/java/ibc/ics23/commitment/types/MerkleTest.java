@@ -2,9 +2,7 @@ package ibc.ics23.commitment.types;
 
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.StringUtil;
-import icon.proto.clients.tendermint.MerkleRoot;
-import icon.proto.core.commitment.MerklePath;
-import icon.proto.core.commitment.MerkleProof;
+import ibc.core.commitment.v1.*;
 import score.Context;
 
 import org.junit.jupiter.api.Test;

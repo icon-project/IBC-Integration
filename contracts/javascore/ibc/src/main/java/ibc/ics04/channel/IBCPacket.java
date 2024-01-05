@@ -1,19 +1,20 @@
 package ibc.ics04.channel;
 
-import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Proto;
-import ibc.icon.structs.messages.MsgRequestTimeoutPacket;
 import ibc.ics24.host.IBCCommitment;
-import icon.proto.core.channel.Channel;
-import icon.proto.core.channel.Packet;
-import icon.proto.core.client.Height;
-import icon.proto.core.connection.ConnectionEnd;
+import icon.ibc.interfaces.ILightClient;
+import icon.ibc.structs.messages.MsgRequestTimeoutPacket;
 import score.Context;
 import score.DictDB;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+
+import icon.proto.core.channel.Channel;
+import icon.proto.core.channel.Packet;
+import icon.proto.core.client.Height;
+import icon.proto.core.connection.ConnectionEnd;
 
 public class IBCPacket extends IBCChannelHandshake {
 

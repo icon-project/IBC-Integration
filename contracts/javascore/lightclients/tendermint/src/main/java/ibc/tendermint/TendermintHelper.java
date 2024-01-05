@@ -5,40 +5,38 @@ import java.util.Arrays;
 
 import ibc.icon.score.util.MerkleTree;
 import ibc.icon.score.util.Proto;
-import icon.proto.clients.tendermint.CanonicalVote;
-import icon.proto.clients.tendermint.Commit;
-import icon.proto.clients.tendermint.CommitSig;
-import icon.proto.clients.tendermint.ConsensusState;
-import icon.proto.clients.tendermint.Duration;
-import icon.proto.clients.tendermint.LightHeader;
-import icon.proto.clients.tendermint.MerkleRoot;
-import icon.proto.clients.tendermint.SignedHeader;
-import icon.proto.clients.tendermint.SignedMsgType;
-import icon.proto.clients.tendermint.SimpleValidator;
-import icon.proto.clients.tendermint.Timestamp;
-import icon.proto.clients.tendermint.TmHeader;
-import icon.proto.clients.tendermint.Validator;
-import icon.proto.clients.tendermint.ValidatorSet;
-import icon.proto.core.client.Height;
+import ibc.icon.score.util.ByteUtil;
+import tendermint.types.Commit;
+import tendermint.types.CommitSig;
+import ibc.lightclients.tendermint.v1.ConsensusState;
+import tendermint.types.Header;
+import ibc.core.commitment.v1.MerkleRoot;
+import tendermint.types.SignedHeader;
+import tendermint.types.SignedMsgType;
+import tendermint.types.SimpleValidator;
+import tendermint.types.Validator;
+import tendermint.types.ValidatorSet;
+import ibc.core.client.v1.Height;
+
+import google.protobuf.Timestamp;
+import google.protobuf.Duration;
 import score.Context;
 
 public class TendermintHelper {
     public static final BigInteger MICRO_SECONDS_IN_A_SECOND = BigInteger.valueOf(1_000_000);
 
-    public static CanonicalVote toCanonicalVote(Commit commit, int valIdx, String chainId) {
+    public static byte[] toCanonicalVote(Commit commit, int valIdx, String chainId) {
         CommitSig commitSig = commit.getSignatures().get(valIdx);
-        CanonicalVote vote = new CanonicalVote();
-
-        vote.setType(SignedMsgType.SIGNED_MSG_TYPE_PRECOMMIT);
-        vote.setHeight(commit.getHeight());
-        vote.setRound(commit.getRound());
-        vote.setBlockId(commit.getBlockId());
-        vote.setTimestamp(commitSig.getTimestamp());
-        vote.setChainId(chainId);
-        return vote;
+        return ByteUtil.join(
+            Proto.encode(1, SignedMsgType.SIGNED_MSG_TYPE_PRECOMMIT),
+            Proto.encodeFixed64(2, commit.getHeight()),
+            Proto.encodeFixed64(3, commit.getRound()),
+            Proto.encode(4, commit.getBlockId()),
+            Proto.encode(5, commitSig.getTimestamp()),
+            Proto.encode(6, chainId));
     }
 
-    public static ConsensusState toConsensusState(TmHeader header) {
+    public static ConsensusState toConsensusState(ibc.lightclients.tendermint.v1.Header header) {
         ConsensusState state = new ConsensusState();
         state.setNextValidatorsHash(header.getSignedHeader().getHeader().getNextValidatorsHash());
         state.setTimestamp(header.getSignedHeader().getHeader().getTime());
@@ -129,7 +127,7 @@ public class TendermintHelper {
         return MerkleTree.merkleRootHash(data, 0, size);
     }
 
-    public static byte[] hash(LightHeader header) {
+    public static byte[] hash(Header header) {
         byte[] hbz = Proto.encode(1, header.getVersion().getBlock());
         byte[] pbt = header.getTime().encode();
         byte[] bzbi = header.getLastBlockId().encode();

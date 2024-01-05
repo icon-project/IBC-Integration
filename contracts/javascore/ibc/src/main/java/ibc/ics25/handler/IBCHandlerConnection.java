@@ -1,10 +1,10 @@
 package ibc.ics25.handler;
 
-import ibc.icon.interfaces.IIBCConnection;
-import ibc.icon.structs.messages.MsgConnectionOpenAck;
-import ibc.icon.structs.messages.MsgConnectionOpenConfirm;
-import ibc.icon.structs.messages.MsgConnectionOpenInit;
-import ibc.icon.structs.messages.MsgConnectionOpenTry;
+import icon.ibc.interfaces.IIBCConnection;
+import icon.ibc.structs.messages.MsgConnectionOpenAck;
+import icon.ibc.structs.messages.MsgConnectionOpenConfirm;
+import icon.ibc.structs.messages.MsgConnectionOpenInit;
+import icon.ibc.structs.messages.MsgConnectionOpenTry;
 import score.annotation.EventLog;
 import score.annotation.External;
 

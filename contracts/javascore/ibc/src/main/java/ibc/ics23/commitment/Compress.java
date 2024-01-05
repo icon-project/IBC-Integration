@@ -1,6 +1,6 @@
 package ibc.ics23.commitment;
 
-import icon.proto.core.commitment.*;
+import cosmos.ics23.v1.*;
 import score.Context;
 import scorex.util.ArrayList;
 import scorex.util.HashMap;

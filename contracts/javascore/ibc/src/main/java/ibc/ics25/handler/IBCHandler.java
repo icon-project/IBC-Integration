@@ -6,7 +6,7 @@ import score.annotation.External;
 
 import java.math.BigInteger;
 
-import ibc.icon.structs.messages.MsgCreateClient;
+import icon.ibc.structs.messages.MsgCreateClient;
 
 public class IBCHandler extends IBCHandlerPacket {
 

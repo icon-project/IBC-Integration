@@ -2,13 +2,13 @@ package ibc.ics25.handler;
 
 import java.math.BigInteger;
 
-import ibc.icon.interfaces.IIBCModule;
-import ibc.icon.interfaces.IIBCPacket;
-import ibc.icon.structs.messages.MsgPacketAcknowledgement;
-import ibc.icon.structs.messages.MsgPacketRecv;
-import ibc.icon.structs.messages.MsgPacketTimeout;
-import ibc.icon.structs.messages.MsgRequestTimeoutPacket;
 import icon.proto.core.channel.Packet;
+import icon.ibc.interfaces.IIBCModule;
+import icon.ibc.interfaces.IIBCPacket;
+import icon.ibc.structs.messages.MsgPacketAcknowledgement;
+import icon.ibc.structs.messages.MsgPacketRecv;
+import icon.ibc.structs.messages.MsgPacketTimeout;
+import icon.ibc.structs.messages.MsgRequestTimeoutPacket;
 import score.Context;
 import score.annotation.EventLog;
 import score.annotation.External;

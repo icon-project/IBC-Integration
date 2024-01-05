@@ -4,19 +4,19 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
-import ibc.icon.interfaces.ILightClient;
-import ibc.icon.score.util.ByteUtil;
-import ibc.icon.score.util.Logger;
-import ibc.icon.structs.messages.MsgConnectionOpenAck;
-import ibc.icon.structs.messages.MsgConnectionOpenConfirm;
-import ibc.icon.structs.messages.MsgConnectionOpenInit;
-import ibc.icon.structs.messages.MsgConnectionOpenTry;
-import ibc.ics02.client.IBCClient;
-import ibc.ics24.host.IBCCommitment;
 import icon.proto.core.client.Height;
 import icon.proto.core.connection.ConnectionEnd;
 import icon.proto.core.connection.Counterparty;
 import icon.proto.core.connection.Version;
+import ibc.icon.score.util.ByteUtil;
+import ibc.icon.score.util.Logger;
+import ibc.ics02.client.IBCClient;
+import ibc.ics24.host.IBCCommitment;
+import icon.ibc.interfaces.ILightClient;
+import icon.ibc.structs.messages.MsgConnectionOpenAck;
+import icon.ibc.structs.messages.MsgConnectionOpenConfirm;
+import icon.ibc.structs.messages.MsgConnectionOpenInit;
+import icon.ibc.structs.messages.MsgConnectionOpenTry;
 import score.Context;
 import scorex.util.ArrayList;
 

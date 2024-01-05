@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import ibc.icon.score.util.Proto;
-import ibc.icon.structs.messages.MsgRequestTimeoutPacket;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -28,19 +28,20 @@ import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
 
-import ibc.icon.interfaces.ILightClient;
-import ibc.icon.interfaces.ILightClientScoreInterface;
-import ibc.icon.score.util.ByteUtil;
-import ibc.icon.test.MockContract;
-import ibc.ics03.connection.IBCConnection;
-import ibc.ics24.host.IBCCommitment;
 import icon.proto.core.channel.Channel;
 import icon.proto.core.channel.Packet;
 import icon.proto.core.client.Height;
 import icon.proto.core.connection.ConnectionEnd;
 import icon.proto.core.connection.Counterparty;
-import icon.proto.core.connection.MerklePrefix;
+import ibc.core.commitment.v1.MerklePrefix;
 import icon.proto.core.connection.Version;
+import ibc.icon.score.util.ByteUtil;
+import ibc.icon.test.MockContract;
+import ibc.ics03.connection.IBCConnection;
+import ibc.ics24.host.IBCCommitment;
+import icon.ibc.interfaces.ILightClient;
+import icon.ibc.interfaces.ILightClientScoreInterface;
+import icon.ibc.structs.messages.MsgRequestTimeoutPacket;
 import score.Address;
 
 public class PacketTest extends TestBase {
