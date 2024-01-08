@@ -6,6 +6,7 @@ import score.Address;
 import score.Context;
 import score.VarDB;
 import score.annotation.External;
+import score.annotation.Payable;
 
 import java.math.BigInteger;
 
@@ -27,16 +28,26 @@ public class ICS20TransferBank extends ICS20Transfer {
         return bank.getOrDefault(ZERO_ADDRESS);
     }
 
+    @External(readonly = true)
+    public BigInteger getBankBalance() {
+        return Context.getBalance(Context.getAddress());
+    }
+
+    @Payable
     @External
     public void sendTransfer(String denom, BigInteger amount, String receiver, String sourcePort, String sourceChannel, BigInteger timeoutHeight, BigInteger timeoutRevisionNumber) {
-        byte[] denomPrefix = ICS20Transfer.getDenomPrefix(sourcePort, sourceChannel);
         Address caller = Context.getCaller();
-
-        String denomText = new String(denomPrefix);
-        if (!denom.startsWith(denomText)) {
-            Context.require(_transferFrom(caller, ICS20Transfer.getEscrowAddress(sourceChannel), denom, amount), "ICS20App: transfer failed");
+        if (denom.equals("icx")) {
+            Context.require(Context.getValue().compareTo(BigInteger.ZERO) > 0, "ICS20App: icx transfer failed");
+            Context.require(Context.getValue().compareTo(amount) == 0, "ICS20App: icx value is not equal to amount sent");
         } else {
-            Context.require(_burn(caller, denom, amount), "ICS20App: Burn failed");
+            byte[] denomPrefix = ICS20Transfer.getDenomPrefix(sourcePort, sourceChannel);
+            String denomText = new String(denomPrefix);
+            if (!denom.startsWith(denomText)) {
+                Context.require(_transferFrom(caller, ICS20Transfer.getEscrowAddress(sourceChannel), denom, amount), "ICS20App: transfer failed");
+            } else {
+                Context.require(_burn(caller, denom, amount), "ICS20App: Burn failed");
+            }
         }
 
         Height height = new Height();
@@ -58,4 +69,6 @@ public class ICS20TransferBank extends ICS20Transfer {
 
         Context.call(ibcHandler.get(), "sendPacket", newPacket.encode());
     }
+
+
 }

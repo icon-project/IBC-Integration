@@ -58,7 +58,13 @@ public abstract class ICS20Transfer implements IIBCModule {
 
         if (denom.length >= denomPrefix.length && Ops.hasPrefix(denom, denomPrefix)) {
             byte[] unprefixedDenom = Arrays.copyOfRange(denom, denomPrefix.length, denom.length);
-            success = _transferFrom(getEscrowAddress(packetDb.getDestinationChannel()), receiver, new String(unprefixedDenom), data.amount);
+            String unprefixedDenomString = new String(unprefixedDenom);
+            if (unprefixedDenomString.equals("icx")){
+                success = _transferICX(receiver, data.amount);
+            }
+            else {
+                success = _transferFrom(getEscrowAddress(packetDb.getDestinationChannel()), receiver, unprefixedDenomString, data.amount);
+            }
         } else {
             if (ICS20Lib.isEscapeNeededString(denom)) {
                 success = false;
@@ -84,7 +90,6 @@ public abstract class ICS20Transfer implements IIBCModule {
         if (acknowledgement != ICS20Lib.SUCCESSFUL_ACKNOWLEDGEMENT_JSON) {
             refundTokens(ICS20Lib.unmarshalJSON(packetDb.getData()), packetDb.getSourcePort(), packetDb.getSourceChannel());
         }
-
     }
 
     @External
@@ -180,6 +185,12 @@ public abstract class ICS20Transfer implements IIBCModule {
 
     boolean _burn(Address account, String denom, BigInteger amount) {
         Context.call(bank.get(), "burn", account, denom, amount);
+        return true;
+    }
+
+    boolean _transferICX(Address receiver, BigInteger amount) {
+        Context.require(Context.getBalance(Context.getAddress()).compareTo(amount) >= 0, "ICS20App: insufficient balance for transfer");
+        Context.transfer(receiver, amount);
         return true;
     }
 
