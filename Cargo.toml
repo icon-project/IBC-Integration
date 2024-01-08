@@ -14,7 +14,7 @@ version="0.1.1"
 
 [workspace.dependencies]
 cosmwasm-schema = {version="1.4.0",default-features = false}
-cosmwasm-std = {version="1.4.0",default-features = false,features = ["ibc3"]}
+cosmwasm-std = {version="1.4.0",default-features = false}
 schemars = {version="0.8.10",default-features = false}
 serde = { version = "1.0.145", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }

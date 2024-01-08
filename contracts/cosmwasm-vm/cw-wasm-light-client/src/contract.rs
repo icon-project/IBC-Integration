@@ -180,7 +180,10 @@ fn process_message(
                     Ok(to_binary(&ContractResult::success()).map_err(ContractError::Std)?)
                 }
             }
-        }
+        },
+        ExecuteMsg::UpdateStateOnMisbehaviour(_)=>{
+            Ok(to_binary(&ContractResult::success()).map_err(ContractError::Std)?)
+        },
         _ => todo!(),
     }
 }
