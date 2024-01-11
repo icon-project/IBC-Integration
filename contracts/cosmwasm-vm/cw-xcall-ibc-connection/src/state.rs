@@ -196,6 +196,10 @@ impl<'a> CwIbcConnection<'a> {
             .save(store, nid.to_owned(), config)
             .map_err(ContractError::Std)
     }
+
+    pub fn clear_ibc_config(&self, store: &mut dyn Storage, nid: &NetId) {
+        self.ibc_config.remove(store, nid.to_owned());
+    }
     pub fn set_ibc_host(
         &self,
         store: &mut dyn Storage,

@@ -362,19 +362,21 @@ public void transferAdmin(Address admin) {
 
 ```java
 /**
- * Configures a ibc connection so that a channel can be establised for a specigic nid
+ * Configures a ibc connection so that a channel can be established for a specific nid
 
 
  * @param connectionId The connection id of the connection/chain to open the connection to
  * @param counterpartyPortId  The allocated port name of the connection on the counterparty chain
  * @param counterpartyNid The network Id to be associated with this connection
  * @param clientId The lightClient associated with this connection
- * @param timeoutHeight The timeoutheight to be used on packets, it is recommended to use a high value similar to the trusting period of the lightclient.
+ * @param timeoutHeight The timeout height to be used on packets, it is recommended to use a high value similar to the trusting period of the lightclient.
  */
 public void configureConnection(String connectionId, String counterpartyPortId, String counterpartyNid, String clientId, BigInteger timeoutHeight) {
     onlyAdmin();
-    assert configuredNetworkIds[connectionId][counterpartyPortId] == null
-    assert channels[counterpartyNid] == null;
+    if channels[counterpartyNid] != null:
+        assert ibc.getChannel(PORT, channels[counterpartyNid]).state != OPEN
+        channels[counterpartyNid] = null
+
     configuredNetworkIds[connectionId][counterpartyPortId] = counterpartyNid
     configuredClients[connectionId] = clientId
     configuredTimeoutHeight[connectionId] = timeoutHeight
@@ -382,9 +384,28 @@ public void configureConnection(String connectionId, String counterpartyPortId, 
 ```
 
 ```java
+/**
+ * Resets a ibc connection so that a new channel can be establish for a specific nid
+
+
+ * @param connectionId The connection id of the connection/chain to open the connection to
+ * @param counterpartyPortId  The allocated port name of the connection on the counterparty chain
+ * @param counterpartyNid The network Id to be associated with this connection
+ * @param clientId The lightClient associated with this connection
+ * @param timeoutHeight The timeout height to be used on packets, it is recommended to use a high value similar to the trusting period of the lightclient.
+ */
+public void overrideConnection(String connectionId, String counterpartyPortId, String counterpartyNid, String clientId, BigInteger timeoutHeight) {
+    onlyOwner();
+    configuredNetworkIds[connectionId][counterpartyPortId] = counterpartyNid
+    configuredClients[connectionId] = clientId
+    configuredTimeoutHeight[connectionId] = timeoutHeight
+    channels[counterpartyNid] = null
+}
+
+```
+```java
 void setFee(String nid, BigInteger packetFee, BigInteger ackFee) {
     onlyAdmin();
-    //check chainn specfic limits
     sendPacketFee[nid] = packetFee
     ackFee[nid] = ackFee
 }
