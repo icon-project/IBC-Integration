@@ -18,7 +18,7 @@ base_goerli = "${BASE_GOERLI_RPC_URL}"
 
 ethereum= "${ETHEREUM_RPC_URL}"
 binance= "${BSC_RPC_URL}"
-# avalanche=
+avalanche= "${AVALANCHE_RPC_URL}"
 # arbitrum=
 # optimism=
 # base=
