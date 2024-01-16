@@ -33,7 +33,7 @@ base_goerli = { key = "${BASESCAN_API_KEY}"}
 
 ethereum={ key = "${ETHERSCAN_API_KEY}", chain="mainnet"}
 binance={ key = "${BSCSCAN_API_KEY}", chain="bsc"}
-# avalanche=
+avalanche={ key = "${SNOWSCAN_API_KEY}", chain="avalanche"}
 # arbitrum=
 # optimism=
 # base=
