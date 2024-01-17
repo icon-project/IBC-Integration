@@ -17,6 +17,7 @@ import score.BranchDB;
 import score.Context;
 import score.DictDB;
 import score.annotation.External;
+import score.annotation.Optional;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -120,7 +121,6 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         onlyHandler();
         ibc.lightclients.tendermint.v1.Header tmHeader = ibc.lightclients.tendermint.v1.Header.decode(clientMessageBytes);
         boolean conflictingHeader = false;
-
         // Check if the Client store already has a consensus state for the header's
         // height
         // If the consensus state exists, and it matches the header then we return early
@@ -153,7 +153,8 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         // Header is different from existing consensus state and also valid, so freeze
         // the client and return
         if (conflictingHeader) {
-            clientState.setFrozenHeight(newHeight(tmHeader.getSignedHeader().getHeader().getHeight()));
+            BigInteger revision = getRevisionNumber(tmHeader.getSignedHeader().getHeader().getChainId());
+            clientState.setFrozenHeight(newHeight(tmHeader.getSignedHeader().getHeader().getHeight(), revision));
             encodedClientState = clientState.encode();
             clientStates.set(clientId, encodedClientState);
 
@@ -168,12 +169,13 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
                     "clientStateCommitment", IBCCommitment.keccak256(encodedClientState),
                     "consensusStateCommitment", IBCCommitment.keccak256(encodedConsensusState),
                     "height",
-                    newHeight(tmHeader.getSignedHeader().getHeader().getHeight()).encode());
+                    newHeight(tmHeader.getSignedHeader().getHeader().getHeight(), revision).encode());
         }
 
         // update the consensus state from a new header and set processed time metadata
         if (tmHeader.getSignedHeader().getHeader().getHeight().compareTo(clientState.getLatestHeight().getRevisionHeight()) > 0) {
-            clientState.setLatestHeight(newHeight(tmHeader.getSignedHeader().getHeader().getHeight()));
+            BigInteger revision = getRevisionNumber(tmHeader.getSignedHeader().getHeader().getChainId());
+            clientState.setLatestHeight(newHeight(tmHeader.getSignedHeader().getHeader().getHeight(), revision));
             encodedClientState = clientState.encode();
             clientStates.set(clientId, encodedClientState);
         }

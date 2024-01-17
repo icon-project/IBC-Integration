@@ -280,8 +280,9 @@ public class LightClientTest extends LightClientTestBase {
         SignedHeader header1 = parseSignedHeader(1);
         SignedHeader header2 = parseSignedHeader(2);
 
-        Height height1 = Height.newBuilder().setRevisionHeight(header1.getHeader().getHeight()).build();
-        Height height2 = Height.newBuilder().setRevisionHeight(header2.getHeader().getHeight()).build();
+        BigInteger revision = TendermintHelper.getRevisionNumber(header1.getHeader().getChainId());
+        Height height1 = Height.newBuilder().setRevisionHeight(header1.getHeader().getHeight()).setRevisionNumber(revision.intValue()).build();
+        Height height2 = Height.newBuilder().setRevisionHeight(header2.getHeader().getHeight()).setRevisionNumber(revision.intValue()).build();
 
         // Act
         initializeClient(1);

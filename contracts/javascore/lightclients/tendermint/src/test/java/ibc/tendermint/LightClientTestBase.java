@@ -144,13 +144,15 @@ public class LightClientTestBase extends TestBase {
         Header header = Header.newBuilder()
                 .setSignedHeader(parseSignedHeader(blockOrder))
                 .setValidatorSet(parseValidatorSet(blockOrder)).build();
-
+        BigInteger revisionNumber = TendermintHelper.getRevisionNumber(header.getSignedHeader().getHeader().getChainId());
         ClientState clientState = ClientState.newBuilder()
                 .setChainId(header.getSignedHeader().getHeader().getChainId())
                 .setTrustLevel(trustLevel)
                 .setTrustingPeriod(trustingPeriod)
                 .setMaxClockDrift(maxClockDrift)
-                .setLatestHeight(Height.newBuilder().setRevisionHeight(header.getSignedHeader().getHeader().getHeight()))
+                .setLatestHeight(Height.newBuilder()
+                    .setRevisionHeight(header.getSignedHeader().getHeader().getHeight())
+                    .setRevisionNumber(revisionNumber.intValue()))
                 .setAllowUpdateAfterExpiry(allowUpdateAfterExpiry)
                 .setAllowUpdateAfterMisbehaviour(allowUpdateAfterMisbehaviour).build();
 
