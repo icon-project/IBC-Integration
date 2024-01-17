@@ -3,7 +3,7 @@ package tendermint
 import "time"
 
 func (m *ConsensusState) ValidateBasic() error { return nil }
-func (m *ConsensusState) ClientType() string   { return "icAon" }
+func (m *ConsensusState) ClientType() string   { return "icon" }
 
 // this returns the timestamp in nanoseconds
 func (m *ConsensusState) GetTimestamp() uint64 {
