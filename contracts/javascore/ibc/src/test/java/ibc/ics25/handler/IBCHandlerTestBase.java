@@ -95,7 +95,7 @@ public class IBCHandlerTestBase extends TestBase {
 
     void createClient() {
         // Arrange
-        handler.invoke(owner, "registerClient", clientType, lightClient.getAddress());
+        handler.invoke(owner, "registerClient", clientType, lightClient.getAddress(), 0);
         MsgCreateClient msg = new MsgCreateClient();
         msg.setClientState(new byte[0]);
         msg.setConsensusState(new byte[0]);

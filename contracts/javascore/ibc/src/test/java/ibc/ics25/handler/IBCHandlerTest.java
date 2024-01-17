@@ -252,7 +252,7 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
     void handlerAdminPermissions() {
         // TODO: should be a admin and not a owner.
         assertOnlyCallableBy(owner, "bindPort", portId);
-        assertOnlyCallableBy(owner, "registerClient", clientType, lightClient.getAddress());
+        assertOnlyCallableBy(owner, "registerClient", clientType, lightClient.getAddress(), 0);
         assertOnlyCallableBy(owner, "setExpectedTimePerBlock", BigInteger.TWO);
     }
 

@@ -20,10 +20,10 @@ public class Merkle {
         Proof.getTendermintSpec()
     );
 
-    public static MerklePath applyPrefix(String path) {
+    public static MerklePath applyPrefix(String path, String prefix) {
         var mpath = new MerklePath();
         List<String> keyPath = new ArrayList<>();
-        keyPath.add(StringUtil.bytesToHex("wasm".getBytes()));
+        keyPath.add(prefix);
         keyPath.add(path);
         mpath.setKeyPath(keyPath);
         return mpath;

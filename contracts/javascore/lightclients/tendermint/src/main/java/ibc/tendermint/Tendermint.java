@@ -4,9 +4,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 import ibc.icon.score.util.Proto;
-import tendermint.types.*;
-import google.protobuf.*;
-import ibc.lightclients.tendermint.v1.*;
+import icon.proto.clients.tendermint.*;
 import score.Context;
 
 import static ibc.tendermint.TendermintHelper.*;
@@ -258,7 +256,7 @@ public abstract class Tendermint {
             String chainID,
             int idx) {
 
-        return toCanonicalVote(commit, idx, chainID);
+        return toCanonicalVote(commit, idx, chainID).encode();
     }
 
     protected byte[] voteSignBytesDelim(

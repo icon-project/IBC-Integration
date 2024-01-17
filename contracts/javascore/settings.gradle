@@ -13,6 +13,10 @@ include(':tendermint')
 project(':tendermint').projectDir = file("lightclients/tendermint")
 project(':tendermint').name = "tendermint"
 
+include(':ics-08-tendermint')
+project(':ics-08-tendermint').projectDir = file("lightclients/ics-08-tendermint")
+project(':ics-08-tendermint').name = "ics-08-tendermint"
+
 include(':mockclient')
 project(':mockclient').projectDir = file("lightclients/mockclient")
 project(':mockclient').name = "mockclient"

@@ -64,10 +64,18 @@ public class Proto {
     public static DecodeResponse<BigInteger> decodeVarInt(byte[] data, int index) {
         DecodeResponse<BigInteger> resp = new DecodeResponse<>();
 
-        DataSize dataSize = getDataSize(data, index);
+        long value = 0;
+        for (int shift = 0; shift < 64; shift += 7) {
+            final byte b = data[index];
+            index++;
+            value |= (long) (b & 0x7F) << shift;
+            if ((b & 0x80) == 0) {
+                break;
+            }
+        }
 
-        resp.index = dataSize.index;
-        resp.res = BigInteger.valueOf(dataSize.length);
+        resp.index = index;
+        resp.res = BigInteger.valueOf(value);
         return resp;
     }
 

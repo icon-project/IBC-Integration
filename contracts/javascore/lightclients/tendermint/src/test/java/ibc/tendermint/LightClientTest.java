@@ -9,19 +9,18 @@ import static org.mockito.Mockito.doNothing;
 
 import java.math.BigInteger;
 
-
-import com.google.protobuf.Timestamp;
-import com.google.protobuf.Duration;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.ibc.core.client.v1.Height;
-
+import ibc.tendermint.light.TendermintLight.ClientState;
+import ibc.tendermint.light.TendermintLight.ConsensusState;
+import ibc.tendermint.light.TendermintLight.Duration;
+import ibc.tendermint.light.TendermintLight.Fraction;
+import ibc.tendermint.light.TendermintLight.SignedHeader;
+import icon.proto.clients.tendermint.Timestamp;
+import icon.proto.clients.tendermint.TmHeader;
+import icon.proto.core.client.Height;
 import score.Address;
-
-import com.ibc.lightclients.tendermint.v1.*;
-import com.tendermint.types.*;
 
 public class LightClientTest extends LightClientTestBase {
 
@@ -40,11 +39,11 @@ public class LightClientTest extends LightClientTestBase {
 
         // Assert
         ClientState clientState = getClientState();
-        assertEquals(clientState.getLatestHeight().getRevisionHeight(), initialHeader.getHeader().getHeight());
+        assertEquals(clientState.getLatestHeight(), initialHeader.getHeader().getHeight());
         assertEquals(clientState.getAllowUpdateAfterExpiry(), allowUpdateAfterExpiry);
         assertEquals(clientState.getAllowUpdateAfterMisbehaviour(), allowUpdateAfterMisbehaviour);
         assertEquals(clientState.getChainId(), initialHeader.getHeader().getChainId());
-        assertEquals(clientState.getFrozenHeight(), Height.newBuilder().build());
+        assertEquals(clientState.getFrozenHeight(), 0);
         assertEquals(clientState.getMaxClockDrift(), maxClockDrift);
         assertEquals(clientState.getTrustLevel(), trustLevel);
         assertEquals(clientState.getTrustingPeriod(), trustingPeriod);
@@ -75,7 +74,7 @@ public class LightClientTest extends LightClientTestBase {
 
         // Assert
         ClientState clientState = getClientState();
-        assertEquals(clientState.getLatestHeight().getRevisionHeight(), lastHeader.getHeader().getHeight());
+        assertEquals(clientState.getLatestHeight(), lastHeader.getHeader().getHeight());
         assertConsensusState(parseSignedHeader(1));
         assertConsensusState(parseSignedHeader(2));
         assertConsensusState(lastHeader);
@@ -93,7 +92,7 @@ public class LightClientTest extends LightClientTestBase {
 
         // Assert
         ClientState clientState = getClientState();
-        assertEquals(clientState.getLatestHeight().getRevisionHeight(), lastHeader.getHeader().getHeight());
+        assertEquals(clientState.getLatestHeight(), lastHeader.getHeader().getHeight());
         assertConsensusState(parseSignedHeader(1));
         assertConsensusState(parseSignedHeader(2));
         assertConsensusState(lastHeader);
@@ -112,7 +111,26 @@ public class LightClientTest extends LightClientTestBase {
 
         // Assert
         ClientState clientState = getClientState();
-        assertEquals(clientState.getLatestHeight().getRevisionHeight(), lastHeader.getHeader().getHeight());
+        assertEquals(clientState.getLatestHeight(), lastHeader.getHeader().getHeight());
+        assertConsensusState(parseSignedHeader(1));
+        assertConsensusState(parseSignedHeader(2));
+        assertConsensusState(lastHeader);
+    }
+
+    @Test
+    void updateValidatorWithLargePower() throws Exception {
+        // Arrange
+        blockSetPath = BLOCK_SET_LONG_POWER;
+        SignedHeader lastHeader = parseSignedHeader(3);
+
+        // Act
+        initializeClient(1);
+        updateClient(2, 1);
+        updateClient(3, 2);
+
+        // Assert
+        ClientState clientState = getClientState();
+        assertEquals(clientState.getLatestHeight(), lastHeader.getHeader().getHeight());
         assertConsensusState(parseSignedHeader(1));
         assertConsensusState(parseSignedHeader(2));
         assertConsensusState(lastHeader);
@@ -131,7 +149,7 @@ public class LightClientTest extends LightClientTestBase {
 
         // Assert
         ClientState clientState = getClientState();
-        assertEquals(clientState.getLatestHeight().getRevisionHeight(), lastHeader.getHeader().getHeight());
+        assertEquals(clientState.getLatestHeight(), lastHeader.getHeader().getHeight());
         assertConsensusState(parseSignedHeader(1));
         assertConsensusState(parseSignedHeader(2));
         assertConsensusState(lastHeader);
@@ -145,17 +163,17 @@ public class LightClientTest extends LightClientTestBase {
         initializeClient(1);
         updateClient(2, 1);
         doNothing().when(clientSpy).checkValidity(
-                any(ibc.lightclients.tendermint.v1.ClientState.class),
-                any(ibc.lightclients.tendermint.v1.ConsensusState.class),
-                any(ibc.lightclients.tendermint.v1.Header.class),
-                any());
+                any(icon.proto.clients.tendermint.ClientState.class),
+                any(icon.proto.clients.tendermint.ConsensusState.class),
+                any(TmHeader.class),
+                any(Timestamp.class));
 
         // Act
         updateClient(3, 1);
 
         // Assert
         ClientState clientState = getClientState();
-        assertEquals(clientState.getFrozenHeight().getRevisionHeight(), duplicatedHeader.getHeader().getHeight());
+        assertEquals(clientState.getFrozenHeight(), duplicatedHeader.getHeader().getHeight());
     }
 
     @Test
@@ -247,14 +265,16 @@ public class LightClientTest extends LightClientTestBase {
         SignedHeader header1 = parseSignedHeader(1);
         SignedHeader header2 = parseSignedHeader(2);
 
-        Height height1 =  Height.newBuilder().setRevisionHeight(header1.getHeader().getHeight()).build();
-        Height height2 =  Height.newBuilder().setRevisionHeight(header2.getHeader().getHeight()).build();
+        Height height1 = new Height();
+        height1.setRevisionHeight(BigInteger.valueOf(header1.getHeader().getHeight()));
+        Height height2 = new Height();
+        height2.setRevisionHeight(BigInteger.valueOf(header2.getHeader().getHeight()));
         long expectedTime1 = header1.getHeader().getTime().getSeconds();
         long expectedTime2 = header2.getHeader().getTime().getSeconds();
 
         // Act
-        BigInteger t1 = (BigInteger) client.call("getTimestampAtHeight", clientId, height1.toByteArray());
-        BigInteger t2 = (BigInteger) client.call("getTimestampAtHeight", clientId, height2.toByteArray());
+        BigInteger t1 = (BigInteger) client.call("getTimestampAtHeight", clientId, height1.encode());
+        BigInteger t2 = (BigInteger) client.call("getTimestampAtHeight", clientId, height2.encode());
 
         // Assert
         assertEquals(expectedTime1, t1.longValue());
@@ -264,13 +284,14 @@ public class LightClientTest extends LightClientTestBase {
     @Test
     void getTimestampAtHeight_noConsensusState() throws Exception {
         // Arrange
-        Height height = Height.newBuilder().setRevisionHeight(1).build();
+        Height height = new Height();
+        height.setRevisionHeight(BigInteger.ONE);
         String expectedErrorMessage = "height: " + height.getRevisionHeight()
                 + " does not have a consensus state";
 
         // Act & Assert
         AssertionError e = assertThrows(AssertionError.class,
-                () -> client.call("getTimestampAtHeight", clientId, height.toByteArray()));
+                () -> client.call("getTimestampAtHeight", clientId, height.encode()));
         assertTrue(e.getMessage().contains(expectedErrorMessage));
     }
 
@@ -280,21 +301,22 @@ public class LightClientTest extends LightClientTestBase {
         SignedHeader header1 = parseSignedHeader(1);
         SignedHeader header2 = parseSignedHeader(2);
 
-        BigInteger revision = TendermintHelper.getRevisionNumber(header1.getHeader().getChainId());
-        Height height1 = Height.newBuilder().setRevisionHeight(header1.getHeader().getHeight()).setRevisionNumber(revision.intValue()).build();
-        Height height2 = Height.newBuilder().setRevisionHeight(header2.getHeader().getHeight()).setRevisionNumber(revision.intValue()).build();
+        Height height1 = new Height();
+        height1.setRevisionHeight(BigInteger.valueOf(header1.getHeader().getHeight()));
+        Height height2 = new Height();
+        height2.setRevisionHeight(BigInteger.valueOf(header2.getHeader().getHeight()));
 
         // Act
         initializeClient(1);
 
         // Assert
-        assertArrayEquals(height1.toByteArray(), (byte[]) client.call("getLatestHeight", clientId));
+        assertArrayEquals(height1.encode(), (byte[]) client.call("getLatestHeight", clientId));
 
         // Act
         updateClient(2, 1);
 
         // Assert
-        assertArrayEquals(height2.toByteArray(), (byte[]) client.call("getLatestHeight", clientId));
+        assertArrayEquals(height2.encode(), (byte[]) client.call("getLatestHeight", clientId));
     }
 
     @Test
