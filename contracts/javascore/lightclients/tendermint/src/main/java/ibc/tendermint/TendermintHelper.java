@@ -57,6 +57,14 @@ public class TendermintHelper {
         return validatorSet.getTotalVotingPower();
     }
 
+    public static BigInteger getRevisionNumber(String chainId) {
+        int id = chainId.indexOf("-");
+        if (id >= 0) {
+            return new BigInteger(chainId.substring(id+1));
+        }
+        return BigInteger.ZERO;
+    }
+
     public static int getByAddress(ValidatorSet validatorSet, byte[] addr) {
         int size = validatorSet.getValidators().size();
         for (int idx = 0; idx < size; idx++) {
@@ -68,10 +76,10 @@ public class TendermintHelper {
         return -1;
     }
 
-    public static Height newHeight(BigInteger blockHeight) {
+    public static Height newHeight(BigInteger blockHeight, BigInteger revision) {
         Height height = new Height();
         height.setRevisionHeight(blockHeight);
-        height.setRevisionNumber(BigInteger.ZERO);
+        height.setRevisionNumber(revision);
 
         return height;
     }
