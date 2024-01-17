@@ -3,6 +3,7 @@ package ibc.ics04.channel;
 import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Proto;
+import ibc.icon.score.util.StringUtil;
 import ibc.icon.structs.messages.MsgRequestTimeoutPacket;
 import ibc.ics24.host.IBCCommitment;
 import icon.proto.core.channel.Channel;
@@ -57,6 +58,13 @@ public class IBCPacket extends IBCChannelHandshake {
                 packet.getSourceChannel(),
                 packet.getSequence());
 
+        Context.println("packet srcport "+ packet.getSourcePort());
+        Context.println("packet srcChannel "+ packet.getSourceChannel());
+        Context.println("packet srcport "+ packet.getSequence());
+
+        Context.println("packet byte "+ StringUtil.bytesToHex( packet.encode()));
+
+
         byte[] packetCommitment = createPacketCommitment(packet);
         commitments.set(packetCommitmentKey, packetCommitment);
         packetHeights.at(packet.getSourcePort()).at(packet.getSourceChannel()).set(packet.getSequence(),
@@ -85,11 +93,12 @@ public class IBCPacket extends IBCChannelHandshake {
                 "connection state is not OPEN");
 
         Context.require(
-                packet.getTimeoutHeight().getRevisionHeight().equals(BigInteger.ZERO)
+                packet.getTimeoutHeight().getRevisionHeight().equals(BigInteger.ONE)
                         || BigInteger.valueOf(Context.getBlockHeight())
                         .compareTo(packet.getTimeoutHeight()
                                 .getRevisionHeight()) < 0,
                 "block height >= packet timeout height");
+        Context.println("timestamp is "+ Context.getBlockTimestamp());
         Context.require(
                 packet.getTimeoutTimestamp().equals(BigInteger.ZERO)
                         || BigInteger.valueOf(Context.getBlockTimestamp())
@@ -99,6 +108,12 @@ public class IBCPacket extends IBCChannelHandshake {
         byte[] commitmentPath = IBCCommitment.packetCommitmentPath(packet.getSourcePort(),
                 packet.getSourceChannel(), packet.getSequence());
         byte[] commitmentBytes = createPacketCommitmentBytes(packet);
+
+
+
+        Context.println("commitmentpath"+ StringUtil.bytesToHex(commitmentPath));
+        Context.println("commitmentBytes"+ StringUtil.bytesToHex(commitmentBytes));
+
 
         verifyPacketCommitment(
                 connection,
@@ -144,16 +159,21 @@ public class IBCPacket extends IBCChannelHandshake {
         byte[] ackCommitmentKey = IBCCommitment.packetAcknowledgementCommitmentKey(destinationPortId,
                 destinationChannel, sequence);
         Context.require(commitments.get(ackCommitmentKey) == null, "acknowledgement for packet already exists");
-        byte[] ackCommitment = IBCCommitment.keccak256(acknowledgement);
+        Context.println(destinationChannel);
+        byte[] ackCommitment = IBCCommitment.sha256(acknowledgement);
+
         commitments.set(ackCommitmentKey, ackCommitment);
         ackHeights.at(destinationPortId).at(destinationChannel).set(sequence,
-                Context.getBlockHeight());
-
-        sendBTPMessage(connection.getClientId(), ByteUtil.join(ackCommitmentKey, ackCommitment));
+        Context.getBlockHeight());
+        
+        byte [] btpMessage = ByteUtil.join(ackCommitmentKey, IBCCommitment.keccak256(ackCommitment));
+        Context.println("ackCommitment"+ StringUtil.bytesToHex(btpMessage));
+        sendBTPMessage(connection.getClientId(), btpMessage);
 
     }
 
     public void _acknowledgePacket(Packet packet, byte[] acknowledgement, byte[] proof, byte[] proofHeight) {
+        Context.println("_ackPacket");
         Channel channel = Channel.decode(channels.at(packet.getSourcePort()).get(packet.getSourceChannel()));
         Context.require(channel.getState() == Channel.State.STATE_OPEN, "channel state must be OPEN");
 
@@ -163,11 +183,13 @@ public class IBCPacket extends IBCChannelHandshake {
         Context.require(
                 packet.getDestinationChannel().equals(channel.getCounterparty().getChannelId()),
                 "packet destination channel doesn't match the counterparty's channel");
-
-        ConnectionEnd connection = ConnectionEnd.decode(connections.get(channel.getConnectionHops().get(0)));
-        Context.require(connection != null, "connection does not exist");
-        Context.require(connection.getState() == ConnectionEnd.State.STATE_OPEN,
+                
+                
+                ConnectionEnd connection = ConnectionEnd.decode(connections.get(channel.getConnectionHops().get(0)));
+                Context.require(connection != null, "connection does not exist");
+                Context.require(connection.getState() == ConnectionEnd.State.STATE_OPEN,
                 "connection state is not OPEN");
+                Context.println("_ackPacket check verified");
 
         byte[] packetCommitmentKey = IBCCommitment.packetCommitmentKey(packet.getSourcePort(),
                 packet.getSourceChannel(), packet.getSequence());
@@ -179,12 +201,19 @@ public class IBCPacket extends IBCChannelHandshake {
 
         byte[] packetAckPath = IBCCommitment.packetAcknowledgementCommitmentPath(packet.getDestinationPort(),
                 packet.getDestinationChannel(), packet.getSequence());
+        Context.println("_ackPacket before verifyPacketAck");
+
+
         verifyPacketAcknowledgement(
                 connection,
                 proofHeight,
                 proof,
                 packetAckPath,
-                acknowledgement);
+                IBCCommitment.sha256(acknowledgement));
+
+                Context.println("_ackPacket after verifyPacketAck");
+
+
 
         if (channel.getOrdering() == Channel.Order.ORDER_ORDERED) {
             DictDB<String, BigInteger> nextSequenceAckSourcePort = nextSequenceAcknowledgements
@@ -436,13 +465,14 @@ public class IBCPacket extends IBCChannelHandshake {
     }
 
     public static byte[] createPacketCommitmentBytes(Packet packet) {
-        return ByteUtil.join(
+        byte[] d = ByteUtil.join(
                 Proto.encodeFixed64(packet.getTimeoutTimestamp(), false),
                 Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionNumber(),
                         false),
                 Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionHeight(),
                         false),
-                IBCCommitment.keccak256(packet.getData()));
+                IBCCommitment.sha256(packet.getData()));
+        return IBCCommitment.sha256(d);
     }
 
     private boolean lt(Height h1, Height h2) {
