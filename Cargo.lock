@@ -294,6 +294,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-centralized-connection"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "cosmwasm",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 1.1.0 (git+https://github.com/icon-project/cw-storage-plus.git?branch=fix-raw)",
+ "cw-xcall-lib",
+ "cw2",
+ "getrandom",
+ "hex",
+ "schemars 0.8.15",
+ "serde",
+ "serde-json-wasm 0.5.1",
+ "thiserror",
+]
+
+[[package]]
 name = "cw-mock-dapp"
 version = "0.1.0"
 dependencies = [
