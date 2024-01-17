@@ -44,13 +44,13 @@ public class ClientTest extends TestBase {
     void registerClient_alreadyRegistered() {
         // Arrange
         String clientType = "clientType";
-        client.invoke(owner, "registerClient", clientType, lightClient.getAddress());
+        client.invoke(owner, "registerClient", clientType, lightClient.getAddress(), 0);
 
         // Act & Assert
         String expectedErrorMessage = "Already registered";
         Executable registerWithSameType = () -> {
             client.invoke(owner, "registerClient", clientType,
-                    lightClient.getAddress());
+                    lightClient.getAddress(), 0);
         };
         AssertionError e = assertThrows(AssertionError.class, registerWithSameType);
         assertTrue(e.getMessage().contains(expectedErrorMessage));
@@ -85,7 +85,7 @@ public class ClientTest extends TestBase {
         String expectedClientId = msg.getClientType() + "-0";
 
         // Act
-        client.invoke(owner, "registerClient", msg.getClientType(), lightClient.getAddress());
+        client.invoke(owner, "registerClient", msg.getClientType(), lightClient.getAddress(), 0);
         client.invoke(owner, "_createClient", msg);
 
         // Assert

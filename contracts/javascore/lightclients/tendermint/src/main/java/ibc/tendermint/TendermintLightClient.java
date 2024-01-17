@@ -1,12 +1,8 @@
 package ibc.tendermint;
 
-import icon.ibc.interfaces.ILightClient;
-import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.NullChecker;
-import ibc.icon.score.util.StringUtil;
 import ibc.ics23.commitment.types.Merkle;
 import ibc.ics24.host.IBCCommitment;
-import cosmos.ics23.v1.*;
 import google.protobuf.*;
 import tendermint.types.*;
 import ibc.core.commitment.v1.*;
@@ -17,7 +13,6 @@ import score.BranchDB;
 import score.Context;
 import score.DictDB;
 import score.annotation.External;
-import score.annotation.Optional;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -27,7 +22,7 @@ import static ibc.ics23.commitment.types.Merkle.applyPrefix;
 import static ibc.tendermint.TendermintHelper.*;
 import static score.Context.require;
 
-public class TendermintLightClient extends Tendermint implements ILightClient {
+public abstract class TendermintLightClient extends Tendermint {
     public final Address ibcHandler;
 
     public static final String CLIENT_STATES = "CLIENT_STATES";
@@ -194,19 +189,19 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
                 "height", clientState.getLatestHeight().encode());
     }
 
-    @External(readonly = true)
+    // @External(readonly = true)
     public void verifyMembership(
             String clientId,
             byte[] heightBytes,
             BigInteger delayTimePeriod,
             BigInteger delayBlockPeriod,
             byte[] proof,
-            byte[] prefix,
-            byte[] path,
+            String prefix,
+            String path,
             byte[] value) {
 
-        value = IBCCommitment.keccak256(value);
-        path = ByteUtil.join(prefix, StringUtil.bytesToHex(IBCCommitment.keccak256(path)).getBytes());
+        // value = IBCCommitment.keccak256(value);
+        // path = ByteUtil.join(prefix, StringUtil.bytesToHex(IBCCommitment.keccak256(path)).getBytes());
 
         Height height = Height.decode(heightBytes);
         ClientState clientState = ClientState.decode(mustGetClientState(clientId));
@@ -218,22 +213,22 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
 
         var root = consensusState.getRoot();
         var merkleProof = MerkleProof.decode(proof);
-        var merklePath = applyPrefix(new String(path));
+        var merklePath = applyPrefix(path, prefix);
 
         Merkle.verifyMembership(merkleProof, Merkle.SDK_SPEC, root, merklePath, value);
     }
 
-    @External(readonly = true)
+    // @External(readonly = true)
     public void verifyNonMembership(
             String clientId,
             byte[] heightBytes,
             BigInteger delayTimePeriod,
             BigInteger delayBlockPeriod,
             byte[] proof,
-            byte[] prefix,
-            byte[] path) {
+            String prefix,
+            String path) {
 
-        path = ByteUtil.join(prefix, StringUtil.bytesToHex(IBCCommitment.keccak256(path)).getBytes());
+        // path = ByteUtil.join(prefix, StringUtil.bytesToHex(IBCCommitment.keccak256(path)).getBytes());
 
         Height height = Height.decode(heightBytes);
         ClientState clientState = ClientState.decode(mustGetClientState(clientId));
@@ -245,7 +240,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
 
         var root = consensusState.getRoot();
         var merkleProof = MerkleProof.decode(proof);
-        var merklePath = applyPrefix(new String(path));
+        var merklePath = applyPrefix(path, prefix);
 
         Merkle.verifyNonMembership(merkleProof, Merkle.SDK_SPEC, root, merklePath);
     }
@@ -291,13 +286,13 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         require(ok, "LC: failed to verify header");
     }
 
-    private void validateArgs(ClientState cs, BigInteger height, byte[] prefix, byte[] proof) {
+    private void validateArgs(ClientState cs, BigInteger height, String prefix, byte[] proof) {
         Context.require(cs.getLatestHeight().getRevisionHeight().compareTo(height) >= 0,
                 "Latest height must be greater or equal to proof height");
         Context.require(cs.getFrozenHeight().getRevisionHeight().equals(BigInteger.ZERO) ||
                         cs.getFrozenHeight().getRevisionHeight().compareTo(height) >= 0,
                 "Client is Frozen");
-        Context.require(prefix.length > 0, "Prefix cant be empty");
+        Context.require(prefix.length() > 0, "Prefix cant be empty");
         Context.require(proof.length > 0, "Proof cant be empty");
     }
 
