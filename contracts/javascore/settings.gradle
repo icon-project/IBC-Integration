@@ -17,10 +17,6 @@ include(':ics-08-tendermint')
 project(':ics-08-tendermint').projectDir = file("lightclients/ics-08-tendermint")
 project(':ics-08-tendermint').name = "ics-08-tendermint"
 
-include(':wasm-tendermint')
-project(':wasm-tendermint').projectDir = file("lightclients/wasm-tendermint")
-project(':wasm-tendermint').name = "wasm-tendermint"
-
 include(':mockclient')
 project(':mockclient').projectDir = file("lightclients/mockclient")
 project(':mockclient').name = "mockclient"

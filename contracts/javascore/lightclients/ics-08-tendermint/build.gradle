@@ -7,7 +7,6 @@ dependencies {
     implementation project(':score-util')
     implementation project(':ibc')
     implementation project(':proto-lib')
-    implementation project(':tendermint')
 
     testImplementation 'com.google.protobuf:protobuf-javalite:3.16.3'
     testImplementation 'com.google.protobuf:protobuf-java-util:3.16.3'
@@ -36,7 +35,7 @@ tasks.named('compileJava') {
 }
 
 optimizedJar {
-    mainClassName = 'ibc.tendermint.ICS08LightClient'
+    mainClassName = 'ibc.ics08.tendermint.ICS08TendermintLightClient'
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }

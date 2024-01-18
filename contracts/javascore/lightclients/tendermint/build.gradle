@@ -1,18 +1,14 @@
 version = '0.1.0'
 
-optimizedJar.enabled = false
-
 dependencies {
     compileOnly("foundation.icon:javaee-api:$javaeeVersion")
     implementation("foundation.icon:javaee-scorex:$scorexVersion")
     implementation project(':lib')
     implementation project(':score-util')
     implementation project(':ibc')
-    implementation project(':proto-lib')
 
 
     testImplementation 'com.google.protobuf:protobuf-javalite:3.16.3'
-    testImplementation 'com.google.protobuf:protobuf-java-util:3.16.3'
     testImplementation 'foundation.icon:javaee-rt:0.9.3'
     testImplementation("org.mockito:mockito-core:$mockitoCoreVersion")
     testImplementation("org.mockito:mockito-inline:$mockitoCoreVersion")
@@ -39,7 +35,6 @@ jacocoTestReport {
     dependsOn ':ibc:jacocoTestReport'
     dependsOn ':ibc:processTestResources'
     dependsOn ':lib:test'
-    dependsOn ':proto-lib:test'
     dependsOn ':mockapp:compileJava'
     dependsOn ':mockapp:test'
     dependsOn ':proto-util:compileJava'
@@ -69,8 +64,13 @@ tasks.named('compileJava') {
     dependsOn(':lib:jar')
 }
 
-
-
+optimizedJar {
+    mainClassName = 'ibc.tendermint.TendermintLightClient'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
 
 deployJar {
     endpoints {

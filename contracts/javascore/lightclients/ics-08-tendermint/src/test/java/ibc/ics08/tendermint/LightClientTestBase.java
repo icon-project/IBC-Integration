@@ -1,4 +1,4 @@
-package ibc.tendermint;
+package ibc.ics08.tendermint;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,7 +8,7 @@ import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
 import foundation.icon.ee.util.Crypto;
-import ibc.tendermint.light.TendermintLight.*;
+import ibc.lightclients.tendermint.v1.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,10 +40,21 @@ import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
 
-import ibc.tendermint.light.TendermintLight.*;
-import icon.proto.core.client.Height;
+import com.google.protobuf.Timestamp;
+import com.google.protobuf.Duration;
 import score.Context;
 import foundation.icon.ee.util.Crypto;
+
+import com.ibc.lightclients.tendermint.v1.*;
+import com.ibc.lightclients.tendermint.v1.ConsensusState;
+import com.ibc.lightclients.tendermint.v1.ClientState;
+import com.ibc.lightclients.tendermint.v1.Header;
+import com.tendermint.types.*;
+import com.tendermint.crypto.*;
+import com.ibc.lightclients.tendermint.v1.Fraction;
+import com.ibc.core.client.v1.Height;
+import com.ibc.core.commitment.v1.MerkleRoot;
+import com.tendermint.version.Consensus;
 
 import static org.mockito.Mockito.spy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,7 +66,7 @@ public class LightClientTestBase extends TestBase {
     protected final Account owner = sm.createAccount();
     protected Account ibcHandler = sm.createAccount();
     protected Score client;
-    protected TendermintLightClient clientSpy;
+    protected ICS08TendermintLightClient clientSpy;
     protected String clientId = "client-1";
     protected static final DateTimeFormatter INSTANT_FORMAT = DateTimeFormatter.ISO_INSTANT;
     protected static final BigInteger day = BigInteger.valueOf(86400);
@@ -66,12 +77,11 @@ public class LightClientTestBase extends TestBase {
     protected static boolean allowUpdateAfterExpiry = false;
     protected static boolean allowUpdateAfterMisbehaviour = false;
     protected final MockedStatic<Context> contextMock = Mockito.mockStatic(Context.class, Mockito.CALLS_REAL_METHODS);
-    protected static final String BLOCK_SET_BASE_PATH = "src/test/java/ibc/tendermint/data/";
+    protected static final String BLOCK_SET_BASE_PATH = "src/test/java/ibc/ics08/tendermint/data/";
     protected static final String BLOCK_SET_SIMPLE = BLOCK_SET_BASE_PATH + "simple/";
     protected static final String BLOCK_SET_MUTILPLE_VALIDATORS = BLOCK_SET_BASE_PATH + "multi-validator/";
     protected static final String BLOCK_SET_ADJACENT = BLOCK_SET_BASE_PATH + "adjacent/";
     protected static final String BLOCK_SET_MALICIOUS = BLOCK_SET_BASE_PATH + "malicious/";
-    protected static final String BLOCK_SET_LONG_POWER = BLOCK_SET_BASE_PATH + "validator-with-long-voting-power/";
     protected String blockSetPath = BLOCK_SET_SIMPLE;
 
     static {
@@ -102,9 +112,9 @@ public class LightClientTestBase extends TestBase {
         contextMock.when(() -> Context.getBlockTimestamp())
                 .thenReturn(System.currentTimeMillis() * 1000 + (sm.getBlock().getHeight() * 2_000_000));
 
-        client = sm.deploy(owner, TendermintLightClient.class, ibcHandler.getAddress());
+        client = sm.deploy(owner, ICS08TendermintLightClient.class, ibcHandler.getAddress());
 
-        clientSpy = (TendermintLightClient) spy(client.getInstance());
+        clientSpy = (ICS08TendermintLightClient) spy(client.getInstance());
         client.setInstance(clientSpy);
 
         Mockito.doAnswer((Answer<Boolean>) invocation -> {
@@ -131,38 +141,40 @@ public class LightClientTestBase extends TestBase {
     }
 
     protected void initializeClient(int blockOrder) throws Exception {
-        TmHeader tmHeader = TmHeader.newBuilder()
+        Header header = Header.newBuilder()
                 .setSignedHeader(parseSignedHeader(blockOrder))
                 .setValidatorSet(parseValidatorSet(blockOrder)).build();
-
+        BigInteger revisionNumber = TendermintHelper.getRevisionNumber(header.getSignedHeader().getHeader().getChainId());
         ClientState clientState = ClientState.newBuilder()
-                .setChainId(tmHeader.getSignedHeader().getHeader().getChainId())
+                .setChainId(header.getSignedHeader().getHeader().getChainId())
                 .setTrustLevel(trustLevel)
                 .setTrustingPeriod(trustingPeriod)
                 .setMaxClockDrift(maxClockDrift)
-                .setLatestHeight(tmHeader.getSignedHeader().getHeader().getHeight())
+                .setLatestHeight(Height.newBuilder()
+                    .setRevisionHeight(header.getSignedHeader().getHeader().getHeight())
+                    .setRevisionNumber(revisionNumber.intValue()))
                 .setAllowUpdateAfterExpiry(allowUpdateAfterExpiry)
                 .setAllowUpdateAfterMisbehaviour(allowUpdateAfterMisbehaviour).build();
 
         MerkleRoot root = MerkleRoot.newBuilder()
-                .setHash(tmHeader.getSignedHeader().getHeader().getAppHash()).build();
+                .setHash(header.getSignedHeader().getHeader().getAppHash()).build();
 
         ConsensusState consensusState = ConsensusState.newBuilder()
-                .setTimestamp(tmHeader.getSignedHeader().getHeader().getTime())
+                .setTimestamp(header.getSignedHeader().getHeader().getTime())
                 .setRoot(root)
-                .setNextValidatorsHash(tmHeader.getSignedHeader().getHeader().getNextValidatorsHash()).build();
+                .setNextValidatorsHash(header.getSignedHeader().getHeader().getNextValidatorsHash()).build();
 
         client.invoke(ibcHandler, "createClient", clientId, clientState.toByteArray(),
                 consensusState.toByteArray(), new byte[0]);
     }
 
     protected void updateClient(int blockOrder, int referenceBlock) throws Exception {
-        TmHeader tmHeader = createHeader(blockOrder, referenceBlock);
-        client.invoke(ibcHandler, "updateClient", clientId, tmHeader.toByteArray());
+        Header header = createHeader(blockOrder, referenceBlock);
+        client.invoke(ibcHandler, "updateClient", clientId, header.toByteArray());
     }
 
     protected ConsensusState getConsensusState(Height height) throws Exception {
-        return ConsensusState.parseFrom((byte[]) client.call("getConsensusState", clientId, height.encode()));
+        return ConsensusState.parseFrom((byte[]) client.call("getConsensusState", clientId, height.toByteArray()));
     }
 
     protected ClientState getClientState() throws Exception {
@@ -170,21 +182,20 @@ public class LightClientTestBase extends TestBase {
     }
 
     protected void assertConsensusState(SignedHeader header) throws Exception {
-        Height height = new Height();
-        height.setRevisionHeight(BigInteger.valueOf(header.getHeader().getHeight()));
+        Height height = Height.newBuilder().setRevisionHeight(header.getHeader().getHeight()).build();
         ConsensusState consensusState = getConsensusState(height);
         assertEquals(header.getHeader().getNextValidatorsHash(), consensusState.getNextValidatorsHash());
         assertEquals(header.getHeader().getAppHash(), consensusState.getRoot().getHash());
         assertEquals(header.getHeader().getTime(), consensusState.getTimestamp());
     }
 
-    protected TmHeader createHeader(int blockOrder, int referenceBlock) throws Exception {
-        TmHeader tmHeader = TmHeader.newBuilder()
+    protected Header createHeader(int blockOrder, int referenceBlock) throws Exception {
+        Header header = Header.newBuilder()
                 .setSignedHeader(parseSignedHeader(blockOrder))
                 .setValidatorSet(parseValidatorSet(blockOrder))
-                .setTrustedHeight(parseSignedHeader(referenceBlock).getHeader().getHeight())
+                .setTrustedHeight(Height.newBuilder().setRevisionHeight(parseSignedHeader(referenceBlock).getHeader().getHeight()))
                 .setTrustedValidators(parseValidatorSet(referenceBlock)).build();
-        return tmHeader;
+        return header;
     }
 
     protected SignedHeader parseSignedHeader(int blockOrder) throws Exception {
@@ -199,7 +210,7 @@ public class LightClientTestBase extends TestBase {
         Consensus version = Consensus.newBuilder()
                 .setBlock(jsonHeader.get("version").get("block").asInt()).build();
 
-        LightHeader lightHeader = LightHeader.newBuilder()
+        com.tendermint.types.Header lightHeader = com.tendermint.types.Header.newBuilder()
                 .setVersion(version)
                 .setChainId(jsonHeader.get("chain_id").asText())
                 .setHeight(jsonHeader.get("height").asInt())

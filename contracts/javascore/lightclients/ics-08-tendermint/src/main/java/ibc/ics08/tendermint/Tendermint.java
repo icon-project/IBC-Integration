@@ -1,13 +1,15 @@
-package ibc.tendermint;
+package ibc.ics08.tendermint;
+
+import static ibc.ics08.tendermint.TendermintHelper.*;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 
 import ibc.icon.score.util.Proto;
-import icon.proto.clients.tendermint.*;
+import tendermint.types.*;
+import google.protobuf.*;
+import ibc.lightclients.tendermint.v1.*;
 import score.Context;
-
-import static ibc.tendermint.TendermintHelper.*;
 
 public abstract class Tendermint {
     protected boolean verify(
@@ -256,7 +258,7 @@ public abstract class Tendermint {
             String chainID,
             int idx) {
 
-        return toCanonicalVote(commit, idx, chainID).encode();
+        return toCanonicalVote(commit, idx, chainID);
     }
 
     protected byte[] voteSignBytesDelim(
