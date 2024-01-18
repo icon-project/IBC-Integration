@@ -1,8 +1,11 @@
 name: Update Changelog
 
 on:
-  pull_request_review:
-    types: [submitted]
+  push:
+    branches:
+      - main
+  Schedule: 
+    -cron: '0 9 * * 5'
 
 jobs:
   generate-changelog:
