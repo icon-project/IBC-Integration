@@ -58,7 +58,7 @@ public class TendermintHelper {
     }
 
     public static BigInteger getRevisionNumber(String chainId) {
-        int id = chainId.indexOf("-");
+        int id = chainId.lastIndexOf("-");
         if (id >= 0) {
             return new BigInteger(chainId.substring(id+1));
         }
