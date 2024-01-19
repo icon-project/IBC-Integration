@@ -93,6 +93,7 @@ fn process_message(
             cw_println!(deps_mut.api, "[WasmClient]: Full Path is {:?}", fullpath);
             let path = fullpath.as_bytes().to_vec();
             let (skip, value) = unwrap_any_type(deps_mut.as_ref(), &msg.value);
+            cw_println!(deps_mut.api, "[WasmClient]: Full Value is {:?}", &value);
 
             if skip {
                 return to_binary(&ContractResult::success()).map_err(ContractError::Std);
@@ -184,7 +185,18 @@ fn process_message(
         ExecuteMsg::UpdateStateOnMisbehaviour(_)=>{
             Ok(to_binary(&ContractResult::success()).map_err(ContractError::Std)?)
         },
-        _ => todo!(),
+        ExecuteMsg::VerifyUpgradeAndUpdateState(msg)=>{
+            todo!()
+
+        },
+        ExecuteMsg::CheckSubstituteAndUpdateState(msg)=>{
+           todo!()
+        },
+        ExecuteMsg::CheckForMisbehaviour(msg)=>{
+            let mut result=ContractResult::success();
+            result.found_misbehaviour=false;
+            Ok(to_binary(&result).map_err(ContractError::Std)?)
+        },
     }
 }
 
