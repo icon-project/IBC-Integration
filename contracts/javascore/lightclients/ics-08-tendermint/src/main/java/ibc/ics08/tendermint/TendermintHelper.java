@@ -9,6 +9,7 @@ import ibc.icon.score.util.ByteUtil;
 import tendermint.types.Commit;
 import tendermint.types.CommitSig;
 import ibc.lightclients.tendermint.v1.ConsensusState;
+import ibc.lightclients.tendermint.v1.Fraction;
 import tendermint.types.Header;
 import ibc.core.commitment.v1.MerkleRoot;
 import tendermint.types.SignedHeader;
@@ -56,6 +57,7 @@ public class TendermintHelper {
         validatorSet.setTotalVotingPower(sum);
         return validatorSet.getTotalVotingPower();
     }
+
 
     public static BigInteger getRevisionNumber(String chainId) {
         int id = chainId.lastIndexOf("-");
@@ -158,5 +160,14 @@ public class TendermintHelper {
         };
 
         return MerkleTree.merkleRootHash(all, 0, all.length);
+    }
+
+    public static void validateTrustLevel(Fraction tl) {
+        Context.require(
+            tl.getNumerator().multiply(BigInteger.valueOf(3)).compareTo(tl.getDenominator()) >= 0 &&
+            tl.getNumerator().compareTo(tl.getDenominator()) <=  0 &&
+            !tl.getDenominator().equals(BigInteger.ZERO),
+            "trustLevel must be within [1/3, 1]"
+        );
     }
 }

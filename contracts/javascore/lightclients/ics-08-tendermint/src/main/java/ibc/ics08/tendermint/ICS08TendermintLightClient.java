@@ -101,8 +101,7 @@ public class ICS08TendermintLightClient extends Tendermint implements ILightClie
         Context.require(clientStates.get(clientId) == null, "Client already exists");
         ClientState clientState = ClientState.decode(clientStateBytes);
 
-        Context.require(!clientState.getTrustLevel().getDenominator().equals(BigInteger.ZERO),
-                "trustLevel has zero Denominator");
+        validateTrustLevel(clientState.getTrustLevel());
 
         clientStates.set(clientId, clientStateBytes);
         consensusStates.at(clientId).set(clientState.getLatestHeight().getRevisionHeight(), consensusStateBytes);
