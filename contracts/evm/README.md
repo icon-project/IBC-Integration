@@ -63,21 +63,7 @@ Replace the placeholders with your specific values:
 - `<chain1>`, `<chain2>`, ...: Specify one or more chains for deployment. Use "all" to deploy to all valid chains for the environment.
 - `filename-version`: filename of new contract to upgrade like, CallServiceV2.sol (only needed in upgrade)
 
-### xCall Configurations
-
-```shell
-cast send <contract_address>  "setProtocolFee(uint256 _value)" <value> --rpc-url <rpc_url> --private-key  <private-key>
-```
-
-```shell
-cast send <contract_address>  "setProtocolFeeHandler(address _addr)" <addr> --rpc-url <rpc_url> --private-key <private-key>
-```
-
-```shell
-cast send <contract_address>  "setDefaultConnection(string memory _nid,address connection)" <nid> <connection> --rpc-url <rpc_url> --private-key <private-key>
-```
-
-### Valid Options
+ Valid Options
 
 - *Actions*: "deploy", "upgrade"
 - *Environments*: "mainnet", "testnet", "local"
@@ -95,6 +81,69 @@ cast send <contract_address>  "setDefaultConnection(string memory _nid,address c
 
 ```shell
 ./deploy_script.sh --contract callservice --upgrade --env testnet --chain all --version CallServiceV2.sol
+```
+### xCall Configurations
+
+```shell
+cast send <contract_address>  "setProtocolFee(uint256 _value)" <value> --rpc-url <rpc_url> --private-key  <private-key>
+```
+
+```shell
+cast send <contract_address>  "setProtocolFeeHandler(address _addr)" <addr> --rpc-url <rpc_url> --private-key <private-key>
+```
+
+```shell
+cast send <contract_address>  "setDefaultConnection(string memory _nid,address connection)" <nid> <connection> --rpc-url <rpc_url> --private-key <private-key>
+```
+
+### xCall Flow Test
+
+#### Step 0: Copy Environment File
+
+Start by copying the `.env.example` file to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+#### Step 1: Deploy Contracts
+
+```bash
+#deploy xcall
+./deploy_script.sh --contract callservice --deploy --env testnet --chain <source_chain> <destination_chain> 
+```
+
+```bash
+#deploy adapter (wormhole layerzero centralized)
+./deploy_script.sh --contract wormhole --deploy --env testnet --chain <source_chain> <destination_chain> 
+```
+
+```bash
+#deploy dapp
+./deploy_script.sh --contract mock --deploy --env testnet --chain <source_chain> <destination_chain> 
+```
+#### Step 3: Configure Connections
+
+If you are using Wormhole or Layerzero for cross-chain communication, you will need to configure the connection. Execute the provided script to set up the connection. 
+
+```bash
+./deploy_script.sh --contract <adapter> --configure --env testnet --chain <source_chain> <destination_chain>
+```
+- *adapter*: "layerzero", "wormhole", "centralized"
+
+#### Step 4: Add Connections in Dapp
+
+In your dapp, add the connections for cross-chain communication.
+
+```bash
+forge script DeployCallService  -s "addConnection(string memory chain1, string memory chain2)" <source_chain> <destination_chain> --fork-url <source_chain> --broadcast        
+forge script DeployCallService  -s "addConnection(string memory chain1, string memory chain2)" <destination_chain> <source_chain> --fork-url <destination_chain> --broadcast   
+```
+
+#### Step 5: Execute Test
+
+```
+./test_xcall_flow.sh <source_chain> <destination_chain>
 ```
 
 ### Cast

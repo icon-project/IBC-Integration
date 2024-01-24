@@ -49,7 +49,8 @@ while [[ $# -gt 0 ]]; do
                 chains=("$1" "$2")
                 shift  # Additional shift to consume the second chain parameter
             else
-                chains+=("$1")  # For other actions, add chains to the array
+                chains=("$@")  # For other actions, add chains to the array
+                break  # Exit the loop since we've processed all arguments
             fi
             ;;
         *)
