@@ -59,6 +59,25 @@ Replace the placeholders with your specific values:
 - `<chain1>`, `<chain2>`, ...: Specify one or more chains for deployment. Use "all" to deploy to all valid chains for the environment.
 - `filename-version`: filename of new contract to upgrade like, CallServiceV2.sol (only needed in upgrade)
 
+### xCall Configurations
+
+```shell
+cast send <contract_address>  "setProtocolFee(uint256 _value)" <value> --rpc-url <rpc_url> --private-key  <private-key>
+```
+
+```shell
+cast send <contract_address>  "setProtocolFeeHandler(address _addr)" <addr> --rpc-url <rpc_url> --private-key <private-key>
+```
+
+```shell
+cast send <contract_address>  "setDefaultConnection(string memory _nid,address connection)" <nid> <connection> --rpc-url <rpc_url> --private-key <private-key>
+```
+
+### Adapter Configurations(Wormhole and Layerzero)
+
+```shell
+./deploy_script.sh --contract <contract> --configure --env <environment> --chain <chain1> <chain2> 
+```
 ### Valid Options
 
 - *Actions*: "deploy", "upgrade"

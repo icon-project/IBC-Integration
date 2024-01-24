@@ -17,14 +17,12 @@ contract DeployCallService is Script {
     using Strings for string;
 
     uint256 internal deployerPrivateKey;
-    address internal ownerAddress;
 
     string internal nid;
     uint256 internal protocolFee;
 
     constructor() {
         deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        ownerAddress = vm.envAddress("OWNER_ADDRESS");
     }
 
     modifier broadcast(uint256 privateKey) {
@@ -63,10 +61,6 @@ contract DeployCallService is Script {
                 abi.encodeCall(CallService.initialize, nid)
             );
             console2.log("CallService address:", proxy, "\n");
-
-            proxyXcall = CallService(proxy);
-            proxyXcall.setProtocolFee(protocolFee);
-            proxyXcall.setProtocolFeeHandler(ownerAddress);
         } else if (contractA.compareTo("wormhole")) {
             address xcall = vm.envAddress(chain.concat("_XCALL"));
             address wormholeRelayer = vm.envAddress(
@@ -81,6 +75,7 @@ contract DeployCallService is Script {
                     (wormholeRelayer, xcall)
                 )
             );
+            console2.log("Wormhole Adapter address:", proxy, "\n");
         } else if (contractA.compareTo("layerzero")) {
             address xcall = vm.envAddress(chain.concat("_XCALL"));
             address layerzeroRelayer = vm.envAddress(
@@ -95,6 +90,7 @@ contract DeployCallService is Script {
                     (layerzeroRelayer, xcall)
                 )
             );
+            console2.log("LayerZero Adapter address:", proxy, "\n");
         } else if (contractA.compareTo("centralized")) {
             address xcall = vm.envAddress(chain.concat("_XCALL"));
             address centralizedRelayer = vm.envAddress(
@@ -109,17 +105,125 @@ contract DeployCallService is Script {
                     (centralizedRelayer, xcall)
                 )
             );
-        } else if(contractA.compareTo("mock")) {
+            console2.log("Centralized Connection address:", proxy, "\n");
+        } else if (contractA.compareTo("mock")) {
             address xcall = vm.envAddress(chain.concat("_XCALL"));
             address proxy = Upgrades.deployTransparentProxy(
                 "MultiProtocolSampleDapp.sol",
                 msg.sender,
-                abi.encodeCall(
-                    MultiProtocolSampleDapp.initialize,
-                    xcall
-                )
+                abi.encodeCall(MultiProtocolSampleDapp.initialize, xcall)
             );
+            console2.log("Mock Dapp address:", proxy, "\n");
         }
+    }
+
+    function configureWormholeConnection(
+        string memory chain1,
+        string memory chain2
+    ) public broadcast(deployerPrivateKey) {
+        address chain1_adapter = vm.envAddress(
+            capitalizeString(chain1).concat("_WORMHOLE_ADAPTER")
+        );
+        address chain2_adapter = vm.envAddress(
+            capitalizeString(chain2).concat("_WORMHOLE_ADAPTER")
+        );
+
+        string memory nid_chain1 = vm.envString(
+            capitalizeString(chain1).concat("_NID")
+        );
+        string memory nid_chain2 = vm.envString(
+            capitalizeString(chain2).concat("_NID")
+        );
+
+        uint256 chain1_id = vm.envUint(
+            capitalizeString(chain1).concat("_CHAIN_ID")
+        );
+        uint256 chain2_id = vm.envUint(
+            capitalizeString(chain2).concat("_CHAIN_ID")
+        );
+        console2.log(chain1_id, chain2_id, chain1_adapter, chain2_adapter);
+        WormholeAdapter adapter1 = WormholeAdapter(chain1_adapter);
+        WormholeAdapter adapter2 = WormholeAdapter(chain2_adapter);
+
+        adapter1.configureConnection(
+            nid_chain2,
+            uint16(chain2_id),
+            toWormholeFormat(chain2_adapter),
+            5_000_000,
+            0
+        );
+    }
+
+    function configureLayerzeroConnection(
+        string memory chain1,
+        string memory chain2
+    ) public broadcast(deployerPrivateKey) {
+        address chain1_adapter = vm.envAddress(
+            capitalizeString(chain1).concat("_LAYERZERO_ADAPTER")
+        );
+        address chain2_adapter = vm.envAddress(
+            capitalizeString(chain2).concat("_LAYERZERO_ADAPTER")
+        );
+
+        string memory nid_chain1 = vm.envString(
+            capitalizeString(chain1).concat("_NID")
+        );
+        string memory nid_chain2 = vm.envString(
+            capitalizeString(chain2).concat("_NID")
+        );
+
+        uint256 chain1_id = vm.envUint(
+            capitalizeString(chain1).concat("_LAYERZERO_CHAIN_ID")
+        );
+        uint256 chain2_id = vm.envUint(
+            capitalizeString(chain2).concat("_LAYERZERO_CHAIN_ID")
+        );
+
+        LayerZeroAdapter adapter1 = LayerZeroAdapter(payable(chain1_adapter));
+        LayerZeroAdapter adapter2 = LayerZeroAdapter(payable(chain2_adapter));
+
+        adapter1.configureConnection(
+            nid_chain2,
+            uint16(chain2_id),
+            abi.encodePacked(chain2_adapter),
+            uint256(900_000),
+            uint256(1e10)
+        );
+    }
+
+    function addConnection(
+        string memory chain1,
+        string memory chain2
+    ) public broadcast(deployerPrivateKey) {
+        address chain1_dapp = vm.envAddress(
+            capitalizeString(chain1).concat("_MOCK_DAPP")
+        );
+        address chain2_dapp = vm.envAddress(
+            capitalizeString(chain2).concat("_MOCK_DAPP")
+        );
+
+        address chain1_adapter = vm.envAddress(
+            capitalizeString(chain1).concat("_WORMHOLE_ADAPTER")
+        );
+        address chain2_adapter = vm.envAddress(
+            capitalizeString(chain2).concat("_WORMHOLE_ADAPTER")
+        );
+
+        string memory nid_chain1 = vm.envString(
+            capitalizeString(chain1).concat("_NID")
+        );
+        string memory nid_chain2 = vm.envString(
+            capitalizeString(chain2).concat("_NID")
+        );
+
+        MultiProtocolSampleDapp dapp1 = MultiProtocolSampleDapp(chain1_dapp);
+        MultiProtocolSampleDapp dapp2 = MultiProtocolSampleDapp(chain2_dapp);
+
+        dapp1.addConnection(
+            nid_chain2,
+            ParseAddress.toString(chain1_adapter),
+            ParseAddress.toString(chain2_adapter)
+        );
     }
 
     function upgradeContract(
