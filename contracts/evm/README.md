@@ -51,6 +51,10 @@ $ anvil
 ./deploy_script.sh --contract <contract> --<action> --env <environment> --chain <chain1> <chain2> ... --version <filename-version>
 ```
 
+Adapter(Wormhole and Layerzero) Configuration between 2 chains
+```shell
+./deploy_script.sh --contract <contract> --configure --env <environment> --chain <chain1> <chain2> 
+```
 Replace the placeholders with your specific values:
 
 - `<contract>`: Contract to deploy or upgrade
@@ -73,11 +77,6 @@ cast send <contract_address>  "setProtocolFeeHandler(address _addr)" <addr> --rp
 cast send <contract_address>  "setDefaultConnection(string memory _nid,address connection)" <nid> <connection> --rpc-url <rpc_url> --private-key <private-key>
 ```
 
-### Adapter Configurations(Wormhole and Layerzero)
-
-```shell
-./deploy_script.sh --contract <contract> --configure --env <environment> --chain <chain1> <chain2> 
-```
 ### Valid Options
 
 - *Actions*: "deploy", "upgrade"
