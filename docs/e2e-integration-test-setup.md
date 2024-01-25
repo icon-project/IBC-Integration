@@ -6,93 +6,96 @@ To run the demo, the following software needs to be installed.
 
 * Docker compose \[[download](https://docs.docker.com/compose/install/)\]
 
-### Setting up the Environment
+## Setting up the Environment
 
-1. Build the `ibc-relayer` image:
+1. Create an `ibc-e2e-tests` folder and clone the `IBC-Integration` repository:
+
+    ```bash
+    mkdir ibc-e2e-tests
+    cd ibc-e2e-tests
+    git clone https://github.com/icon-project/IBC-Integration.git
+    ```
+
+2. Build the `ibc-relayer` image:
 
    ```bash
-   $ git clone https://github.com/icon-project/ibc-relay/
-   $ cd ibc-relay/
-   $ docker build -t relayer .
+   git clone https://github.com/icon-project/ibc-relay.git
+   cd ibc-relay
+   docker build -t relayer .
+   cd -  # Back to the root folder
    ```
-
-2. Build the builder image for bundling contracts:
-
-   ```bash
-   make build-builder-img
-   ```
-
-3. Optimize contracts:
-
-   Before starting to bundle contracts, update all submodules:
+3. Build an `icon-chain` image
 
    ```bash
-   git submodule init
-   git submodule update --remote
-   ```
-
-   Start bundling Icon and Rust contracts:
-
-   ```bash
-   make optimize-build
-   ```
-
-### Additional steps for Apple Silicon 
-
-* Build an `icon-chain` image
-
-   ```bash
-   git clone https://github.com/icon-project/goloop.git
-   cd goloop
-   make gochain-icon-image
+    git clone https://github.com/icon-project/goloop.git 
+    cd goloop
+    make gochain-icon-image
+    cd -  # Back to the root folder
    ``` 
 
-* Build a `goloop` image
+### Additional Images required for Apple Silicon 
+
+If you are using an Apple Silicon machine, follow these additional steps to build required images:
+
+1. Build a `goloop` image
 
    ```bash
-   git clone https://github.com/icon-project/goloop/
-   cd goloop/ 
-   make goloop-icon-image
+    git clone https://github.com/icon-project/goloop/
+    cd goloop/ 
+    make goloop-icon-image
+    cd -  # Back to the root folder
    ```
 
-* Build an `archway` or `neutron` image
+2. Build an `archway` or `neutron` image
 
-  **For Archway:**
+      **For Archway:**
+        
+    ```bash
+    git clone https://github.com/archway-network/archway/
+    cd archway
+    git checkout -b v0.5.1 v0.5.1
+    docker build -f Dockerfile.deprecated -t archway . --build-arg arch=aarch64
+    cd -  # Back to the root folder
+    ```
+    
+      **For Neutron:**
+    
+    ```bash
+    git clone https://github.com/neutron-org/neutron.git
+    cd neutron
+    make build-docker-image
+    cd -  # Back to the root folder
+    ```
 
-   ```bash
-   git clone https://github.com/archway-network/archway/
-   cd archway
-   docker build -f Dockerfile.deprecated -t archway . --build-arg arch=aarch64
-   ```
+## Running IBC Integration System Tests
 
-  **For Neutron:**
-
-   ```bash
-   git clone https://github.com/neutron-org/neutron.git
-   cd neutron
-   make build-docker-image
-   ```
-
-ℹ️ Change the image name and version of Archway/Neutron in `e2e-config.yaml` or `e2e-config-neutron.yaml`.
-
-### Running IBC Integration System Tests
-
-To conduct tests for IBC integration system, carefully adhere to the provided instructions:
+To conduct tests for the IBC integration system, follow these steps:
 
 #### 1. Configure Environment Variables
 
-Prior to initiating the tests, ensure proper configuration of essential environment variables, which play a pivotal role in the testing process:
+Before initiating the tests, configure essential environment variables:
 
-- **`E2E_CONFIG_PATH`**: Set this variable to the absolute path of your chosen configuration file. For Archway, utilize `sample-config-archway.yaml`, and for Neutron, employ `sample-config-neutron.yaml`.
-- **`GOLOOP_IMAGE_ENV`**: Indicate the name of the Goloop image.
+- **`E2E_CONFIG_PATH`**: Set this variable to the absolute path of your chosen configuration file. You can create these configuration files using the sample files provided in the `IBC-Integration` source folder. Sample configuration files are available at the following locations:
+    - For Archway, use: `IBC-Integration/test/testsuite/sample-config-archway.yaml`
+    - For Neutron, use: `IBC-Integration/test/testsuite/sample-config-neutron.yaml`
+- **`GOLOOP_IMAGE_ENV`**: Specify the name of the Goloop image.
 - **`GOLOOP_IMAGE_TAG_ENV`**: Specify the version of the Goloop image.
 
 Here's an example of environment variable configuration:
 
 ```bash
-export E2E_CONFIG_PATH=/home/User/IBC-integration/sample-config-archway.yaml
+export E2E_CONFIG_PATH=/path/to/config.yaml
 export GOLOOP_IMAGE_ENV=goloop-icon
 export GOLOOP_IMAGE_TAG_ENV=latest
+```
+
+ℹ️ Please note that most of the config content can be used same as it in sample config however you may need to update the image name and version for Archway, Neutron, and Icon in the configuration file you create.
+
+
+After configuring these variables, navigate to the `IBC-Integration` source folder:
+
+```bash
+cd IBC-Integration
 ```
 
 #### 2. Run the Test Script
@@ -103,31 +106,30 @@ Use the appropriate command to run the test suite. Depending on your specific te
 ./scripts/execute-test.sh [options]
 ```
 
-Replace `[options]` with any command-line options or arguments that the test script supports. To view more details about available options and usage, run the following command:
+Replace `[options]` with any command-line options or arguments that the test script supports. Here's an option block to help you:
 
-```bash
-./scripts/execute-test.sh --help
+```markdown
+Options:
+ --clean: Clean contract directories (true/false, default: false).
+ --build-ibc: Build IBC contracts (true/false, default: false).
+ --build-xcall: Build xCall contracts (true/false, default: false).
+ --xcall-branch <branch>: Specify the xCall branch to build (default: main).
+ --use-docker: Use Docker for building contracts(true/false, default: false).
+ --test <test_type>: Specify the type of test (e2e, e2e-demo, integration, default: e2e).
 ```
 
-This will display the available options, explain how to use them, and provide additional information about running the tests.
-
-
-#### 3. Execute the Test Suite
-
-Depending on your specific testing requirements, employ the appropriate commands to run the test suite:
-
-
-- To execute the end-to-end tests:
+To perform an end-to-end (e2e) test with all the necessary builds, execute the following command:
 ```bash
-go test -v ./test/e2e -timeout 0
+./scripts/execute-test.sh --build-ibc --build-xcall --use-docker --test e2e
+```
+This command covers building IBC and xCall contracts while utilizing Docker and running an end-to-end test.
+
+Once you've initially built the contracts using the command above, you can easily execute the e2e test by using the following simplified command:
+```bash
+./scripts/execute-test.sh  --test e2e
 ```
 
-- To run the integration tests:
-```bash
-go test -v ./test/integration -timeout 0
-```
-
-#### 3. Set Up the Demo Test Environment (Optional)
+### Set Up the Demo Test Environment (Optional)
 
 If necessary, establish the e2e demo test environment by executing the following command:
 
@@ -135,12 +137,32 @@ If necessary, establish the e2e demo test environment by executing the following
 make e2e-demo-setup
 ```
 
-During the setup process, distinct configuration files are generated in the `test/e2e-demo/ibc-config` directory. These files include contract addresses, along with wallets containing mnemonic/private keys. These keys are essential for conducting subsequent tests.
+During the setup process, distinct configuration files are generated in the `IBC-Integration/test/e2e-demo/ibc-config` directory. These files include contract addresses, along with wallets containing mnemonic/private keys. These keys are essential for conducting subsequent tests.
 
-#### 4. Clean Up the Demo Test Environment (Optional)
+#### Clean Up the Demo Test Environment (Optional)
 
 Upon completion of the testing process, if you've set up the e2e demo environment, you can execute the following command to perform a cleanup:
 
 ```bash
 make e2e-demo-clean
 ```
+
+### Other commands available inside IBC-Integration repo
+
+1. Build the builder image for bundling contracts:
+
+   ```bash
+   make build-builder-img
+   ```
+
+2. Bundle and optimize IBC core contracts:
+
+   ```bash
+   make optimize-build
+   ``` 
+
+3. Bundle and optimize xcall-multi contracts:
+
+    ```bash
+   make optimize-xcall
+   ```
