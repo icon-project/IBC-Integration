@@ -5,9 +5,11 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"github.com/strangelove-ventures/interchaintest/v7/ibc"
+	"math/big"
 	"os"
 	"strings"
+
+	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -36,8 +38,10 @@ type Chain interface {
 	FindTargetXCallMessage(ctx context.Context, target Chain, height uint64, to string) (*XCallResponse, error)
 	ConfigureBaseConnection(ctx context.Context, connection XCallConnection) (context.Context, error)
 	SendPacketXCall(ctx context.Context, keyName, _to string, data, rollback []byte) (context.Context, error)
+	SendNewPacketXCall(ctx context.Context, keyName, _to string, data []byte, messageType *big.Int, rollback []byte) (context.Context, error)
 	IsPacketReceived(ctx context.Context, params map[string]interface{}, order ibc.Order) bool
 	XCall(ctx context.Context, targetChain Chain, keyName, _to string, data, rollback []byte) (*XCallResponse, error)
+	NewXCall(ctx context.Context, targetChain Chain, keyName, _to string, data []byte, messageType *big.Int, rollback []byte) (*XCallResponse, error)
 	CheckForTimeout(ctx context.Context, src Chain, params map[string]interface{}, listener EventListener) (context.Context, error)
 	EOAXCall(ctx context.Context, targetChain Chain, keyName, _to string, data []byte, sources, destinations []string) (string, string, string, error)
 	ExecuteCall(ctx context.Context, reqId, data string) (context.Context, error)

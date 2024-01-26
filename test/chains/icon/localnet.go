@@ -5,9 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/icon-project/ibc-integration/libraries/go/common/tendermint"
-	interchaintest "github.com/icon-project/ibc-integration/test"
-	"github.com/icon-project/icon-bridge/common/wallet"
 	"io"
 	"log"
 	"math/big"
@@ -16,6 +13,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/icon-project/ibc-integration/libraries/go/common/tendermint"
+	interchaintest "github.com/icon-project/ibc-integration/test"
+	"github.com/icon-project/icon-bridge/common/wallet"
 
 	dockertypes "github.com/docker/docker/api/types"
 	volumetypes "github.com/docker/docker/api/types/volume"
@@ -537,6 +538,21 @@ func (c *IconLocalnet) SendPacketXCall(ctx context.Context, keyName, _to string,
 	return context.WithValue(ctx, "sn", getSn(txn)), nil
 }
 
+func (c *IconLocalnet) SendNewPacketXCall(ctx context.Context, keyName, _to string, data []byte, messageType *big.Int, rollback []byte) (context.Context, error) {
+	testcase := ctx.Value("testcase").(string)
+	dappKey := fmt.Sprintf("dapp-%s", testcase)
+	var params = `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `","messageType":"` + messageType.String() + `"}`
+	if rollback != nil {
+		params = `{"_to":"` + _to + `", "_data":"` + hex.EncodeToString(data) + `","messageType":"` + messageType.String() + `", "_rollback":"` + hex.EncodeToString(rollback) + `"}`
+	}
+	ctx, err := c.executeContract(ctx, c.IBCAddresses[dappKey], keyName, "sendNewMessage", params)
+	if err != nil {
+		return nil, err
+	}
+	txn := ctx.Value("txResult").(*icontypes.TransactionResult)
+	return context.WithValue(ctx, "sn", getSn(txn)), nil
+}
+
 // HasPacketReceipt returns the receipt of the packet sent to the target chain
 func (c *IconLocalnet) IsPacketReceived(ctx context.Context, params map[string]interface{}, order ibc.Order) bool {
 	if order == ibc.Ordered {
@@ -597,6 +613,18 @@ func (c *IconLocalnet) XCall(ctx context.Context, targetChain chains.Chain, keyN
 	}
 	// TODO: send fees
 	ctx, err = c.SendPacketXCall(ctx, keyName, to, data, rollback)
+	if err != nil {
+		return nil, err
+	}
+	return c.FindTargetXCallMessage(ctx, targetChain, height, strings.Split(to, "/")[1])
+}
+
+func (c *IconLocalnet) NewXCall(ctx context.Context, targetChain chains.Chain, keyName, to string, data []byte, messageType *big.Int, rollback []byte) (*chains.XCallResponse, error) {
+	height, err := targetChain.(ibc.Chain).Height(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ctx, err = c.SendNewPacketXCall(ctx, keyName, to, data, messageType, rollback)
 	if err != nil {
 		return nil, err
 	}

@@ -6,10 +6,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	interchaintest "github.com/icon-project/ibc-integration/test"
+	"math/big"
 	"strconv"
 	"strings"
 	"time"
+
+	interchaintest "github.com/icon-project/ibc-integration/test"
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cosmos/gogoproto/proto"
@@ -242,6 +244,21 @@ func (c *CosmosLocalnet) SendPacketXCall(ctx context.Context, keyName, _to strin
 	return context.WithValue(ctx, "sn", c.findSn(tx, "wasm-CallMessageSent")), nil
 }
 
+func (c *CosmosLocalnet) SendNewPacketXCall(ctx context.Context, keyName, _to string, data []byte, messageType *big.Int, rollback []byte) (context.Context, error) {
+	testcase := ctx.Value("testcase").(string)
+	dappKey := fmt.Sprintf("dapp-%s", testcase)
+
+	dataArray := strings.Join(strings.Fields(fmt.Sprintf("%d", data)), ",")
+	rollbackArray := strings.Join(strings.Fields(fmt.Sprintf("%d", rollback)), ",")
+	params := fmt.Sprintf(`{"to":"%s", "data":%s,"message_type":%s, "rollback":%s}`, _to, dataArray, messageType.String(), rollbackArray)
+	ctx, err := c.executeContract(ctx, c.IBCAddresses[dappKey], interchaintest.UserAccount, "send_new_call_message", params)
+	if err != nil {
+		return nil, err
+	}
+	tx := ctx.Value("txResult").(*TxResul)
+	return context.WithValue(ctx, "sn", c.findSn(tx, "wasm-CallMessageSent")), nil
+}
+
 // FindTargetXCallMessage returns the request id and the data of the message sent to the target chain
 func (c *CosmosLocalnet) FindTargetXCallMessage(ctx context.Context, target chains.Chain, height uint64, to string) (*chains.XCallResponse, error) {
 	testcase := ctx.Value("testcase").(string)
@@ -338,6 +355,18 @@ func (c *CosmosLocalnet) XCall(ctx context.Context, targetChain chains.Chain, ke
 		return nil, err
 	}
 	ctx, err = c.SendPacketXCall(ctx, keyName, to, data, rollback)
+	if err != nil {
+		return nil, err
+	}
+	return c.FindTargetXCallMessage(ctx, targetChain, height, strings.Split(to, "/")[1])
+}
+
+func (c *CosmosLocalnet) NewXCall(ctx context.Context, targetChain chains.Chain, keyName, to string, data []byte, messageType *big.Int, rollback []byte) (*chains.XCallResponse, error) {
+	height, err := targetChain.(ibc.Chain).Height(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ctx, err = c.SendNewPacketXCall(ctx, keyName, to, data, messageType, rollback)
 	if err != nil {
 		return nil, err
 	}
