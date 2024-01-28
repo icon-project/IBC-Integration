@@ -14,7 +14,7 @@ version="0.1.1"
 
 [workspace.dependencies]
 cosmwasm-schema = {version="1.4.0",default-features = false}
-cosmwasm-std = {version="1.4.0",default-features = false}
+cosmwasm-std = {version="1.4.0",default-features = false, features = ["ibc3"]}
 schemars = {version="0.8.10",default-features = false}
 serde = { version = "1.0.145", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
@@ -23,6 +23,9 @@ cw-storage-plus = {git="https://github.com/icon-project/cw-storage-plus.git", br
 
 common = { path="./libraries/rust/common" }
 cw-common = { path="./contracts/cosmwasm-vm/cw-common" }
+cw-light-client-common= {path="./contracts/cosmwasm-vm/cw-light-client-common"}
+
+
 cw-xcall-lib={package="cw-xcall-lib", git="https://github.com/icon-project/xCall.git", branch="main"}
 cw-xcall = {package="cw-xcall", git="https://github.com/icon-project/xCall.git", branch="main"}
 cw-mock-dapp = { git="https://github.com/icon-project/xCall.git",  branch="main" }

@@ -182,22 +182,21 @@ fn process_message(
                     Ok(to_binary(&ContractResult::success()).map_err(ContractError::Std)?)
                 }
             }
-        },
-        ExecuteMsg::UpdateStateOnMisbehaviour(_)=>{
+        }
+        ExecuteMsg::UpdateStateOnMisbehaviour(_) => {
             Ok(to_binary(&ContractResult::success()).map_err(ContractError::Std)?)
-        },
-        ExecuteMsg::VerifyUpgradeAndUpdateState(msg)=>{
+        }
+        ExecuteMsg::VerifyUpgradeAndUpdateState(_msg) => {
             todo!()
-
-        },
-        ExecuteMsg::CheckSubstituteAndUpdateState(msg)=>{
-           todo!()
-        },
-        ExecuteMsg::CheckForMisbehaviour(msg)=>{
-            let mut result=ContractResult::success();
-            result.found_misbehaviour=false;
+        }
+        ExecuteMsg::CheckSubstituteAndUpdateState(_msg) => {
+            todo!()
+        }
+        ExecuteMsg::CheckForMisbehaviour(_msg) => {
+            let mut result = ContractResult::success();
+            result.found_misbehaviour = false;
             Ok(to_binary(&result).map_err(ContractError::Std)?)
-        },
+        }
     }
 }
 
