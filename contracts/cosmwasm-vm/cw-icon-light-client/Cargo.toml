@@ -45,7 +45,7 @@ sha3 = { version = "0.10.6", default-features = false }
 bytes = { workspace=true }
 common = { workspace=true, default-features = false }
 cw-common = { workspace=true,default-features = false }
-cw-light-client-common = { path="../cw-light-client-common",default-features = false }
+cw-light-client-common = { workspace=true, default-features = false }
 prost = { workspace=true}
 serde-json-wasm = {workspace=true}
 debug_print = {workspace=true}

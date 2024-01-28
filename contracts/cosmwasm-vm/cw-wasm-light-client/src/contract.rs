@@ -78,6 +78,7 @@ fn process_message(
         ExecuteMsg::VerifyMembership(mut msg) => {
             cw_println!(deps_mut.api, "[WasmClient]: Verify Membership called");
             let height = msg.height.revision_height;
+            // "empty" is sent by relayer because native IBC doesnt support empty proofs.
             if msg.proof == "empty".as_bytes() {
                 msg.proof = vec![];
             }

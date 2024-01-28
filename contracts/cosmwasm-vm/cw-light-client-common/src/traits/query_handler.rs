@@ -53,14 +53,10 @@ pub trait IQueryHandler {
         storage: &dyn Storage,
         client_id: &str,
     ) -> Result<ConsensusState, ContractError> {
-        let state = CLIENT_STATES
-            .load(storage, client_id.to_string())
-            .map_err(ContractError::Std)?;
-        let client_state =
-            ClientState::decode(state.as_slice()).map_err(ContractError::DecodeError)?;
+        let latest_height=Self::get_latest_height(storage, client_id)?;
 
         let consensus_state =
-            Self::get_consensus_state(storage, client_id, client_state.latest_height)?;
+            Self::get_consensus_state(storage, client_id, latest_height)?;
         Ok(consensus_state)
     }
 
