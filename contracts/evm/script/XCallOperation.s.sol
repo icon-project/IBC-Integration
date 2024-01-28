@@ -64,14 +64,9 @@ contract WormholeTest is Script {
 
     function sendMessage(
         string memory chain1,
-        string memory chain2
+        string memory chain2,
+        uint256 fee
     ) public broadcast(deployerPrivateKey) {
-        address chain1_adapter = vm.envAddress(
-            capitalizeString(chain1).concat("_WORMHOLE_ADAPTER")
-        );
-        address chain2_adapter = vm.envAddress(
-            capitalizeString(chain2).concat("_WORMHOLE_ADAPTER")
-        );
 
         address chain1_dapp = vm.envAddress(
             capitalizeString(chain1).concat("_MOCK_DAPP")
@@ -95,7 +90,7 @@ contract WormholeTest is Script {
             ParseAddress.toString(chain2_dapp)
         );
 
-        dapp1.sendMessage{value: 3000000000000000}(
+        dapp1.sendMessage{value: fee}(
             to,
             bytes("Hi I am Ranju from Pokhara"),
             bytes("")

@@ -25,6 +25,14 @@ listen_events_and_execute() {
         api_endpoint="https://api-goerli.arbiscan.io/api"
         api_key=${ARBITRUMSCAN_API_KEY}
         contract_address=${ARBITRUM_GOERLI_XCALL}
+    elif [ "$network" = "optimism_sepolia" ]; then
+        api_endpoint="https://sepolia-optimism.etherscan.io/api"
+        api_key=${OPTIMISMSCAN_API_KEY}
+        contract_address=${OPTIMISM_SEPOLIA_XCALL}
+    elif [ "$network" = "arbitrum_sepolia" ]; then
+        api_endpoint="https://api-sepolia.arbiscan.io/api"
+        api_key=${ARBITRUMSCAN_API_KEY}
+        contract_address=${ARBITRUM_SEPOLIA_XCALL}
     else
         echo "Unsupported network"
         return 1
@@ -85,17 +93,65 @@ done
 end_to_end_test() {
         local source=$1
         local destination=$2
-        forge script WormholeTest -s "sendMessage(string memory chain1, string memory chain2)" $source $destination --fork-url $source --broadcast
+        local fee=$3
+        forge script WormholeTest -s "sendMessage(string memory chain1, string memory chain2, uint256 fee)" $source $destination $fee --fork-url $source --broadcast
         listen_events_and_execute $destination
 }
 
-if [ $# -lt 2 ]; then
-    echo "Configure action requires exactly two parameters for chain\n"
-    echo "Usage: $0 <source_chain> <destination_chain>"
-    echo "Valid chains: fuji bsctest base_goerli optimism_goerli arbitrum_goerli"
-else
-    end_to_end_test $1 $2
+# if [ $# -lt 2 ]; then
+#     echo "Configure action requires exactly two parameters for chain\n"
+#     echo "Usage: $0 <source_chain> <destination_chain> --transaction fee"
+#     echo "Valid chains: fuji bsctest base_goerli optimism_goerli arbitrum_goerli"
+# else
+#     end_to_end_test $1 $2
+# fi
+source_chain="fuji"
+dest_chain="bsctest"
+transaction_fee=30000000000000000
+
+while [ "$1" != "" ]; do
+    case $1 in
+        --fee ) shift
+                if [[ $1 =~ ^[0-9]+$ ]]; then
+                    transaction_fee=$1
+                else
+                    echo "Invalid fee value. Please provide a number."
+                    exit 1
+                fi
+                ;;
+        --src ) shift
+                case $1 in
+                    fuji|bsctest|base_goerli|optimism_sepolia|arbitrum_sepolia )
+                        source_chain=$1
+                        ;;
+                    *)
+                        echo "Invalid source chain. Valid chains: fuji bsctest base_goerli optimism_sepolia arbitrum_sepolia"
+                        exit 1
+                        ;;
+                esac
+                ;;
+        --dest ) shift
+                case $1 in
+                    fuji|bsctest|base_goerli|optimism_sepolia|arbitrum_sepolia )
+                        dest_chain=$1
+                        ;;
+                    *)
+                        echo "Invalid destination chain. Valid chains: fuji bsctest base_goerli optimism_sepolia arbitrum_sepolia"
+                        exit 1
+                        ;;
+                esac
+                ;;
+    esac
+    shift
+done
+
+if [ "$source_chain" = "$dest_chain" ]; then
+    echo "Source and destination chains cannot be the same."
+    exit 1
 fi
 
-
+echo "Source Chain: $source_chain"
+echo "Destination Chain: $dest_chain"
+echo "Transaction Fee: $transaction_fee"
+end_to_end_test $source_chain $dest_chain $transaction_fee
 

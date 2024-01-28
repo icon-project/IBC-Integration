@@ -150,7 +150,7 @@ contract DeployCallService is Script {
             uint16(chain2_id),
             toWormholeFormat(chain2_adapter),
             5_000_000,
-            0
+            uint256(1e14)
         );
     }
 

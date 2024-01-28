@@ -10,26 +10,32 @@ test = "test"
 [rpc_endpoints]
 local = "${LOCAL_RPC_URL}" 
 sepolia = "${SEPOLIA_RPC_URL}"
+goerli = "${GOERLI_RPC_URL}"
 bsctest = "${BSCTEST_RPC_URL}"
 fuji = "${FUJI_RPC_URL}"
 arbitrum_goerli = "${ARBITRUM_GOERLI_RPC_URL}"
 optimism_goerli = "${OPTIMISM_GOERLI_RPC_URL}"
 base_goerli = "${BASE_GOERLI_RPC_URL}"
+optimism_sepolia = "${OPTIMISM_SEPOLIA_RPC_URL}"
+arbitrum_sepolia = "${ARBITRUM_SEPOLIA_RPC_URL}"
 
 ethereum= "${ETHEREUM_RPC_URL}"
-binance= "${BSC_RPC_URL}"
+binance= "${BINANCE_RPC_URL}"
 avalanche= "${AVALANCHE_RPC_URL}"
-# arbitrum=
-# optimism=
-# base=
+arbitrum= "${ARBITRUM_RPC_URL}"
+optimism= "${OPTIMISM_RPC_URL}"
+base= "${BASE_RPC_URL}"
 
 [etherscan]
+goerli = { key = "${ETHERSCAN_API_KEY}", chain="goerli"}
 sepolia = { key = "${ETHERSCAN_API_KEY}"}
 bsctest = { key = "${BSCSCAN_API_KEY}", chain="bsc-testnet"}
 fuji = { key = "${SNOWSCAN_API_KEY}"}
-arbitrum_goerli = { key = "${ARBITRUMSCAN_API_KEY}"}
+arbitrum_goerli = { key = "${ARBITRUMSCAN_API_KEY}", chain="arbitrum-goerli"}
 optimism_goerli = { key = "${OPTIMISMSCAN_API_KEY}"}
 base_goerli = { key = "${BASESCAN_API_KEY}", chain="base-goerli"}
+optimism_sepolia = { key = "${OPTIMISMSCAN_API_KEY}", chain="optimism-sepolia"}
+arbitrum_sepolia = { key = "${ARBITRUMSCAN_API_KEY}", chain="arbitrum-sepolia"}
 
 ethereum={ key = "${ETHERSCAN_API_KEY}", chain="mainnet"}
 binance={ key = "${BSCSCAN_API_KEY}", chain="bsc"}

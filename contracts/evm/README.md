@@ -141,10 +141,13 @@ forge script DeployCallService  -s "addConnection(string memory chain1, string m
 ```
 
 #### Step 5: Execute Test
+```bash
+$ ./test_xcall_flow.sh --src <source_chain> --dest <destination_chain> --fee <value>
+```
 
-```
-./test_xcall_flow.sh <source_chain> <destination_chain>
-```
+- `--fee <value>`: Sets the transaction fee (in wei). The value must be a number.
+- `--src <source_chain>`: Sets the source chain for the transaction. Valid chain options are `fuji`, `bsctest`, `base_goerli`, `optimism_sepolia`, and `arbitrum_goerli`.
+- `--dest <destination_chain>`: Sets the destination chain for the transaction. Valid chain options are `fuji`, `bsctest`, `base_goerli`, `optimism_sepolia`, and `arbitrum_goerli`.
 
 ### Cast
 Set the CONTRACT_ADDRESS variable in your terminal:

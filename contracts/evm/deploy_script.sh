@@ -5,7 +5,7 @@ valid_actions=("deploy" "upgrade" "configure")
 valid_contracts=("callservice" "mock" "wormhole" "layerzero" "centralized")
 valid_environments=("mainnet" "testnet" "local")
 valid_mainnet_chains=("ethereum" "binance" "avalanche" "arbitrum" "optimism" "base" "all")
-valid_testnet_chains=("sepolia" "bsctest" "fuji" "arbitrum_goerli" "optimism_goerli" "base_goerli" "all")
+valid_testnet_chains=("sepolia" "bsctest" "fuji" "arbitrum_goerli" "optimism_goerli" "base_goerli" "optimism_sepolia" "arbitrum_sepolia" "goerli" "all")
 valid_local_chains=("local" "all")
 
 # Initialize variables
