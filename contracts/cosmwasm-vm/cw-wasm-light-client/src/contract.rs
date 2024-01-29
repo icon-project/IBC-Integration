@@ -95,12 +95,12 @@ fn process_message(
             let path = fullpath.as_bytes().to_vec();
             let (skip, value) = unwrap_any_type(deps_mut.as_ref(), &msg.value);
             cw_println!(deps_mut.api, "[WasmClient]: Full Value is {:?}", &value);
-
+            // in case of consensusstate we skip verification since its not viable for icon chain.
             if skip {
                 return to_binary(&ContractResult::success()).map_err(ContractError::Std);
             }
 
-            let mut res = QueryHandler::verify_membership(
+            QueryHandler::verify_membership(
                 deps_mut.as_ref(),
                 client_id,
                 height,
@@ -109,20 +109,7 @@ fn process_message(
                 &proofs_decoded.proofs,
                 &value,
                 &path,
-            );
-            if res.is_err() {
-                res = QueryHandler::verify_membership(
-                    deps_mut.as_ref(),
-                    client_id,
-                    height,
-                    msg.delay_time_period,
-                    msg.delay_block_period,
-                    &proofs_decoded.proofs,
-                    &sha256(value),
-                    &path,
-                );
-            }
-            res.unwrap();
+            )?;
 
             cw_println!(deps_mut.api, "[WasmClient]: Verify Membership Complete");
 
