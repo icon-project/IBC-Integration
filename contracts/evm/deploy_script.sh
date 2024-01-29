@@ -1,11 +1,11 @@
 #!/bin/bash
 source .env
 # Define valid actions and environments
-valid_actions=("deploy" "upgrade")
+valid_actions=("deploy" "upgrade" "configure")
 valid_contracts=("callservice" "mock" "wormhole" "layerzero" "centralized")
 valid_environments=("mainnet" "testnet" "local")
 valid_mainnet_chains=("ethereum" "binance" "avalanche" "arbitrum" "optimism" "base" "all")
-valid_testnet_chains=("sepolia" "bsc_testnet" "fuji" "arbitrum_goerli" "optimism_goerli" "base_goerli" "all")
+valid_testnet_chains=("sepolia" "bsctest" "fuji" "arbitrum_goerli" "optimism_goerli" "base_goerli" "optimism_sepolia" "arbitrum_sepolia" "goerli" "all")
 valid_local_chains=("local" "all")
 
 # Initialize variables
@@ -32,14 +32,26 @@ while [[ $# -gt 0 ]]; do
         --upgrade)
             action="upgrade"
             ;;
+        --configure)
+            action="configure"
+            ;;
         --env)
             shift
             env="$1"
             ;;
         --chain)
             shift
-            chains=("$@")
-            break
+            if [ "$action" = "configure" ]; then
+                if [ $# -lt 2 ]; then
+                    echo "Configure action requires exactly two parameters for chain."
+                    exit 1
+                fi
+                chains=("$1" "$2")
+                shift  # Additional shift to consume the second chain parameter
+            else
+                chains=("$@")  # For other actions, add chains to the array
+                break  # Exit the loop since we've processed all arguments
+            fi
             ;;
         *)
             echo "Invalid option: $1"
@@ -119,4 +131,15 @@ elif [ "$action" == "upgrade" ]; then
         forge script DeployCallService  -s "upgradeContract(string memory chain, string memory contractName, string memory contractA)" $chain $contractVersion $contract --fork-url $chain --broadcast --sender ${ADMIN} --verify --etherscan-api-key $chain --ffi        
         fi
     done
+elif [ "$action" == "configure" ]; then
+    echo "Configuring $contract on $env:"
+        if [ "$contract" == "wormhole" ]; then
+        forge script DeployCallService  -s "configureWormholeConnection(string memory chain1, string memory chain2)" ${chains[0]} ${chains[1]} --fork-url ${chains[0]} --broadcast        
+        forge script DeployCallService  -s "configureWormholeConnection(string memory chain1, string memory chain2)" ${chains[1]} ${chains[0]} --fork-url ${chains[1]} --broadcast  
+        elif [ "$contract" == "layerzero" ]; then
+        forge script DeployCallService  -s "configureLayerzeroConnection(string memory chain1, string memory chain2)" ${chains[0]} ${chains[1]} --fork-url ${chains[0]} --broadcast        
+        forge script DeployCallService  -s "configureLayerzeroConnection(string memory chain1, string memory chain2)" ${chains[1]} ${chains[0]} --fork-url ${chains[1]} --broadcast       
+        else
+        echo "Contract $contract is not configurable!"
+        fi
 fi
