@@ -58,6 +58,31 @@ jobs:
         with:
           name: cosmwasm-contracts
           path: cosmwasm-contracts.zip
+  build_solidity:
+    name: Build Solidity Contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Forge build
+        working-directory: contracts/evm
+        run: |
+          git submodule update --init --recursive
+          bash ./forge_build.sh
+          cd artifacts && zip -r ../../../solidity-contracts.zip . -j
+        
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: solidity-contracts
+          path: solidity-contracts.zip
   release:
     name: Release and Publish
     runs-on: ubuntu-latest
@@ -82,45 +107,46 @@ jobs:
           name: cosmwasm-contracts
           path: cosmwasm-contracts
 
+      - name: Download Solidity Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: solidity-contracts
+          path: solidity-contracts
+
       - name: Unzip Javascore Artifacts
         run: unzip javascore-contracts/javascore-contracts.zip -d javascore-contracts && rm -rf javascore-contracts/javascore-contracts.zip
 
       - name: Unzip Cosmwasm Artifacts
         run: unzip cosmwasm-contracts/cosmwasm-contracts.zip -d cosmwasm-contracts && rm -rf cosmwasm-contracts/cosmwasm-contracts.zip
 
+      - name: Unzip Cosmwasm Artifacts
+        run: unzip solidity-contracts/solidity-contracts.zip -d solidity-contracts && rm -rf solidity-contracts/solidity-contracts.zip
+
       - name: Changelog
         uses: scottbrenner/generate-changelog-action@master
         id: Changelog
         env:
           REPO: ${{ github.repository }}
+      
+      - name: Generate checksum
+        uses: jmgilman/actions-generate-checksum@v1
+        with:
+          patterns: |
+            cosmwasm-contracts/*.wasm
+            javascore-contracts/*.jar
+            solidity-contracts/*
+          output: check256sums.txt
 
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Prerelease ${{ github.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           body: |
             ${{ steps.Changelog.outputs.changelog }}
-          draft: false
-          prerelease: false
-
-      - name: Upload Javascore contracts to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./javascore-contracts/*
-          tag: ${{ github.ref }}
-          overwrite: true
-          file_glob: true
-
-      - name: Upload Cosmwasm contracts to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./cosmwasm-contracts/*
-          tag: ${{ github.ref }}
-          overwrite: true
-          file_glob: true
+          files: |
+            ./javascore-contracts/*.jar
+            ./cosmwasm-contracts/*.wasm
+            ./solidity-contracts/*
+            check256sums.txt
