@@ -28,7 +28,7 @@ Assuming you want to deploy centralized to {CHAIN_NAME} chain.
 ```sh
 cd $PROJECT_ROOT/contracts/evm
 forge build
-cp env.example .env
+cp .env.example .env
 ```
 Edit the .env file. You need to change the following fields:
 ```env
@@ -55,7 +55,7 @@ Now, to deploy the centralized-connection contract:
 
 - This can be called only by the relayer.
 ```sh
-cast send <connection_contract_address>  "setProtocolFee(string calldata networkId, uint256 messageFee, uint256 responseFee)" "0x1.icon" 10000000000000000 10000000000000000 --rpc-url <rpc_url> --private-key  <private-key>
+cast send <connection_contract_address>  "setFee(string calldata networkId, uint256 messageFee, uint256 responseFee)" "0x1.icon" 10000000000000000 10000000000000000 --rpc-url <rpc_url> --private-key  <private-key>
 ```
 
 **Change relayer address**: 
