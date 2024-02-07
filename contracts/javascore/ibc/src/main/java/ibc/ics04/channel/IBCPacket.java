@@ -181,12 +181,13 @@ public class IBCPacket extends IBCChannelHandshake {
 
         byte[] packetAckPath = IBCCommitment.packetAcknowledgementCommitmentPath(packet.getDestinationPort(),
                 packet.getDestinationChannel(), packet.getSequence());
+        byte[] commitmentBytes = createAcknowledgmentCommitmentBytes(connection.getClientId(), acknowledgement);
         verifyPacketAcknowledgement(
                 connection,
                 proofHeight,
                 proof,
                 packetAckPath,
-                acknowledgement);
+                commitmentBytes);
 
         if (channel.getOrdering() == Channel.Order.ORDER_ORDERED) {
             DictDB<String, BigInteger> nextSequenceAckSourcePort = nextSequenceAcknowledgements
