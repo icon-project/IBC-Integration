@@ -18,6 +18,7 @@ import icon.proto.clients.tendermint.Timestamp;
 import icon.proto.clients.tendermint.TmHeader;
 import icon.proto.clients.tendermint.Validator;
 import icon.proto.clients.tendermint.ValidatorSet;
+import icon.proto.clients.tendermint.Fraction;
 import ibc.core.commitment.v1.MerkleRoot;
 import icon.proto.core.client.Height;
 import score.Context;
@@ -152,5 +153,14 @@ public class TendermintHelper {
         };
 
         return MerkleTree.merkleRootHash(all, 0, all.length);
+    }
+
+    public static void validateTrustLevel(Fraction tl) {
+        Context.require(
+            tl.getNumerator().multiply(BigInteger.valueOf(3)).compareTo(tl.getDenominator()) >= 0 &&
+            tl.getNumerator().compareTo(tl.getDenominator()) <=  0 &&
+            !tl.getDenominator().equals(BigInteger.ZERO),
+            "trustLevel must be within [1/3, 1]"
+            );
     }
 }
