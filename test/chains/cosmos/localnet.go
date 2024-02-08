@@ -6,10 +6,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	interchaintest "github.com/icon-project/ibc-integration/test"
+	"math/big"
 	"strconv"
 	"strings"
 	"time"
+
+	interchaintest "github.com/icon-project/ibc-integration/test"
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cosmos/gogoproto/proto"
@@ -775,4 +777,16 @@ func (c *CosmosLocalnet) RestoreConfig(backup []byte) error {
 	}
 	c.Wallets = wallets
 	return nil
+}
+
+func (c *CosmosLocalnet) SetupIBCICS20(ctx context.Context, keyName string) (context.Context, error) {
+	panic("not implemented")
+}
+
+func (c *CosmosLocalnet) SendIBCTokenTransfer(ctx context.Context, sourceChannel, destinationChannel, port, receiver, chainID string, amount uint64) (string, error) {
+	panic("not implemented")
+}
+
+func (c *CosmosLocalnet) GetWalletBalance(ctx context.Context, address string, denom string) (*big.Int, error) {
+	panic("not implemented")
 }

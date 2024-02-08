@@ -1,0 +1,73 @@
+chains:
+  - name: icon
+    version: "3"
+    environment: remote
+    nid: "3"
+    rpc_uri: http://docker.for.mac.host.internal:9082/api/v3/
+    keystore_file: godwallet.json
+    keystore_password: gochain
+    contracts_path: "$BASE_PATH/artifacts/icon"
+    config_path: "$BASE_PATH/test/chains/icon/data"
+    chain_config:      
+      type: icon
+      name: icon
+      chain_id: ibc-icon
+      bech32_prefix: hx
+      bin: "/goloop/bin/goloop"
+      denom: icx
+      image:
+        repository: iconloop/goloop-icon
+        version: latest
+        uid_gid: ""
+    contracts:
+      ibc: "$BASE_PATH/artifacts/icon/ibc-latest.jar"
+      client: "$BASE_PATH/artifacts/icon/tendermint-latest.jar"
+      xcall: "$BASE_PATH/artifacts/icon/xcall-latest.jar"
+      connection: "$BASE_PATH/artifacts/icon/xcall-connection-latest.jar"
+      dapp: "$BASE_PATH/artifacts/icon/dapp-multi-protocol-latest.jar"
+      mockdapp: "$BASE_PATH/artifacts/icon/mockapp-latest.jar"
+      ics20bank: "$BASE_PATH/artifacts/icon/ics20bank-0.1.0-optimized.jar"
+      ics20app: "$BASE_PATH/artifacts/icon/ics20app-0.1.0-optimized.jar"
+      ibc_ics: "$BASE_PATH/artifacts/icon/ibc-0.1.0-optimized.jar"
+      ibc_ics_client: "$BASE_PATH/artifacts/icon/tendermint-0.1.0-optimized.jar"
+      ibc_ics20_client: "$BASE_PATH/artifacts/icon/ics-08-tendermint-0.1.0-optimized.jar"
+  - name: centauri
+    version: "3"
+    environment: remote
+    contracts_path: "$BASE_PATH/artifacts/centauri"
+    config_path: "$BASE_PATH/test/chains/cosmos/data"
+    keystore_file: default
+    keystore_password: test
+    rpc_uri: http://docker.for.mac.host.internal:50001
+    chain_config:
+      type: cosmos
+      name: centauri
+      chain_id: centauri-testnet-1
+      image:
+        repository: composable-centauri
+        version: latest
+        uid_gid: ""
+      bin: centaurid
+      bech32_prefix: centauri
+      denom: stake
+      coin_type: 118
+      gas_prices: 0.00stake
+      gas_adjustment: 1.3
+      trusting_period: 508h
+      no_host_mount: false
+    nid: "3"
+    contracts:
+      ibc: "$BASE_PATH/artifacts/archway/cw_ibc_core_latest.wasm"
+      client: "$BASE_PATH/artifacts/archway/cw_icon_light_client_latest.wasm"
+      xcall: "$BASE_PATH/artifacts/archway/cw_xcall_latest.wasm"
+      connection: "$BASE_PATH/artifacts/archway/cw_xcall_ibc_connection_latest.wasm"
+      dapp: "$BASE_PATH/artifacts/archway/cw_mock_dapp_multi.wasm"
+      mockdapp: "$BASE_PATH/artifacts/archway/cw_mock_ibc_dapp.wasm"
+      ibc_ics20_client: "$BASE_PATH/artifacts/centauri/cw_wasm_light_client_icon.wasm"
+relayer:
+  image: relayer/relayer
+  tag: ics-20
+  use_existing_keys: true
+  keys:
+    icon: godwallet:gochain
+    centauri: default

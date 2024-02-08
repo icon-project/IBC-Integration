@@ -5,44 +5,43 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
-
-	"github.com/strangelove-ventures/interchaintest/v7/relayer/rly"
+	"time"
 
 	// "github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/docker/docker/client"
 	"github.com/icon-project/ibc-integration/test/relayer"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
+	"github.com/strangelove-ventures/interchaintest/v7/relayer/rly"
 	"go.uber.org/zap"
 )
 
-const (
-	RlyDefaultUidGid = "100:1000"
-)
-
-// ICONRelayer is the ibc.Relayer implementation for github.com/cosmos/relayer.
-type ICONRelayer struct {
+// ICONRemoteRelayer is the ibc.Relayer implementation for github.com/cosmos/relayer.
+type ICONRemoteRelayer struct {
 	// Embedded DockerRelayer so commands just work.
 	*relayer.DockerRelayer
 }
 
-func NewICONRelayer(log *zap.Logger, testName string, cli *client.Client, networkID string, options ...relayer.RelayerOption) *ICONRelayer {
-	c := commander{log: log}
+func NewICONRemoteRelayer(log *zap.Logger, testName string, cli *client.Client, networkID string, relayerAccounts map[string]string, options ...relayer.RelayerOption) *ICONRemoteRelayer {
+	c := RemoteCommander{log: log}
 	for _, opt := range options {
 		switch o := opt.(type) {
 		case relayer.RelayerOptionExtraStartFlags:
 			c.extraStartFlags = o.Flags
 		}
 	}
-	dr, err := relayer.NewDockerRelayer(context.TODO(), log, testName, cli, networkID, c, nil, options...)
+	dr, err := relayer.NewDockerRelayer(context.TODO(), log, testName, cli, networkID, c, relayerAccounts, options...)
 	if err != nil {
 		panic(err) // TODO: return
 	}
-	return &ICONRelayer{DockerRelayer: dr}
+	return &ICONRemoteRelayer{DockerRelayer: dr}
 }
 
-type ICONRelayerChainConfigValue struct {
+type ICONRemoteRelayerChainConfigValue struct {
 	KeyDirectory      string `json:"key-directory"`
 	Key               string `json:"key"`
 	ChainID           string `json:"chain-id"`
@@ -58,66 +57,30 @@ type ICONRelayerChainConfigValue struct {
 	BlockInterval     int    `json:"block-interval"`
 }
 
-type ArchRelayerChainConfigValue struct {
-	rly.CosmosRelayerChainConfigValue
-	KeyDir            string `json:"key-directory"`
-	MinGasAmount      int    `json:"min-gas-amount"`
-	CoinType          int    `json:"coin-type"`
-	StartHeight       int    `json:"start-height"`
-	IBCHandlerAddress string `json:"ibc-handler-address"`
-	BlockInterval     int    `json:"block-interval"`
+type ICONRemoteRelayerChainConfig struct {
+	Type  string                            `json:"type"`
+	Value ICONRemoteRelayerChainConfigValue `json:"value"`
 }
 
-type CosmosRelayerChainConfigValue struct {
-	rly.CosmosRelayerChainConfigValue
-	KeyDir        string `json:"key-directory"`
-	Key           string `json:"key"`
-	MinGasAmount  int    `json:"min-gas-amount"`
-	CoinType      int    `json:"coin-type"`
-	BlockInterval int    `json:"block-interval"`
-}
-
-type ICONRelayerChainConfig struct {
-	Type  string                      `json:"type"`
-	Value ICONRelayerChainConfigValue `json:"value"`
-}
-
-type ArchRelayerChainConfig struct {
-	Type  string                      `json:"type"`
-	Value ArchRelayerChainConfigValue `json:"value"`
-}
-
-type CosmosRelayerChainConfig struct {
-	Type  string                        `json:"type"`
-	Value CosmosRelayerChainConfigValue `json:"value"`
-}
-
-const (
-	DefaultContainerImage   = "ghcr.io/cosmos/relayer"
-	DefaultContainerVersion = "v2.3.1"
-)
-
-// Capabilities returns the set of capabilities of the Cosmos relayer.
-//
-// Note, this API may change if the rly package eventually needs
-// to distinguish between multiple rly versions.
-func Capabilities() map[relayer.Capability]bool {
-	// RC1 matches the full set of capabilities as of writing.
-	return relayer.FullCapabilities()
-}
-
-func ChainConfigToICONRelayerChainConfig(chainConfig ibc.ChainConfig, keyName, rpcAddr, gprcAddr string) ICONRelayerChainConfig {
+func ChainConfigToICONRemoteRelayerRemoteChainConfig(chainConfig ibc.ChainConfig, keyName, rpcAddr, gprcAddr, keystorePwd string) ICONRemoteRelayerChainConfig {
 	chainType := chainConfig.Type
-	return ICONRelayerChainConfig{
+	keystore := "godwallet"
+	pwd := "gochain"
+	if keystorePwd != "" {
+		parts := strings.Split(keystorePwd, ":")
+		keystore = parts[0]
+		pwd = parts[1]
+	}
+	return ICONRemoteRelayerChainConfig{
 		Type: chainType,
-		Value: ICONRelayerChainConfigValue{
+		Value: ICONRemoteRelayerChainConfigValue{
 			Key:               "icx",
 			ChainID:           chainConfig.ChainID,
-			RPCAddr:           "http://" + rpcAddr + "/api/v3/",
+			RPCAddr:           rpcAddr,
 			Timeout:           "10s",
-			Keystore:          "relayer-" + chainConfig.Name,
+			Keystore:          keystore,
 			KeyDirectory:      "/home/relayer/.relayer/keys",
-			Password:          "relayer-" + chainConfig.Name,
+			Password:          pwd,
 			IconNetworkID:     3,
 			BtpNetworkID:      chainConfig.ConfigFileOverrides["btp-network-id"].(int),
 			StartHeight:       chainConfig.ConfigFileOverrides["start-height"].(int),
@@ -128,63 +91,62 @@ func ChainConfigToICONRelayerChainConfig(chainConfig ibc.ChainConfig, keyName, r
 	}
 }
 
-// commander satisfies relayer.RelayerCommander.
-type commander struct {
+type RemoteCommander struct {
 	log             *zap.Logger
 	extraStartFlags []string
 }
 
-func (commander) Name() string {
+func (RemoteCommander) Name() string {
 	return "rly"
 }
 
-func (commander) DockerUser() string {
+func (RemoteCommander) DockerUser() string {
 	return RlyDefaultUidGid // docker run -it --rm --entrypoint echo ghcr.io/cosmos/relayer "$(id -u):$(id -g)"
 }
 
-func (commander) AddChainConfiguration(containerFilePath, homeDir string) []string {
+func (RemoteCommander) AddChainConfiguration(containerFilePath, homeDir string) []string {
 	return []string{
 		"rly", "chains", "add", "-f", containerFilePath,
 	}
 }
 
-func (commander) AddKey(chainID, keyName, coinType, homeDir string) []string {
+func (RemoteCommander) AddKey(chainID, keyName, coinType, homeDir string) []string {
 	return []string{
 		"rly", "keys", "add", chainID, keyName,
 		"--coin-type", fmt.Sprint(coinType),
 	}
 }
 
-func (commander) CreateChannel(pathName string, opts ibc.CreateChannelOptions, homeDir string) []string {
+func (RemoteCommander) CreateChannel(pathName string, opts ibc.CreateChannelOptions, homeDir string) []string {
 	return []string{
 		"rly", "tx", "channel", pathName,
 		"--src-port", opts.SourcePortName,
 		"--dst-port", opts.DestPortName,
-		"--order", opts.Order.String(),
-		"--version", opts.Version,
 	}
 }
 
-func (commander) CreateClients(pathName string, opts ibc.CreateClientOptions, homeDir string) []string {
+func (RemoteCommander) CreateClients(pathName string, opts ibc.CreateClientOptions, homeDir string) []string {
 	return []string{
-		"rly", "tx", "clients", pathName, "--client-tp", opts.TrustingPeriod,
+		"rly", "tx", "clients", pathName, "--client-tp", "5040m",
+		"--src-wasm-code-id", "3d2194afeaafca671c55c8dacdb4f3e318e12061a69f1dbeb98317784a6da319", "--override", "-d",
 	}
 }
 
 // passing a value of 0 for customeClientTrustingPeriod will use default
-func (commander) CreateClient(pathName, homeDir, customeClientTrustingPeriod string) []string {
+func (RemoteCommander) CreateClient(pathName, homeDir, customeClientTrustingPeriod string) []string {
 	return []string{
 		"rly", "tx", "client", pathName, "--client-tp", customeClientTrustingPeriod,
 	}
 }
 
-func (commander) CreateConnections(pathName string, homeDir string) []string {
+func (RemoteCommander) CreateConnections(pathName string, homeDir string) []string {
+	time.Sleep(10 * time.Second)
 	return []string{
 		"rly", "tx", "connection", pathName,
 	}
 }
 
-func (commander) Flush(pathName, channelID, homeDir string) []string {
+func (RemoteCommander) Flush(pathName, channelID, homeDir string) []string {
 	cmd := []string{"rly", "tx", "flush"}
 	if pathName != "" {
 		cmd = append(cmd, pathName)
@@ -196,13 +158,13 @@ func (commander) Flush(pathName, channelID, homeDir string) []string {
 	return cmd
 }
 
-func (commander) GeneratePath(srcChainID, dstChainID, pathName, homeDir string) []string {
+func (RemoteCommander) GeneratePath(srcChainID, dstChainID, pathName, homeDir string) []string {
 	return []string{
-		"rly", "paths", "new", srcChainID, dstChainID, pathName,
+		"rly", "paths", "new", dstChainID, srcChainID, pathName,
 	}
 }
 
-func (commander) UpdatePath(pathName, homeDir string, filter ibc.ChannelFilter) []string {
+func (RemoteCommander) UpdatePath(pathName, homeDir string, filter ibc.ChannelFilter) []string {
 	return []string{
 		"rly", "paths", "update", pathName,
 
@@ -211,26 +173,26 @@ func (commander) UpdatePath(pathName, homeDir string, filter ibc.ChannelFilter) 
 	}
 }
 
-func (commander) GetChannels(chainID, homeDir string) []string {
+func (RemoteCommander) GetChannels(chainID, homeDir string) []string {
 	return []string{
 		"rly", "q", "channels", chainID,
 	}
 }
 
-func (commander) GetConnections(chainID, homeDir string) []string {
+func (RemoteCommander) GetConnections(chainID, homeDir string) []string {
 	return []string{
 		"rly", "q", "connections", chainID,
 	}
 }
 
-func (commander) GetClients(chainID, homeDir string) []string {
+func (RemoteCommander) GetClients(chainID, homeDir string) []string {
 	return []string{
 		"rly", "q", "clients", chainID,
 	}
 }
 
 // TODO figure out values for commented parameters
-func (commander) LinkPath(pathName, homeDir string, channelOpts ibc.CreateChannelOptions, clientOpt ibc.CreateClientOptions) []string {
+func (RemoteCommander) LinkPath(pathName, homeDir string, channelOpts ibc.CreateChannelOptions, clientOpt ibc.CreateClientOptions) []string {
 	return []string{
 		"rly", "tx", "link", pathName,
 		"--src-port", channelOpts.SourcePortName,
@@ -242,14 +204,14 @@ func (commander) LinkPath(pathName, homeDir string, channelOpts ibc.CreateChanne
 	}
 }
 
-func (commander) RestoreKey(chainID, keyName, coinType, mnemonic, homeDir string) []string {
+func (RemoteCommander) RestoreKey(chainID, keyName, coinType, mnemonic, homeDir string) []string {
 	return []string{
 		"rly", "keys", "restore", chainID, keyName, mnemonic,
 		"--coin-type", fmt.Sprint(coinType),
 	}
 }
 
-func (c commander) StartRelayer(homeDir string, pathNames ...string) []string {
+func (c RemoteCommander) StartRelayer(homeDir string, pathNames ...string) []string {
 	cmd := []string{
 		"rly", "start", "--debug",
 	}
@@ -258,13 +220,13 @@ func (c commander) StartRelayer(homeDir string, pathNames ...string) []string {
 	return cmd
 }
 
-func (commander) UpdateClients(pathName, homeDir string) []string {
+func (RemoteCommander) UpdateClients(pathName, homeDir string) []string {
 	return []string{
 		"rly", "tx", "update-clients", pathName,
 	}
 }
 
-func (commander) ConfigContent(ctx context.Context, cfg ibc.ChainConfig, keyName, rpcAddr, grpcAddr string, relayerAccounts map[string]string) ([]byte, error) {
+func (RemoteCommander) ConfigContent(ctx context.Context, cfg ibc.ChainConfig, keyName, rpcAddr, grpcAddr string, relayerAccounts map[string]string) ([]byte, error) {
 
 	switch chainType := cfg.Type; chainType {
 	case "wasm":
@@ -290,6 +252,7 @@ func (commander) ConfigContent(ctx context.Context, cfg ibc.ChainConfig, keyName
 	case "cosmos":
 		cosmosRelayerChainConfig := rly.ChainConfigToCosmosRelayerChainConfig(cfg, keyName, rpcAddr, grpcAddr)
 		coinType, err := strconv.Atoi(cfg.CoinType)
+
 		archRelayerChainConfig := &CosmosRelayerChainConfig{
 			Type: "cosmos",
 			Value: CosmosRelayerChainConfigValue{
@@ -299,6 +262,19 @@ func (commander) ConfigContent(ctx context.Context, cfg ibc.ChainConfig, keyName
 				CoinType:                      coinType,
 			},
 		}
+		if relayerAccounts != nil {
+			key := relayerAccounts[cfg.Name]
+			archRelayerChainConfig = &CosmosRelayerChainConfig{
+				Type: "cosmos",
+				Value: CosmosRelayerChainConfigValue{
+					CosmosRelayerChainConfigValue: cosmosRelayerChainConfig.Value,
+					KeyDir:                        "/home/relayer/.relayer/keys/" + cfg.ChainID,
+					MinGasAmount:                  1000000,
+					CoinType:                      coinType,
+					Key:                           key,
+				},
+			}
+		}
 		jsonBytes, err := json.Marshal(archRelayerChainConfig)
 		if err != nil {
 			return nil, err
@@ -306,54 +282,65 @@ func (commander) ConfigContent(ctx context.Context, cfg ibc.ChainConfig, keyName
 		return jsonBytes, nil
 
 	default:
+		if relayerAccounts != nil {
+			ICONRelayerChainConfig := ChainConfigToICONRemoteRelayerRemoteChainConfig(cfg, keyName, rpcAddr, grpcAddr, relayerAccounts["icon"])
+			jsonBytes, err := json.Marshal(ICONRelayerChainConfig)
+			if err != nil {
+				return nil, err
+			}
+			return jsonBytes, nil
+		}
 		ICONRelayerChainConfig := ChainConfigToICONRelayerChainConfig(cfg, keyName, rpcAddr, grpcAddr)
 		jsonBytes, err := json.Marshal(ICONRelayerChainConfig)
 		if err != nil {
 			return nil, err
 		}
 		return jsonBytes, nil
+
 	}
 }
 
-func (commander) DefaultContainerImage() string {
+func (RemoteCommander) DefaultContainerImage() string {
 	return DefaultContainerImage
 }
 
-func (commander) DefaultContainerVersion() string {
+func (RemoteCommander) DefaultContainerVersion() string {
 	return DefaultContainerVersion
 }
 
-func (commander) ParseAddKeyOutput(stdout, stderr string) (ibc.Wallet, error) {
+func (RemoteCommander) ParseAddKeyOutput(stdout, stderr string) (ibc.Wallet, error) {
 	var wallet WalletModel
 	err := json.Unmarshal([]byte(stdout), &wallet)
 	rlyWallet := NewWallet("", wallet.Address, wallet.Mnemonic)
 	return rlyWallet, err
 }
 
-func (commander) ParseRestoreKeyOutput(stdout, stderr string) string {
+func (RemoteCommander) ParseRestoreKeyOutput(stdout, stderr string) string {
 	return strings.Replace(stdout, "\n", "", 1)
 }
 
-func (c commander) ParseGetChannelsOutput(stdout, stderr string) ([]ibc.ChannelOutput, error) {
+func (c RemoteCommander) ParseGetChannelsOutput(stdout, stderr string) ([]ibc.ChannelOutput, error) {
 	var channels []ibc.ChannelOutput
 	channelSplit := strings.Split(stdout, "\n")
 	for _, channel := range channelSplit {
 		if strings.TrimSpace(channel) == "" {
 			continue
 		}
-		var channelOutput ibc.ChannelOutput
-		err := json.Unmarshal([]byte(channel), &channelOutput)
-		if err != nil {
-			c.log.Error("Failed to parse channels json", zap.Error(err))
-			continue
+		if strings.HasPrefix(channel, "{") {
+			var channelOutput ibc.ChannelOutput
+			err := json.Unmarshal([]byte(channel), &channelOutput)
+			if err != nil {
+				c.log.Error("Failed to parse channels json", zap.Error(err))
+				continue
+			}
+			channels = append(channels, channelOutput)
 		}
-		channels = append(channels, channelOutput)
 	}
 
 	return channels, nil
 }
 
-func (c commander) ParseGetConnectionsOutput(stdout, stderr string) (ibc.ConnectionOutputs, error) {
+func (c RemoteCommander) ParseGetConnectionsOutput(stdout, stderr string) (ibc.ConnectionOutputs, error) {
 	var connections ibc.ConnectionOutputs
 	for _, connection := range strings.Split(stdout, "\n") {
 		if strings.TrimSpace(connection) == "" {
@@ -375,7 +362,7 @@ func (c commander) ParseGetConnectionsOutput(stdout, stderr string) (ibc.Connect
 	return connections, nil
 }
 
-func (c commander) ParseGetClientsOutput(stdout, stderr string) (ibc.ClientOutputs, error) {
+func (c RemoteCommander) ParseGetClientsOutput(stdout, stderr string) (ibc.ClientOutputs, error) {
 	var clients ibc.ClientOutputs
 	for _, client := range strings.Split(stdout, "\n") {
 		if strings.TrimSpace(client) == "" {
@@ -397,12 +384,20 @@ func (c commander) ParseGetClientsOutput(stdout, stderr string) (ibc.ClientOutpu
 	return clients, nil
 }
 
-func (commander) Init(homeDir string) []string {
+func (RemoteCommander) Init(homeDir string) []string {
+	path, _ := os.Getwd()
+	baseTestDir := filepath.Dir(path)
+	if _, err := os.Stat(baseTestDir + "/relayer/data/config/config.yaml"); err == nil {
+		err := os.Remove(baseTestDir + "/relayer/data/config/config.yaml")
+		if err != nil {
+			log.Fatal("failed to remove file:", err)
+		}
+	}
 	return []string{
 		"rly", "config", "init",
 	}
 }
 
-func (c commander) CreateWallet(keyName, address, mnemonic string) ibc.Wallet {
+func (c RemoteCommander) CreateWallet(keyName, address, mnemonic string) ibc.Wallet {
 	return NewWallet(keyName, address, mnemonic)
 }

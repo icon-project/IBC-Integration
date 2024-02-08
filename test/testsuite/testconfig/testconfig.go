@@ -22,6 +22,9 @@ type Chain struct {
 	Name             string             `mapstructure:"name"`
 	version          string             `mapstructure:"version"`
 	Environment      string             `mapstructure:"environment"`
+	RPCUri           string             `mapstructure:"rpc_uri"`
+	ContractsPath    string             `mapstructure:"contracts_path"`
+	ConfigPath       string             `mapstructure:"config_path"`
 	ChainConfig      chains.ChainConfig `mapstructure:"chain_config"`
 	URL              string             `mapstructure:"url"`
 	NID              string             `mapstructure:"nid"`

@@ -5,9 +5,11 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"github.com/strangelove-ventures/interchaintest/v7/ibc"
+	"math/big"
 	"os"
 	"strings"
+
+	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -63,6 +65,9 @@ type Chain interface {
 	RestoreConfig([]byte) error
 	//integration test specific
 	SendPacketMockDApp(ctx context.Context, targetChain Chain, keyName string, params map[string]interface{}) (PacketTransferResponse, error)
+	SetupIBCICS20(ctx context.Context, keyName string) (context.Context, error)
+	SendIBCTokenTransfer(ctx context.Context, sourceChannel, destinationChannel, port, receiver, chainID string, amount uint64) (string, error)
+	GetWalletBalance(ctx context.Context, address string, denom string) (*big.Int, error)
 }
 
 func GetEnvOrDefault(key, defaultValue string) string {

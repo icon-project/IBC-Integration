@@ -3,8 +3,10 @@ package testsuite
 import (
 	"context"
 	"fmt"
-	test "github.com/strangelove-ventures/interchaintest/v7/testutil"
 	"strconv"
+	"time"
+
+	test "github.com/strangelove-ventures/interchaintest/v7/testutil"
 
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains/cosmos"
@@ -120,6 +122,51 @@ func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
 	}
 	s.relayer = r
 	return r, err
+}
+
+func (s *E2ETestSuite) SetupICS20Relayer(ctx context.Context) (ibc.Relayer, error) {
+	chainA, chainB := s.GetChains()
+	r := relayer.New(s.T(), s.cfg.RelayerConfig, s.logger, s.DockerClient, s.network)
+	ic := interchaintest.NewInterchain().
+		AddChain(chainA.(ibc.Chain)).
+		AddChain(chainB.(ibc.Chain)).
+		AddRelayer(r, "r").
+		AddLink(interchaintest.InterchainLink{
+			Chain1:  chainA.(ibc.Chain),
+			Chain2:  chainB.(ibc.Chain),
+			Relayer: r,
+		})
+	eRep := s.GetRelayerExecReporter()
+	buildOptions := interchaintest.InterchainBuildOptions{
+		TestName:          s.T().Name(),
+		Client:            s.DockerClient,
+		NetworkID:         s.network,
+		BlockDatabaseFile: interchaintest.DefaultBlockDatabaseFilepath(),
+		SkipPathCreation:  true,
+	}
+	if err := ic.BuildRemoteChains(ctx, eRep, buildOptions); err != nil {
+		return nil, err
+	}
+
+	if _, err := chainA.SetupIBCICS20(ctx, interchaintest.IBCOwnerAccount); err != nil {
+		return nil, err
+	}
+	if _, err := chainB.SetupIBCICS20(ctx, interchaintest.IBCOwnerAccount); err != nil {
+		return nil, err
+	}
+	if err := ic.BuildRemoteRelayer(ctx, eRep, buildOptions); err != nil {
+		return nil, err
+	}
+	s.startRelayerFn = func(relayer ibc.Relayer, pathName string) error {
+		if err := relayer.StartRelayer(ctx, eRep, pathName); err != nil {
+			return fmt.Errorf("failed to start relayer: %s", err)
+		}
+		// give some time to start the relayer
+		time.Sleep(5 * time.Second)
+		return nil
+	}
+	s.relayer = r
+	return r, nil
 }
 
 func (s *E2ETestSuite) buildWallets(ctx context.Context, chainA chains.Chain, chainB chains.Chain) error {
@@ -276,9 +323,9 @@ func (s *E2ETestSuite) createChains(chainOptions *testconfig.ChainOptions) (chai
 
 	logger := zaptest.NewLogger(t)
 
-	chainA, _ := buildChain(logger, t.Name(), chainOptions.ChainAConfig)
+	chainA, _ := buildChain(logger, t.Name(), s, chainOptions.ChainAConfig)
 
-	chainB, _ := buildChain(logger, t.Name(), chainOptions.ChainBConfig)
+	chainB, _ := buildChain(logger, t.Name(), s, chainOptions.ChainBConfig)
 
 	// this is intentionally called after the interchaintest.DockerSetup function. The above function registers a
 	// cleanup task which deletes all containers. By registering a cleanup function afterwards, it is executed first
@@ -290,24 +337,43 @@ func (s *E2ETestSuite) createChains(chainOptions *testconfig.ChainOptions) (chai
 	return chainA, chainB
 }
 
-func buildChain(log *zap.Logger, testName string, cfg *testconfig.Chain) (chains.Chain, error) {
+func buildChain(log *zap.Logger, testName string, s *E2ETestSuite, cfg *testconfig.Chain) (chains.Chain, error) {
 	var (
 		chain chains.Chain
 		err   error
 	)
 	ibcChainConfig := cfg.ChainConfig.GetIBCChainConfig(&chain)
-	switch cfg.ChainConfig.Type {
-	case "icon":
-		chain = icon.NewIconLocalnet(testName, log, ibcChainConfig, chains.DefaultNumValidators, chains.DefaultNumFullNodes, cfg.Contracts)
-		return chain, nil
-	case "cosmos", "wasm":
-		enc := cosmos.DefaultEncoding()
-		ibcChainConfig.EncodingConfig = &enc
-		chain, err = cosmos.NewCosmosLocalnet(testName, log, ibcChainConfig, chains.DefaultNumValidators, chains.DefaultNumFullNodes, cfg.KeystorePassword, cfg.Contracts)
-		return chain, err
+	switch cfg.Environment {
+	case "local":
+		switch cfg.ChainConfig.Type {
+		case "icon":
+			chain = icon.NewIconLocalnet(testName, log, ibcChainConfig, chains.DefaultNumValidators, chains.DefaultNumFullNodes, cfg.Contracts)
+			return chain, nil
+		case "wasm", "cosmos":
+			enc := cosmos.DefaultEncoding()
+			ibcChainConfig.EncodingConfig = &enc
+			chain, err = cosmos.NewCosmosLocalnet(testName, log, ibcChainConfig, chains.DefaultNumValidators, chains.DefaultNumFullNodes, cfg.KeystorePassword, cfg.Contracts)
+			return chain, err
+		default:
+			return nil, fmt.Errorf("unexpected error, unknown chain type: %s for chain: %s in environment : %s", cfg.ChainConfig.Type, cfg.Name, cfg.Environment)
+		}
+	case "remote":
+		switch cfg.ChainConfig.Type {
+		case "icon":
+			chain = icon.NewIconRemotenet(testName, log, ibcChainConfig, s.DockerClient, s.network, cfg)
+			return chain, nil
+		case "wasm", "cosmos":
+			enc := cosmos.DefaultEncoding()
+			ibcChainConfig.EncodingConfig = &enc
+			chain, err = cosmos.NewCosmosRemotenet(testName, log, ibcChainConfig, s.DockerClient, s.network, cfg.KeystorePassword, cfg)
+			return chain, err
+		default:
+			return nil, fmt.Errorf("unexpected error, unknown chain type: %s for chain: %s in environment : %s", cfg.ChainConfig.Type, cfg.Name, cfg.Environment)
+		}
 	default:
-		return nil, fmt.Errorf("unexpected error, unknown chain type: %s for chain: %s", cfg.ChainConfig.Type, cfg.Name)
+		return nil, fmt.Errorf("unexpected error, unknown chain type: %s for chain: %s in environment : %s", cfg.ChainConfig.Type, cfg.Name, cfg.Environment)
 	}
+
 }
 
 // GetRelayerExecReporter returns a testreporter.RelayerExecReporter instances
