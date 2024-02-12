@@ -98,14 +98,16 @@ public class ICS20Bank {
     }
 
     @External
-    public void withdraw(Address tokenContract, BigInteger amount, Address receiver) {
+    public void withdraw(Address tokenContract, BigInteger amount) {
         Context.require(tokenContract.isContract(), "ICS20Bank: tokenContract is not a contract");
+        Address receiver = Context.getCaller();
         _burn(receiver, tokenContract.toString(), amount);
         Context.call(tokenContract, "transfer", receiver, amount);
     }
 
     private void _mint(Address account, String denom, BigInteger amount) {
         balances.at(denom).set(account, balanceOf(account, denom).add(amount));
+
         balancesOfNew.set(account, amount);
         denomOfBalance.set(account, denom);
         addressOfBalances.add(account);
@@ -116,6 +118,7 @@ public class ICS20Bank {
         Context.require(accountBalance.compareTo(amount) >= 0, "ICS20Bank: burn amount exceeds balance");
         BigInteger newBalance = accountBalance.subtract(amount);
         balances.at(denom).set(account, newBalance);
+
         balancesOfNew.set(account, newBalance);
     }
 
