@@ -87,7 +87,7 @@ public abstract class ICS20Transfer implements IIBCModule {
     public void onAcknowledgementPacket(byte[] packet, byte[] acknowledgement, Address relayer) {
         onlyIBC();
         Packet packetDb = Packet.decode(packet);
-        if (acknowledgement != ICS20Lib.SUCCESSFUL_ACKNOWLEDGEMENT_JSON) {
+        if (!acknowledgement.equals(ICS20Lib.SUCCESSFUL_ACKNOWLEDGEMENT_JSON)) {
             refundTokens(ICS20Lib.unmarshalJSON(packetDb.getData()), packetDb.getSourcePort(), packetDb.getSourceChannel());
         }
     }
