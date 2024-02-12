@@ -22,6 +22,7 @@ import java.util.Map;
 
 import icon.proto.core.channel.Channel.Counterparty;
 import icon.proto.core.channel.Channel.Order;
+import icon.proto.core.channel.Channel;
 import icon.proto.core.channel.Packet;
 import icon.proto.core.client.Height;
 import score.Address;
@@ -82,6 +83,10 @@ public class IBCConnection {
         checkCallerOrThrow(admin.get(), "Only Admin allowed");
     }
 
+    private void onlyOwner() {
+        checkCallerOrThrow(Context.getOwner(), "Only Owner allowed");
+    }
+
     public BigInteger getValue() {
         return Context.getValue();
     }
@@ -102,9 +107,25 @@ public class IBCConnection {
     @External
     public void configureConnection(String connectionId, String counterpartyPortId, String counterpartyNid, String clientId, BigInteger timeoutHeight) {
         onlyAdmin();
-        Context.require(configuredClients.get(connectionId) == null, "connection already configured");
-        Context.require(configuredNetworkIds.at(connectionId).get(counterpartyPortId) == null, "connection and port already configured");
-        Context.require(channels.get(counterpartyNid) == null, "networkId already configured");
+        String channelId = channels.get(counterpartyNid);
+        if (channelId != null) {
+            byte[] channelBytes = Context.call(byte[].class, ibc.get(), "getChannel", PORT, channelId);
+            Channel channel = Channel.decode(channelBytes);
+            Context.require(channel.getState() != Channel.State.STATE_OPEN, "Channel is already open");
+            channels.set(counterpartyNid, null);
+        }
+
+        _configureConnection(connectionId, counterpartyPortId, counterpartyNid, clientId, timeoutHeight);
+    }
+
+    @External
+    public void overrideConnection(String connectionId, String counterpartyPortId, String counterpartyNid, String clientId, BigInteger timeoutHeight) {
+        onlyOwner();
+        channels.set(counterpartyNid, null);
+        _configureConnection(connectionId, counterpartyPortId, counterpartyNid, clientId, timeoutHeight);
+    }
+
+    private void _configureConnection(String connectionId, String counterpartyPortId, String counterpartyNid, String clientId, BigInteger timeoutHeight) {
         configuredNetworkIds.at(connectionId).set(counterpartyPortId, counterpartyNid);
         configuredClients.set(connectionId, clientId);
         configuredTimeoutHeight.set(connectionId, timeoutHeight);

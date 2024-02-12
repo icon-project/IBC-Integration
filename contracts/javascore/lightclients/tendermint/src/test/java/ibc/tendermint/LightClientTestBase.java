@@ -71,6 +71,7 @@ public class LightClientTestBase extends TestBase {
     protected static final String BLOCK_SET_MUTILPLE_VALIDATORS = BLOCK_SET_BASE_PATH + "multi-validator/";
     protected static final String BLOCK_SET_ADJACENT = BLOCK_SET_BASE_PATH + "adjacent/";
     protected static final String BLOCK_SET_MALICIOUS = BLOCK_SET_BASE_PATH + "malicious/";
+    protected static final String BLOCK_SET_LONG_POWER = BLOCK_SET_BASE_PATH + "validator-with-long-voting-power/";
     protected String blockSetPath = BLOCK_SET_SIMPLE;
 
     static {

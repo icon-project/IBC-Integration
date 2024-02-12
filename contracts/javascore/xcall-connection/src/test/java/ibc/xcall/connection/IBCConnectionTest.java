@@ -1,28 +1,31 @@
 package ibc.xcall.connection;
 
-import static org.mockito.AdditionalMatchers.aryEq;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import com.iconloop.score.test.Account;
-import com.iconloop.score.test.ServiceManager;
-
-import ibc.icon.score.util.StringUtil;
-import icon.proto.core.channel.Packet;
-import icon.proto.core.client.Height;
 
 import java.math.BigInteger;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+
+import com.iconloop.score.test.Account;
+import com.iconloop.score.test.ServiceManager;
+
+import ibc.icon.score.util.StringUtil;
+import icon.proto.core.channel.Channel;
+import icon.proto.core.channel.Packet;
+import icon.proto.core.client.Height;
 import score.Address;
 
 public class IBCConnectionTest extends IBCConnectionTestBase {
@@ -37,7 +40,7 @@ public class IBCConnectionTest extends IBCConnectionTestBase {
     ArgumentCaptor<byte[]> packetCaptor = ArgumentCaptor.forClass(byte[].class);
 
     @Test
-    public void channelOpe_NotConfigured() {
+    public void channelOpen_NotConfigured() {
         // Arrange
         String errorMessage = "Reverted(0): Invalid counterparty network id";
 
@@ -340,6 +343,43 @@ public class IBCConnectionTest extends IBCConnectionTestBase {
 
         // Assert
         assertEquals(fee, relayer.getBalance());
+    }
+
+    @Test
+    public void overrideConnection() {
+        establishConnection(defaultClientId, defaultConnectionId, defaultChannel, defaultCounterpartyPort, defaultCounterpartyChannel, defaultCounterpartyNid, defaultTimeoutHeight);
+        connection.invoke(owner, "overrideConnection", defaultConnectionId, defaultCounterpartyPort, defaultCounterpartyNid, defaultClientId, defaultTimeoutHeight);
+        channelOpenInit(defaultConnectionId, defaultCounterpartyPort, "new channel");
+        channelOpenAck("new channel", "new counterparty channel");
+    }
+
+    @Test
+    public void reEstablishConnection_Open() {
+        // Arrange
+        establishDefaultConnection();
+        Channel channel = new Channel();
+        channel.setState(Channel.State.STATE_OPEN);
+        when(ibc.mock.getChannel(IBCConnection.PORT, defaultChannel)).thenReturn(channel.encode());
+
+        // Act
+        Executable configureOpenChannel = () -> connection.invoke(owner, "configureConnection", defaultConnectionId, defaultCounterpartyPort, defaultCounterpartyNid, defaultClientId, defaultTimeoutHeight);
+
+        // Arrange
+        AssertionError e = assertThrows(AssertionError.class, configureOpenChannel);
+        assertEquals("Reverted(0): Channel is already open", e.getMessage());
+    }
+
+    @Test
+    public void reEstablishConnection() {
+        // Arrange
+        connection.invoke(owner, "configureConnection", defaultConnectionId, defaultCounterpartyPort, defaultCounterpartyNid, defaultClientId, defaultTimeoutHeight);
+        channelOpenInit(defaultConnectionId, defaultCounterpartyPort, defaultChannel);
+        Channel channel = new Channel();
+        channel.setState(Channel.State.STATE_INIT);
+        when(ibc.mock.getChannel(IBCConnection.PORT, defaultChannel)).thenReturn(channel.encode());
+
+        // Act & Assert
+        assertDoesNotThrow(() -> connection.invoke(owner, "configureConnection", defaultConnectionId, defaultCounterpartyPort, defaultCounterpartyNid, defaultClientId, defaultTimeoutHeight));
     }
 
     @Test

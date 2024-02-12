@@ -198,7 +198,7 @@ fn create_misbehaviour_event_test() {
 }
 
 #[test]
-fn store_client_type_sucess() {
+fn store_client_type_success() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
     let client_type = ClientType::new("icon_client".to_string());
@@ -1169,7 +1169,7 @@ fn fails_on_storing_already_registered_client_into_registry() {
 }
 
 #[test]
-fn sucess_on_getting_client() {
+fn success_on_getting_client() {
     let mut mock_deps = deps();
     let contract = CwIbcCoreContext::default();
     let client_type = ClientType::new("new_client_type".to_string());
@@ -1290,7 +1290,7 @@ fn fails_on_getting_client_state() {
 }
 
 #[test]
-fn sucess_on_misbehaviour_validate() {
+fn success_on_misbehaviour_validate() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
     let info = create_mock_info("alice", "umlg", 2000);
