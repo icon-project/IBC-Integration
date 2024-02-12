@@ -60,7 +60,6 @@ deployJar {
         lisbon {
             uri = 'https://lisbon.net.solidwallet.io/api/v3'
             nid = 0x2
-            to = "$ics20App"?:null
         }
         local {
             uri = 'http://localhost:9082/api/v3'
@@ -75,7 +74,7 @@ deployJar {
     keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''
     password = rootProject.hasProperty('keystorePass') ? "$keystorePass" : ''
     parameters {
-        arg('_ibcHandler', "$ibcCore"?:null)
-        arg("_bank","$ics20Bank"?:null)
+//        arg('_ibcHandler', "$ibcCore"?:null)
+//        arg("_bank","$ics20Bank"?:null)
     }
 }
