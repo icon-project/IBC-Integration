@@ -8,48 +8,6 @@ import score.Address;
 // that modules must define as specified in ICS-26
 @ScoreInterface
 public interface IIBCModule {
-    public class MsgOnChanOpenInit {
-        public Channel.Order order;
-        public String[] connectionHops;
-        public String portId;
-        public String channelId;
-        public Channel.Counterparty counterparty;
-        public String version;
-    }
-
-    public class MsgOnChanOpenTry {
-        public Channel.Order order;
-        public String[] connectionHops;
-        public String portId;
-        public String channelId;
-        public Channel.Counterparty counterparty;
-        public String counterPartyVersion;
-    }
-
-    public class MsgOnChanOpenAck {
-        public String portId;
-        public String channelId;
-        public String counterPartyVersion;
-    }
-
-    public class MsgOnChanOpenConfirm {
-        public String portId;
-        public String channelId;
-    }
-
-    public class MsgOnChanCloseInit {
-        public String portId;
-        public String channelId;
-    }
-
-    public class MsgOnChanCloseConfirm {
-        String portId;
-        String channelId;
-    }
-
-
-
-
     /**
      * onChanOpenInit will verify that the relayer-chosen parameters are valid and perform any custom INIT logic. It
      * may return an error if the chosen parameters are invalid in which case the handshake is aborted. If the
