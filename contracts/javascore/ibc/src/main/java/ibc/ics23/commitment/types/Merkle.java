@@ -20,7 +20,7 @@ public class Merkle {
         Proof.getTendermintSpec()
     );
 
-    public static MerklePath applyPrefix(String path, String prefix) {
+    public static MerklePath applyPrefix(String prefix, String path) {
         var mpath = new MerklePath();
         List<String> keyPath = new ArrayList<>();
         keyPath.add(prefix);

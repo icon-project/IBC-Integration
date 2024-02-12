@@ -213,7 +213,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
 
         var root = consensusState.getRoot();
         var merkleProof = MerkleProof.decode(proof);
-        var merklePath = applyPrefix(new String(path), StringUtil.bytesToHex("wasm".getBytes()));
+        var merklePath = applyPrefix(StringUtil.bytesToHex("wasm".getBytes()), new String(path));
 
         Merkle.verifyMembership(merkleProof, Merkle.SDK_SPEC, root, merklePath, value);
     }
@@ -240,7 +240,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
 
         var root = consensusState.getRoot();
         var merkleProof = MerkleProof.decode(proof);
-        var merklePath = applyPrefix(new String(path), StringUtil.bytesToHex("wasm".getBytes()));
+        var merklePath = applyPrefix(StringUtil.bytesToHex("wasm".getBytes()), new String(path));
 
         Merkle.verifyNonMembership(merkleProof, Merkle.SDK_SPEC, root, merklePath);
     }

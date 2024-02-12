@@ -64,7 +64,7 @@ public class IBCIntegrationTest implements ScoreIntegrationTest {
     @Test
     @Order(0)
     void registerClient() {
-        getClientInterface(owner).registerClient(clientType, mockLightClient._address());
+        getClientInterface(owner).registerClient(clientType, mockLightClient._address(), 0);
     }
 
     @Test
