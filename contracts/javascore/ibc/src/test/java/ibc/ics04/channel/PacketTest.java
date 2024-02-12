@@ -1,6 +1,6 @@
 package ibc.ics04.channel;
 
-import static ibc.ics04.channel.IBCPacket.createPacketCommitmentBytes;
+import static ibc.ics04.channel.IBCPacket.createWasmPacketCommitmentBytes;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -405,7 +405,7 @@ public class PacketTest extends TestBase {
                 basePacket.getSourceChannel(), basePacket.getSequence());
         byte[] commitmentPath2 = IBCCommitment.packetCommitmentPath(basePacket.getSourcePort(),
                 basePacket.getSourceChannel(), basePacket.getSequence().add(BigInteger.ONE));
-        byte[] commitmentBytes = createPacketCommitmentBytes(basePacket);
+        byte[] commitmentBytes = createWasmPacketCommitmentBytes(basePacket);
 
         // Act
         basePacket.setSequence(BigInteger.TWO);
@@ -450,7 +450,7 @@ public class PacketTest extends TestBase {
 
         byte[] commitmentPath = IBCCommitment.packetCommitmentPath(basePacket.getSourcePort(),
                 basePacket.getSourceChannel(), basePacket.getSequence());
-        byte[] commitmentBytes = createPacketCommitmentBytes(basePacket);
+        byte[] commitmentBytes = createWasmPacketCommitmentBytes(basePacket);
 
         // Act
         packet.invoke(owner, "_recvPacket", basePacket, proof, proofHeight.encode());
@@ -470,7 +470,7 @@ public class PacketTest extends TestBase {
 
         byte[] commitmentPath = IBCCommitment.packetCommitmentPath(basePacket.getSourcePort(),
                 basePacket.getSourceChannel(), basePacket.getSequence());
-        byte[] commitmentBytes = createPacketCommitmentBytes(basePacket);
+        byte[] commitmentBytes = createWasmPacketCommitmentBytes(basePacket);
 
         // Act
         packet.invoke(owner, "_recvPacket", basePacket, proof, proofHeight.encode());

@@ -5,38 +5,40 @@ import java.util.Arrays;
 
 import ibc.icon.score.util.MerkleTree;
 import ibc.icon.score.util.Proto;
-import ibc.icon.score.util.ByteUtil;
-import tendermint.types.Commit;
-import tendermint.types.CommitSig;
-import ibc.lightclients.tendermint.v1.ConsensusState;
-import tendermint.types.Header;
+import icon.proto.clients.tendermint.CanonicalVote;
+import icon.proto.clients.tendermint.Commit;
+import icon.proto.clients.tendermint.CommitSig;
+import icon.proto.clients.tendermint.ConsensusState;
+import icon.proto.clients.tendermint.Duration;
+import icon.proto.clients.tendermint.LightHeader;
+import icon.proto.clients.tendermint.SignedHeader;
+import icon.proto.clients.tendermint.SignedMsgType;
+import icon.proto.clients.tendermint.SimpleValidator;
+import icon.proto.clients.tendermint.Timestamp;
+import icon.proto.clients.tendermint.TmHeader;
+import icon.proto.clients.tendermint.Validator;
+import icon.proto.clients.tendermint.ValidatorSet;
 import ibc.core.commitment.v1.MerkleRoot;
-import tendermint.types.SignedHeader;
-import tendermint.types.SignedMsgType;
-import tendermint.types.SimpleValidator;
-import tendermint.types.Validator;
-import tendermint.types.ValidatorSet;
-import ibc.core.client.v1.Height;
-
-import google.protobuf.Timestamp;
-import google.protobuf.Duration;
+import icon.proto.core.client.Height;
 import score.Context;
 
 public class TendermintHelper {
     public static final BigInteger MICRO_SECONDS_IN_A_SECOND = BigInteger.valueOf(1_000_000);
 
-    public static byte[] toCanonicalVote(Commit commit, int valIdx, String chainId) {
+    public static CanonicalVote toCanonicalVote(Commit commit, int valIdx, String chainId) {
         CommitSig commitSig = commit.getSignatures().get(valIdx);
-        return ByteUtil.join(
-            Proto.encode(1, SignedMsgType.SIGNED_MSG_TYPE_PRECOMMIT),
-            Proto.encodeFixed64(2, commit.getHeight()),
-            Proto.encodeFixed64(3, commit.getRound()),
-            Proto.encode(4, commit.getBlockId()),
-            Proto.encode(5, commitSig.getTimestamp()),
-            Proto.encode(6, chainId));
+        CanonicalVote vote = new CanonicalVote();
+
+        vote.setType(SignedMsgType.SIGNED_MSG_TYPE_PRECOMMIT);
+        vote.setHeight(commit.getHeight());
+        vote.setRound(commit.getRound());
+        vote.setBlockId(commit.getBlockId());
+        vote.setTimestamp(commitSig.getTimestamp());
+        vote.setChainId(chainId);
+        return vote;
     }
 
-    public static ConsensusState toConsensusState(ibc.lightclients.tendermint.v1.Header header) {
+    public static ConsensusState toConsensusState(TmHeader header) {
         ConsensusState state = new ConsensusState();
         state.setNextValidatorsHash(header.getSignedHeader().getHeader().getNextValidatorsHash());
         state.setTimestamp(header.getSignedHeader().getHeader().getTime());
@@ -57,14 +59,6 @@ public class TendermintHelper {
         return validatorSet.getTotalVotingPower();
     }
 
-    public static BigInteger getRevisionNumber(String chainId) {
-        int id = chainId.indexOf("-");
-        if (id >= 0) {
-            return new BigInteger(chainId.substring(id+1));
-        }
-        return BigInteger.ZERO;
-    }
-
     public static int getByAddress(ValidatorSet validatorSet, byte[] addr) {
         int size = validatorSet.getValidators().size();
         for (int idx = 0; idx < size; idx++) {
@@ -76,10 +70,10 @@ public class TendermintHelper {
         return -1;
     }
 
-    public static Height newHeight(BigInteger blockHeight, BigInteger revision) {
+    public static Height newHeight(BigInteger blockHeight) {
         Height height = new Height();
         height.setRevisionHeight(blockHeight);
-        height.setRevisionNumber(revision);
+        height.setRevisionNumber(BigInteger.ZERO);
 
         return height;
     }
@@ -135,7 +129,7 @@ public class TendermintHelper {
         return MerkleTree.merkleRootHash(data, 0, size);
     }
 
-    public static byte[] hash(Header header) {
+    public static byte[] hash(LightHeader header) {
         byte[] hbz = Proto.encode(1, header.getVersion().getBlock());
         byte[] pbt = header.getTime().encode();
         byte[] bzbi = header.getLastBlockId().encode();

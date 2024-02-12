@@ -1,23 +1,19 @@
 package ibc.tendermint;
 
-import icon.ibc.interfaces.ILightClient;
+import icon.ibc.interfaces.ILightClient;;
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.NullChecker;
 import ibc.icon.score.util.StringUtil;
 import ibc.ics23.commitment.types.Merkle;
 import ibc.ics24.host.IBCCommitment;
-import cosmos.ics23.v1.*;
-import google.protobuf.*;
-import tendermint.types.*;
-import ibc.core.commitment.v1.*;
-import ibc.lightclients.tendermint.v1.*;
-import ibc.core.client.v1.Height;
+import icon.proto.clients.tendermint.*;
+import icon.proto.core.client.Height;
+import ibc.core.commitment.v1.MerkleProof;
 import score.Address;
 import score.BranchDB;
 import score.Context;
 import score.DictDB;
 import score.annotation.External;
-import score.annotation.Optional;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -76,7 +72,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         byte[] encodedClientState = clientStates.get(clientId);
         NullChecker.requireNotNull(encodedClientState, "Client does not exist");
         ClientState clientState = ClientState.decode(encodedClientState);
-        return clientState.getLatestHeight().encode();
+        return newHeight(clientState.getLatestHeight()).encode();
     }
 
     @External(readonly = true)
@@ -105,12 +101,12 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
                 "trustLevel has zero Denominator");
 
         clientStates.set(clientId, clientStateBytes);
-        consensusStates.at(clientId).set(clientState.getLatestHeight().getRevisionHeight(), consensusStateBytes);
+        consensusStates.at(clientId).set(clientState.getLatestHeight(), consensusStateBytes);
 
         return Map.of(
                 "clientStateCommitment", IBCCommitment.keccak256(clientStateBytes),
                 "consensusStateCommitment", IBCCommitment.keccak256(consensusStateBytes),
-                "height", clientState.getLatestHeight().encode());
+                "height", newHeight(clientState.getLatestHeight()).encode());
     }
 
     /**
@@ -119,8 +115,9 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
     @External
     public Map<String, byte[]> updateClient(String clientId, byte[] clientMessageBytes) {
         onlyHandler();
-        ibc.lightclients.tendermint.v1.Header tmHeader = ibc.lightclients.tendermint.v1.Header.decode(clientMessageBytes);
+        TmHeader tmHeader = TmHeader.decode(clientMessageBytes);
         boolean conflictingHeader = false;
+
         // Check if the Client store already has a consensus state for the header's
         // height
         // If the consensus state exists, and it matches the header then we return early
@@ -143,7 +140,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         byte[] encodedClientState = clientStates.get(clientId);
         require(encodedClientState != null, "LC: client state is invalid");
         ClientState clientState = ClientState.decode(encodedClientState);
-        byte[] encodedTrustedonsensusState = consensusStates.at(clientId).get(tmHeader.getTrustedHeight().getRevisionHeight());
+        byte[] encodedTrustedonsensusState = consensusStates.at(clientId).get(tmHeader.getTrustedHeight());
         require(encodedTrustedonsensusState != null, "LC: consensusState not found at trusted height");
         ConsensusState trustedConsensusState = ConsensusState.decode(encodedTrustedonsensusState);
 
@@ -153,13 +150,12 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         // Header is different from existing consensus state and also valid, so freeze
         // the client and return
         if (conflictingHeader) {
-            BigInteger revision = getRevisionNumber(tmHeader.getSignedHeader().getHeader().getChainId());
-            clientState.setFrozenHeight(newHeight(tmHeader.getSignedHeader().getHeader().getHeight(), revision));
+            clientState.setFrozenHeight(tmHeader.getSignedHeader().getHeader().getHeight());
             encodedClientState = clientState.encode();
             clientStates.set(clientId, encodedClientState);
 
             byte[] encodedConsensusState = toConsensusState(tmHeader).encode();
-            consensusStates.at(clientId).set(clientState.getLatestHeight().getRevisionHeight(), encodedConsensusState);
+            consensusStates.at(clientId).set(clientState.getLatestHeight(), encodedConsensusState);
             processedHeights.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
                     BigInteger.valueOf(Context.getBlockHeight()));
             processedTimes.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
@@ -169,13 +165,12 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
                     "clientStateCommitment", IBCCommitment.keccak256(encodedClientState),
                     "consensusStateCommitment", IBCCommitment.keccak256(encodedConsensusState),
                     "height",
-                    newHeight(tmHeader.getSignedHeader().getHeader().getHeight(), revision).encode());
+                    newHeight(tmHeader.getSignedHeader().getHeader().getHeight()).encode());
         }
 
         // update the consensus state from a new header and set processed time metadata
-        if (tmHeader.getSignedHeader().getHeader().getHeight().compareTo(clientState.getLatestHeight().getRevisionHeight()) > 0) {
-            BigInteger revision = getRevisionNumber(tmHeader.getSignedHeader().getHeader().getChainId());
-            clientState.setLatestHeight(newHeight(tmHeader.getSignedHeader().getHeader().getHeight(), revision));
+        if (tmHeader.getSignedHeader().getHeader().getHeight().compareTo(clientState.getLatestHeight()) > 0) {
+            clientState.setLatestHeight(tmHeader.getSignedHeader().getHeader().getHeight());
             encodedClientState = clientState.encode();
             clientStates.set(clientId, encodedClientState);
         }
@@ -191,7 +186,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         return Map.of(
                 "clientStateCommitment", IBCCommitment.keccak256(encodedClientState),
                 "consensusStateCommitment", IBCCommitment.keccak256(encodedConsensusState),
-                "height", clientState.getLatestHeight().encode());
+                "height", newHeight(clientState.getLatestHeight()).encode());
     }
 
     @External(readonly = true)
@@ -218,7 +213,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
 
         var root = consensusState.getRoot();
         var merkleProof = MerkleProof.decode(proof);
-        var merklePath = applyPrefix(new String(path));
+        var merklePath = applyPrefix(StringUtil.bytesToHex("wasm".getBytes()), new String(path));
 
         Merkle.verifyMembership(merkleProof, Merkle.SDK_SPEC, root, merklePath, value);
     }
@@ -245,7 +240,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
 
         var root = consensusState.getRoot();
         var merkleProof = MerkleProof.decode(proof);
-        var merklePath = applyPrefix(new String(path));
+        var merklePath = applyPrefix(StringUtil.bytesToHex("wasm".getBytes()), new String(path));
 
         Merkle.verifyNonMembership(merkleProof, Merkle.SDK_SPEC, root, merklePath);
     }
@@ -254,17 +249,17 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
     public void checkValidity(
             ClientState clientState,
             ConsensusState trustedConsensusState,
-            ibc.lightclients.tendermint.v1.Header tmHeader,
+            TmHeader tmHeader,
             Timestamp currentTime) {
         // assert header height is newer than consensus state
         require(
                 tmHeader.getSignedHeader().getHeader().getHeight()
-                        .compareTo(tmHeader.getTrustedHeight().getRevisionHeight()) > 0,
+                        .compareTo(tmHeader.getTrustedHeight()) > 0,
                 "LC: Trusted height is higher than untrusted header height");
 
-        tendermint.types.Header lc = new tendermint.types.Header();
+        LightHeader lc = new LightHeader();
         lc.setChainId(clientState.getChainId());
-        lc.setHeight(tmHeader.getTrustedHeight().getRevisionHeight());
+        lc.setHeight(tmHeader.getTrustedHeight());
         lc.setTime(trustedConsensusState.getTimestamp());
         lc.setNextValidatorsHash(trustedConsensusState.getNextValidatorsHash());
 
@@ -292,10 +287,10 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
     }
 
     private void validateArgs(ClientState cs, BigInteger height, byte[] prefix, byte[] proof) {
-        Context.require(cs.getLatestHeight().getRevisionHeight().compareTo(height) >= 0,
+        Context.require(cs.getLatestHeight().compareTo(height) >= 0,
                 "Latest height must be greater or equal to proof height");
-        Context.require(cs.getFrozenHeight().getRevisionHeight().equals(BigInteger.ZERO) ||
-                        cs.getFrozenHeight().getRevisionHeight().compareTo(height) >= 0,
+        Context.require(cs.getFrozenHeight().equals(BigInteger.ZERO) ||
+                        cs.getFrozenHeight().compareTo(height) >= 0,
                 "Client is Frozen");
         Context.require(prefix.length > 0, "Prefix cant be empty");
         Context.require(proof.length > 0, "Proof cant be empty");

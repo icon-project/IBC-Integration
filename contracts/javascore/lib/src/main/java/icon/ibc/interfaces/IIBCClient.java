@@ -5,6 +5,7 @@ import icon.ibc.structs.messages.MsgCreateClient;
 import icon.ibc.structs.messages.MsgUpdateClient;
 import score.Address;
 import score.annotation.EventLog;
+import score.annotation.Optional;
 
 @ScoreClient
 public interface IIBCClient {
@@ -19,8 +20,9 @@ public interface IIBCClient {
      * {@code @dev} registerClient registers a new client type into the client registry
      * @param clientType  Type of client
      * @param lightClient Light client contract address
+     * @param hashType Optional hashType (WASM or ICS08) default WASM
      */
-    void registerClient(String clientType, Address client);
+    void registerClient(String clientType, Address client, @Optional int hashType);
 
     /**
      * {@code @dev} createClient creates a new client state and populates it with a given
