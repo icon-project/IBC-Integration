@@ -178,8 +178,7 @@ public class LightClientTest extends LightClientTestBase {
         doNothing().when(clientSpy).checkValidity(
                 any(icon.proto.clients.tendermint.ClientState.class),
                 any(icon.proto.clients.tendermint.ConsensusState.class),
-                any(TmHeader.class),
-                any(Timestamp.class));
+                any(TmHeader.class));
 
         // Act
         updateClient(3, 1);
