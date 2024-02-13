@@ -17,7 +17,7 @@ To run the demo, the following software needs to be installed.
    $ cd ..
    ```
 
-2. Build the builder image in IBC Integration repo for bundling contracts:
+2. Build the builder image in IBC-Integration repo for bundling contracts:
 
    ```bash
    make build-builder-img
