@@ -14,9 +14,10 @@ To run the demo, the following software needs to be installed.
    $ git clone https://github.com/icon-project/ibc-relay/
    $ cd ibc-relay/
    $ docker build -t relayer .
+   $ cd ..
    ```
 
-2. Build the builder image for bundling contracts:
+2. Build the builder image in IBC Integration repo for bundling contracts:
 
    ```bash
    make build-builder-img
@@ -44,7 +45,8 @@ To run the demo, the following software needs to be installed.
    ```bash
    git clone https://github.com/icon-project/goloop.git
    cd goloop
-   make gochain-icon-image
+   make gochain-icon-image  
+   cd .. 
    ``` 
 
 * Build a `goloop` image
@@ -53,6 +55,7 @@ To run the demo, the following software needs to be installed.
    git clone https://github.com/icon-project/goloop/
    cd goloop/ 
    make goloop-icon-image
+   cd ..
    ```
 
 * Build an `archway` or `neutron` image
@@ -63,6 +66,7 @@ To run the demo, the following software needs to be installed.
    git clone https://github.com/archway-network/archway/
    cd archway
    docker build -f Dockerfile.deprecated -t archway . --build-arg arch=aarch64
+   cd ..
    ```
 
   **For Neutron:**
@@ -71,6 +75,7 @@ To run the demo, the following software needs to be installed.
    git clone https://github.com/neutron-org/neutron.git
    cd neutron
    make build-docker-image
+   cd ..
    ```
 
 ℹ️ Change the image name and version of Archway/Neutron in `e2e-config.yaml` or `e2e-config-neutron.yaml`.
