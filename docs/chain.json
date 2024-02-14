@@ -1,0 +1,54 @@
+{
+  "chainId": "icon-1",
+  "chainName": "Icon",
+  "chainSymbolImageUrl": "https://raw.githubusercontent.com/chainapsis/keplr-chain-registry/main/images/osmosis/chain.png",
+  "rpc": "https://rpc-osmosis.blockapsis.com",
+  "rest": "https://lcd-osmosis.blockapsis.com",
+  "nodeProvider": {
+    "name": "Blockapsis",
+    "email": "infra@blockapsis.com",
+    "website":"https://blockapsis.com/"
+  },
+  "bip44": {
+    "coinType": 118
+  },
+  "bech32Config": {
+    "bech32PrefixAccAddr": "",
+    "bech32PrefixAccPub": "",
+    "bech32PrefixValAddr": "",
+    "bech32PrefixValPub": "",
+    "bech32PrefixConsAddr": "",
+    "bech32PrefixConsPub": ""
+  },
+  "currencies": [
+    {
+      "coinDenom": "ICX",
+      "coinMinimalDenom": "loop",
+      "coinDecimals": 18,
+      "coinGeckoId": ""
+    }
+  ],
+  "feeCurrencies": [
+    {
+      "coinDenom": "ICX",
+      "coinMinimalDenom": "loop",
+      "coinDecimals": 18,
+      "coinGeckoId": "",
+      "gasPriceStep": {
+        "low": 0.01,
+        "average": 0.025,
+        "high": 0.03
+      }
+    }
+  ],
+  "stakeCurrency": {
+    "coinDenom": "ICX",
+    "coinMinimalDenom": "loop",
+    "coinDecimals": 18,
+    "coinGeckoId": ""
+  },
+  "features": [
+    "cosmwasm",
+    "ibc"
+  ]
+}
