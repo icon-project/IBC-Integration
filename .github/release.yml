@@ -17,10 +17,10 @@ changelog:
         - enhancement
         - Feature
 
-    - title: Bug Fixes 🎉
+    - title: Bug Fixes 🐛
       labels:
         - Patch
         - bug
-    - title: Other Changes
+    - title: Other Changes 📝
       labels:
         - "*"
