@@ -1,6 +1,9 @@
 {
-  "chainId": "icon-1",
-  "chainName": "Icon",
+  "chainId": "0x7.icon",
+  "chainName": "Berlin",
+  "pretty_name": "Icon Berlin",
+  "status": "live",
+  "network_type": "testnet",
   "chainSymbolImageUrl": "https://raw.githubusercontent.com/chainapsis/keplr-chain-registry/main/images/osmosis/chain.png",
   "rpc": "https://rpc-osmosis.blockapsis.com",
   "rest": "https://lcd-osmosis.blockapsis.com",
