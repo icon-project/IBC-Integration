@@ -5,12 +5,12 @@
   "status": "live",
   "network_type": "testnet",
   "chainSymbolImageUrl": "https://raw.githubusercontent.com/chainapsis/keplr-chain-registry/main/images/osmosis/chain.png",
-  "rpc": "https://rpc-osmosis.blockapsis.com",
-  "rest": "https://lcd-osmosis.blockapsis.com",
+  "rpc": "https://lisbon.net.solidwallet.io/api/v3/",
+  "rest": "https://lisbon.net.solidwallet.io/api/v3/",
   "nodeProvider": {
-    "name": "Blockapsis",
-    "email": "infra@blockapsis.com",
-    "website":"https://blockapsis.com/"
+    "name": "Icon Foundation",
+    "email": "fez@icon.foundation",
+    "website":"https://www.icon.foundation/"
   },
   "bip44": {
     "coinType": 118
