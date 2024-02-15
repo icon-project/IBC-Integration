@@ -1,12 +1,12 @@
 {
-    "chainId": "0x1.icon",
-    "chainName": "Icon",
-    "pretty_name": "Icon",
+    "chainId": "0x2.icon",
+    "chainName": "Lisbon",
+    "pretty_name": "Icon Lisbon",
     "status": "live",
-    "network_type": "mainnet",
+    "network_type": "testnet",
     "chainSymbolImageUrl": "https://raw.githubusercontent.com/chainapsis/keplr-chain-registry/main/images/osmosis/chain.png",
-    "rpc": "https://ctz.solidwallet.io/api/v3/",
-    "rest": "https://ctz.solidwallet.io/api/v3/",
+    "rpc": "https://lisbon.net.solidwallet.io/api/v3/",
+    "rest": "https://lisbon.net.solidwallet.io/api/v3/",
     "nodeProvider": {
       "name": "Icon Foundation",
       "email": "fez@icon.foundation",

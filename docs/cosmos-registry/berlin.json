@@ -28,7 +28,7 @@
       "coinDenom": "ICX",
       "coinMinimalDenom": "loop",
       "coinDecimals": 18,
-      "coinGeckoId": ""
+      "coinGeckoId": "icon"
     }
   ],
   "feeCurrencies": [
@@ -48,7 +48,7 @@
     "coinDenom": "ICX",
     "coinMinimalDenom": "loop",
     "coinDecimals": 18,
-    "coinGeckoId": ""
+    "coinGeckoId": "icon"
   },
   "features": [
     "cosmwasm",
