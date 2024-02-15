@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/icon-project/ibc-integration/test/chains"
-	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
-	"github.com/strangelove-ventures/interchaintest/v7/ibc"
+	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
+	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/icon-project/icon-bridge/common/codec"

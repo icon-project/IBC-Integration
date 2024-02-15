@@ -7,7 +7,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/icon-project/ibc-integration/test/relayer"
 	iconRelayer "github.com/icon-project/ibc-integration/test/relayer/icon"
-	"github.com/strangelove-ventures/interchaintest/v7/ibc"
+	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 	"go.uber.org/zap"
 )
 

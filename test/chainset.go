@@ -10,7 +10,7 @@ import (
 
 	"github.com/docker/docker/client"
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
-	"github.com/strangelove-ventures/interchaintest/v7/ibc"
+	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"

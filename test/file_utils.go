@@ -3,7 +3,7 @@ package interchaintest
 import (
 	"fmt"
 	"github.com/icon-project/ibc-integration/test/chains"
-	"github.com/strangelove-ventures/interchaintest/v7/ibc"
+	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 	"os"
 	"path/filepath"
 )

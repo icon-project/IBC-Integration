@@ -3,7 +3,7 @@ package relayer
 import (
 	dockerclient "github.com/docker/docker/client"
 	interchaintest "github.com/icon-project/ibc-integration/test"
-	"github.com/strangelove-ventures/interchaintest/v7/ibc"
+	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 
 	"testing"
 

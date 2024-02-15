@@ -7,13 +7,13 @@ import (
 	"fmt"
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains/icon"
-	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
+	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/types"
-	types1 "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	types1 "github.com/cosmos/ibc-go/modules/core/02-client/types"
 	"github.com/icon-project/ibc-integration/test/chains"
-	"github.com/strangelove-ventures/interchaintest/v7/ibc"
+	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 )
 
 var ibcConfigSetup = `{"ibc_config":{"msg":{"open_ack":{"channel":{"endpoint":{"port_id":"our-port","channel_id":"channel-1"},"counterparty_endpoint":{"port_id":"their-port","channel_id":"channel-3"},"order":"ORDER_UNORDERED","version":"xcall-1","connection_id":"newconnection"},"counterparty_version":"xcall-1"}}}}`

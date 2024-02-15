@@ -4,7 +4,7 @@ import (
 	"context"
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains"
-	"github.com/strangelove-ventures/interchaintest/v7/ibc"
+	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 )
 
 func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string, duration int) error {

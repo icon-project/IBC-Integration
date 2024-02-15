@@ -10,9 +10,9 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
 	"github.com/icon-project/ibc-integration/test/internal/version"
-	it "github.com/strangelove-ventures/interchaintest/v7"
-	"github.com/strangelove-ventures/interchaintest/v7/ibc"
-	"github.com/strangelove-ventures/interchaintest/v7/testreporter"
+	it "github.com/strangelove-ventures/interchaintest/v8"
+	"github.com/strangelove-ventures/interchaintest/v8/ibc"
+	"github.com/strangelove-ventures/interchaintest/v8/testreporter"
 )
 
 const (

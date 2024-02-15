@@ -18,8 +18,8 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
 	_wallet "github.com/icon-project/icon-bridge/common/wallet"
-	"github.com/strangelove-ventures/interchaintest/v7/ibc"
-	"github.com/strangelove-ventures/interchaintest/v7/testutil"
+	"github.com/strangelove-ventures/interchaintest/v8/ibc"
+	"github.com/strangelove-ventures/interchaintest/v8/testutil"
 	"go.uber.org/zap"
 )
 

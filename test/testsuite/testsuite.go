@@ -3,7 +3,7 @@ package testsuite
 import (
 	"context"
 	"fmt"
-	test "github.com/strangelove-ventures/interchaintest/v7/testutil"
+	test "github.com/strangelove-ventures/interchaintest/v8/testutil"
 	"strconv"
 
 	interchaintest "github.com/icon-project/ibc-integration/test"
@@ -17,8 +17,8 @@ import (
 	"github.com/icon-project/ibc-integration/test/chains"
 
 	dockerclient "github.com/docker/docker/client"
-	"github.com/strangelove-ventures/interchaintest/v7/ibc"
-	"github.com/strangelove-ventures/interchaintest/v7/testreporter"
+	"github.com/strangelove-ventures/interchaintest/v8/ibc"
+	"github.com/strangelove-ventures/interchaintest/v8/testreporter"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
