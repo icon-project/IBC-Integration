@@ -19,8 +19,8 @@ import (
 	"github.com/cosmos/ibc-go/modules/capability"
 
 	"github.com/CosmWasm/wasmd/x/wasm"
-	ibccore "github.com/cosmos/ibc-go/modules/core"
-	ibctm "github.com/cosmos/ibc-go/modules/light-clients/07-tendermint"
+	ibccore "github.com/cosmos/ibc-go/v8/modules/core"
+	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	ibcwasm "github.com/strangelove-ventures/interchaintest/v8/chain/cosmos/08-wasm-types"
 )
 

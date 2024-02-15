@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/ibc-go/modules/core/04-channel/types"
+	"github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/icon-project/ibc-integration/test/chains"

@@ -5,13 +5,15 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
+
+	"cosmossdk.io/math"
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains/icon"
 	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
-	"strings"
 
 	"github.com/cosmos/cosmos-sdk/types"
-	types1 "github.com/cosmos/ibc-go/modules/core/02-client/types"
+	types1 "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 )
@@ -127,7 +129,7 @@ func (c *CosmosLocalnet) GetAndFundTestUser(
 
 	err = c.SendFunds(ctx, interchaintest.FaucetAccountKeyName, ibc.WalletAmount{
 		Address: user.FormattedAddress(),
-		Amount:  amount,
+		Amount:  math.NewInt(amount),
 		Denom:   chainCfg.Denom,
 	})
 

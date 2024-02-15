@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"time"
 
-	conntypes "github.com/cosmos/ibc-go/modules/core/03-connection/types"
-	chantypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
+	conntypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
+	chantypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 

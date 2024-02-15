@@ -13,10 +13,10 @@ import (
 
 	"github.com/avast/retry-go/v4"
 	"github.com/cosmos/gogoproto/proto"
-	clienttypes "github.com/cosmos/ibc-go/modules/core/02-client/types"
+	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 
-	conntypes "github.com/cosmos/ibc-go/modules/core/03-connection/types"
-	chantypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
+	conntypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
+	chantypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
 	icontypes "github.com/icon-project/ibc-integration/libraries/go/common/icon"
 	"github.com/icon-project/ibc-integration/test/chains"

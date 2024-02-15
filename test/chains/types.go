@@ -2,7 +2,7 @@ package chains
 
 import (
 	"fmt"
-	chantypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
+	chantypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"strings"
 )
 

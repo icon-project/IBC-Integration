@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+
 	iccrypto "github.com/icon-project/icon-bridge/common/crypto"
 
 	"io"
@@ -384,6 +385,18 @@ func (r *DockerRelayer) StartRelayer(ctx context.Context, rep ibc.RelayerExecRep
 	}
 
 	return r.containerLifecycle.StartContainer(ctx)
+}
+
+// PauseRelayer halts a relayer that started work through StartRelayer.
+func (r *DockerRelayer) PauseRelayer(ctx context.Context) error {
+	//Todo
+	return nil
+}
+
+// ResumeRelayer resumes a relayer that was paused through PauseRelayer.
+func (r *DockerRelayer) ResumeRelayer(ctx context.Context) error {
+	//Todo
+	return nil
 }
 
 func (r *DockerRelayer) stopRelayer(ctx context.Context, rep ibc.RelayerExecReporter) error {

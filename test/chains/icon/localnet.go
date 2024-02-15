@@ -5,9 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/icon-project/ibc-integration/libraries/go/common/tendermint"
-	interchaintest "github.com/icon-project/ibc-integration/test"
-	"github.com/icon-project/icon-bridge/common/wallet"
 	"io"
 	"log"
 	"math/big"
@@ -17,6 +14,11 @@ import (
 	"sync"
 	"time"
 
+	"cosmossdk.io/math"
+	"github.com/icon-project/ibc-integration/libraries/go/common/tendermint"
+	interchaintest "github.com/icon-project/ibc-integration/test"
+	"github.com/icon-project/icon-bridge/common/wallet"
+
 	dockertypes "github.com/docker/docker/api/types"
 	volumetypes "github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
@@ -25,8 +27,8 @@ import (
 	"github.com/icon-project/ibc-integration/test/internal/blockdb"
 	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
 
-	conntypes "github.com/cosmos/ibc-go/modules/core/03-connection/types"
-	chantypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
+	conntypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
+	chantypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 
 	icontypes "github.com/icon-project/icon-bridge/cmd/iconbridge/chain/icon/types"
 
@@ -349,7 +351,7 @@ func (c *IconLocalnet) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx
 }
 
 // GetBalance fetches the current balance for a specific account address and denom.
-func (c *IconLocalnet) GetBalance(ctx context.Context, address string, denom string) (int64, error) {
+func (c *IconLocalnet) GetBalance(ctx context.Context, address string, denom string) (math.Int, error) {
 	return c.getFullNode().GetBalance(ctx, address)
 }
 
@@ -870,7 +872,7 @@ func (c *IconLocalnet) BuildWallets(ctx context.Context, keyName string) (ibc.Wa
 
 	amount := ibc.WalletAmount{
 		Address: w.FormattedAddress(),
-		Amount:  10000,
+		Amount:  math.NewInt(10000),
 	}
 	var err error
 

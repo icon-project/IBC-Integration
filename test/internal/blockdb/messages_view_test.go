@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/types"
 	ibctest "github.com/strangelove-ventures/interchaintest/v8"
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
@@ -258,7 +259,7 @@ WHERE type = "/ibc.core.channel.v1.MsgChannelOpenConfirm" AND chain_id = ?
 		transfer := ibc.WalletAmount{
 			Address: gaia1FaucetAddr,
 			Denom:   gaia0.Config().Denom,
-			Amount:  txAmount,
+			Amount:  math.NewInt(txAmount),
 		}
 		tx, err := gaia0.SendIBCTransfer(ctx, gaia0ChannelID, ibctest.FaucetAccountKeyName, transfer, ibc.TransferOptions{})
 		require.NoError(t, err)

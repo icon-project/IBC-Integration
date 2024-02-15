@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"cosmossdk.io/math"
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icza/dyno"
 
@@ -286,10 +287,10 @@ func (in *IconNode) Height(ctx context.Context) (uint64, error) {
 	return uint64(res.Height), err
 }
 
-func (in *IconNode) GetBalance(ctx context.Context, address string) (int64, error) {
+func (in *IconNode) GetBalance(ctx context.Context, address string) (math.Int, error) {
 	addr := icontypes.AddressParam{Address: icontypes.Address(address)}
 	bal, err := in.Client.GetBalance(&addr)
-	return bal.Int64(), err
+	return math.NewInt(bal.Int64()), err
 }
 
 func (in *IconNode) DeployContract(ctx context.Context, scorePath, keystorePath, initMessage string) (string, error) {
