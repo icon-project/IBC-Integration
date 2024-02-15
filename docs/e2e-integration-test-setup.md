@@ -88,14 +88,14 @@ To conduct tests for IBC integration system, carefully adhere to the provided in
 
 Prior to initiating the tests, ensure proper configuration of essential environment variables, which play a pivotal role in the testing process:
 
-- **`E2E_CONFIG_PATH`**: Set this variable to the absolute path of your chosen configuration file. For Archway, utilize `sample-config-archway.yaml`, and for Neutron, employ `sample-config-neutron.yaml`.
+- **`TEST_CONFIG_PATH`**: Set this variable to the absolute path of your chosen configuration file. For Archway, utilize `sample-config-archway.yaml`, and for Neutron, employ `sample-config-neutron.yaml`.
 - **`GOLOOP_IMAGE_ENV`**: Indicate the name of the Goloop image.
 - **`GOLOOP_IMAGE_TAG_ENV`**: Specify the version of the Goloop image.
 
 Here's an example of environment variable configuration:
 
 ```bash
-export E2E_CONFIG_PATH=/home/User/IBC-integration/sample-config-archway.yaml
+export TEST_CONFIG_PATH=/home/User/IBC-integration/sample-config-archway.yaml
 export GOLOOP_IMAGE_ENV=goloop-icon
 export GOLOOP_IMAGE_TAG_ENV=latest
 ```
