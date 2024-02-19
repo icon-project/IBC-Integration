@@ -194,20 +194,22 @@ func (c *IconRemotenet) SendFundsFromGodwallet(ctx context.Context, amount ibc.W
 func (c *IconRemotenet) SendIBCTransfer(ctx context.Context, channelID string, keyName string, amount ibc.WalletAmount, options ibc.TransferOptions) (ibc.Tx, error) {
 	panic("not implemented")
 }
-func (c *IconRemotenet) SendIBCTokenTransfer(ctx context.Context, sourceChannel, destinationChannel, port, receiver, chainID string, amount uint64) (string, error) {
+func (c *IconRemotenet) SendIBCTokenTransfer(ctx context.Context, sourceChannel, destinationChannel, port, receiver, chainID, ibcamount string) (string, error) {
 	bankAppClient := c.IBCAddresses["bankAppClient"]
 	commands := []string{"rpc", "sendtx", "call"}
+	amount, denom, _ := strings.Cut(ibcamount, "/")
+	// amount, denom := parts[0], parts[1]
 	commands = append(commands,
 		"--to", bankAppClient,
 		"--method", "sendTransfer",
 		"--uri", c.GetHostRPCAddress(),
 		"--key_store", WalletKeyStore+c.testconfig.KeystoreFile,
 		"--key_password", c.testconfig.KeystorePassword,
-		"--value", fmt.Sprint(amount)+"000000000000000000",
+		"--value", amount,
 		"--step_limit", "10000000000000",
 		"--nid", "0x3",
 	)
-	params := `{"denom":"icx","receiver":"` + receiver + `","amount":"` + fmt.Sprint(amount) + "000000000000000000" + `","sourcePort":"` + port + `","sourceChannel":"` + sourceChannel + `","timeoutHeight":"5000000","timeoutRevisionNumber":"1"}`
+	params := `{"denom":"` + denom + `","receiver":"` + receiver + `","amount":"` + amount + `","sourcePort":"` + port + `","sourceChannel":"` + sourceChannel + `","timeoutHeight":"5000000","timeoutRevisionNumber":"1"}`
 	commands = append(commands, "--params", params)
 	var output string
 	stdout, _, err := c.Exec(ctx, commands, nil)
@@ -262,7 +264,30 @@ func (c *IconRemotenet) FindTxs(ctx context.Context, height uint64) ([]blockdb.T
 
 // GetBalance fetches the current balance for a specific account address and denom.
 func (c *IconRemotenet) GetWalletBalance(ctx context.Context, address string, denom string) (*big.Int, error) {
-	panic("not implemented")
+	bankApp := c.IBCAddresses["bankApp"]
+	commands := []string{"rpc", "call"}
+	commands = append(commands,
+		"--to", bankApp,
+		"--method", "balanceOf",
+		"--uri", c.GetHostRPCAddress(),
+	)
+	params := `{"denom":"` + denom + `","account":"` + address + `"}`
+	commands = append(commands, "--params", params)
+	var output string
+	stdout, _, err := c.Exec(ctx, commands, nil)
+	if err != nil {
+		fmt.Println(err)
+		return big.NewInt(0), err
+	}
+	err = json.Unmarshal(stdout, &output)
+	if err != nil {
+		fmt.Println(err)
+		return big.NewInt(0), err
+	}
+	balanceBigInt := new(big.Int)
+	output = strings.TrimPrefix(output, "0x")
+	balanceBigInt.SetString(output, 16)
+	return balanceBigInt, nil
 }
 
 func (c *IconRemotenet) GetBalance(ctx context.Context, address string, denom string) (int64, error) {
@@ -599,6 +624,7 @@ func (c *IconRemotenet) SetupIBCICS20(ctx context.Context, keyName string) (cont
 		"ibc":           ibcAddress,
 		"client":        client,
 		"bankAppClient": bankClientApp,
+		"bankApp":       bankApp,
 	}
 	c.IBCAddresses = contracts.ContractAddress
 

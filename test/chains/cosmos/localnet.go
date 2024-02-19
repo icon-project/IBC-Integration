@@ -783,7 +783,7 @@ func (c *CosmosLocalnet) SetupIBCICS20(ctx context.Context, keyName string) (con
 	panic("not implemented")
 }
 
-func (c *CosmosLocalnet) SendIBCTokenTransfer(ctx context.Context, sourceChannel, destinationChannel, port, receiver, chainID string, amount uint64) (string, error) {
+func (c *CosmosLocalnet) SendIBCTokenTransfer(ctx context.Context, sourceChannel, destinationChannel, port, receiver, chainID, ibcamount string) (string, error) {
 	panic("not implemented")
 }
 

@@ -1044,6 +1044,6 @@ func (c *IconLocalnet) SetupIBCICS20(ctx context.Context, keyName string) (conte
 	panic("not implemented")
 }
 
-func (c *IconLocalnet) SendIBCTokenTransfer(ctx context.Context, sourceChannel, destinationChannel, port, receiver, chainID string, amount uint64) (string, error) {
+func (c *IconLocalnet) SendIBCTokenTransfer(ctx context.Context, sourceChannel, destinationChannel, port, receiver, chainID, ibcamount string) (string, error) {
 	panic("not implemented")
 }

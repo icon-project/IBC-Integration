@@ -388,7 +388,13 @@ func (RemoteCommander) Init(homeDir string) []string {
 	path, _ := os.Getwd()
 	baseTestDir := filepath.Dir(path)
 	if _, err := os.Stat(baseTestDir + "/relayer/data/config/config.yaml"); err == nil {
-		err := os.Remove(baseTestDir + "/relayer/data/config/config.yaml")
+		err := os.RemoveAll(baseTestDir + "/relayer/data/config")
+		if err != nil {
+			log.Fatal("failed to remove file:", err)
+		}
+	}
+	if _, err := os.Stat(baseTestDir + "/relayer/data/ibc-icon"); err == nil {
+		err = os.RemoveAll(baseTestDir + "/relayer/data/ibc-icon")
 		if err != nil {
 			log.Fatal("failed to remove file:", err)
 		}

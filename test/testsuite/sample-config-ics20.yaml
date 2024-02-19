@@ -66,7 +66,7 @@ chains:
       ibc_ics20_client: "$BASE_PATH/artifacts/centauri/cw_wasm_light_client_icon.wasm"
 relayer:
   image: relayer/relayer
-  tag: ics-20
+  tag: latest
   use_existing_keys: true
   keys:
     icon: godwallet:gochain

@@ -220,8 +220,7 @@ func (c *CosmosRemotenet) SetupIBCICS20(ctx context.Context, keyName string) (co
 	return ctx, nil
 }
 
-func (c *CosmosRemotenet) SendIBCTokenTransfer(ctx context.Context, sourceChannel, destinationChannel, port, receiver, chainID string, amount uint64) (string, error) {
-	ibcamount := fmt.Sprint(amount) + "000000000000000000" + "transfer/" + destinationChannel + "/icx"
+func (c *CosmosRemotenet) SendIBCTokenTransfer(ctx context.Context, sourceChannel, destinationChannel, port, receiver, chainID, ibcamount string) (string, error) {
 	commands := []string{"tx", "ibc-transfer", port, port, sourceChannel, receiver, ibcamount}
 	commands = append(commands,
 		"--node", c.GetHostRPCAddress(),
