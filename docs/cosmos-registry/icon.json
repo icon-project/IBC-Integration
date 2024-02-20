@@ -4,7 +4,7 @@
     "pretty_name": "Icon",
     "status": "live",
     "network_type": "mainnet",
-    "chainSymbolImageUrl": "https://raw.githubusercontent.com/chainapsis/keplr-chain-registry/main/images/osmosis/chain.png",
+    "chainSymbolImageUrl": "https://raw.githubusercontent.com/icon-project/IBC-Integration/main/resources/ICX-token.png",
     "rpc": "https://ctz.solidwallet.io/api/v3/",
     "rest": "https://ctz.solidwallet.io/api/v3/",
     "nodeProvider": {

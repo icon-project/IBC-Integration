@@ -4,7 +4,7 @@
   "pretty_name": "Icon Berlin",
   "status": "live",
   "network_type": "testnet",
-  "chainSymbolImageUrl": "https://raw.githubusercontent.com/chainapsis/keplr-chain-registry/main/images/osmosis/chain.png",
+  "chainSymbolImageUrl": "https://raw.githubusercontent.com/icon-project/IBC-Integration/main/resources/ICX-token.png",
   "rpc": "https://berlin.net.solidwallet.io/api/v3/",
   "rest": "https://berlin.net.solidwallet.io/api/v3/",
   "nodeProvider": {
