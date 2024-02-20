@@ -1,0 +1,57 @@
+{
+  "chainId": "0x7.icon",
+  "chainName": "Berlin",
+  "pretty_name": "Icon Berlin",
+  "status": "live",
+  "network_type": "testnet",
+  "chainSymbolImageUrl": "https://raw.githubusercontent.com/icon-project/IBC-Integration/main/resources/ICX-token.png",
+  "rpc": "https://berlin.net.solidwallet.io/api/v3/",
+  "rest": "https://berlin.net.solidwallet.io/api/v3/",
+  "nodeProvider": {
+    "name": "Icon Foundation",
+    "email": "fez@icon.foundation",
+    "website":"https://www.icon.foundation/"
+  },
+  "bip44": {
+    "coinType": 118
+  },
+  "bech32Config": {
+    "bech32PrefixAccAddr": "",
+    "bech32PrefixAccPub": "",
+    "bech32PrefixValAddr": "",
+    "bech32PrefixValPub": "",
+    "bech32PrefixConsAddr": "",
+    "bech32PrefixConsPub": ""
+  },
+  "currencies": [
+    {
+      "coinDenom": "ICX",
+      "coinMinimalDenom": "loop",
+      "coinDecimals": 18,
+      "coinGeckoId": "icon"
+    }
+  ],
+  "feeCurrencies": [
+    {
+      "coinDenom": "ICX",
+      "coinMinimalDenom": "loop",
+      "coinDecimals": 18,
+      "coinGeckoId": "",
+      "gasPriceStep": {
+        "low": 0.01,
+        "average": 0.025,
+        "high": 0.03
+      }
+    }
+  ],
+  "stakeCurrency": {
+    "coinDenom": "ICX",
+    "coinMinimalDenom": "loop",
+    "coinDecimals": 18,
+    "coinGeckoId": "icon"
+  },
+  "features": [
+    "cosmwasm",
+    "ibc"
+  ]
+}
