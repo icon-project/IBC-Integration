@@ -1,11 +1,13 @@
-mod constants;
+pub use cw_light_client_common::constants;
+pub mod context;
 pub mod contract;
-mod error;
-pub mod light_client;
+pub mod query_handler;
+
+pub use cw_light_client_common::light_client;
+
 #[cfg(feature = "mock")]
 pub mod mock_client;
-pub mod query_handler;
-pub mod state;
-mod traits;
 
-pub use crate::error::ContractError;
+pub use cw_light_client_common::traits;
+
+pub use cw_light_client_common::error::ContractError;

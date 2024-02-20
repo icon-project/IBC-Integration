@@ -42,16 +42,16 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 [dependencies]
 cosmwasm-schema = {workspace=true}
 cosmwasm-std = {workspace=true}
-cosmwasm-storage = {workspace=true}
+#cosmwasm-storage = {workspace=true}
 cw-storage-plus = {workspace=true}
 cw2 = {workspace=true}
 schemars = {workspace=true}
 serde = { workspace=true}
 thiserror = { workspace=true}
-cw-common = { path="../cw-common" }
-common = { path="../../../libraries/rust/common", default-features = false }
+cw-common = { workspace=true }
+common = { workspace=true, default-features = false }
 hex={workspace=true}
-cw-xcall={package="cw-xcall", git="https://github.com/icon-project/xCall.git", branch="main"}
+cw-xcall={workspace=true}
 
 [dev-dependencies]
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}

@@ -532,7 +532,7 @@ fn test_validate_open_init_channel() {
         EXECUTE_ON_CHANNEL_OPEN_INIT,
     );
 
-    println!("{:?}", res);
+    println!("{res:?}");
 
     assert!(res.is_ok());
     assert_eq!(res.unwrap().messages[0], on_chan_open_init)

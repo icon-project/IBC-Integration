@@ -8,22 +8,20 @@ use cosmwasm_std::DepsMut;
 use cosmwasm_std::Env;
 use cosmwasm_std::Storage;
 
-use cw_storage_plus::{Item, Map};
+use cw_light_client_common::traits::IQueryHandler;
 use debug_print::debug_eprintln;
 
+use crate::constants::CLIENT_STATES;
+use crate::constants::CONFIG;
+use crate::constants::CONSENSUS_STATES;
+use crate::constants::PROCESSED_HEIGHTS;
+use crate::constants::PROCESSED_TIMES;
+use crate::query_handler::QueryHandler;
 use prost::Message;
 
-use crate::query_handler::QueryHandler;
 use crate::traits::Config;
 use crate::traits::IContext;
 use crate::ContractError;
-type ClientId = String;
-pub const CLIENT_STATES: Map<String, Vec<u8>> = Map::new("CLIENT_STATES");
-pub const CONSENSUS_STATES: Map<(ClientId, u64), Vec<u8>> = Map::new("CONSENSUS_STATES");
-pub const PROCESSED_TIMES: Map<(ClientId, u64), u64> = Map::new("PROCESSED_TIMES");
-pub const PROCESSED_HEIGHTS: Map<(ClientId, u64), u64> = Map::new("PROCESSED_HEIGHTS");
-
-pub const CONFIG: Item<Config> = Item::new("CONFIG");
 
 pub struct CwContext<'a> {
     pub storage: &'a mut dyn Storage,
@@ -42,8 +40,7 @@ impl<'a> CwContext<'a> {
 }
 
 impl<'a> IContext for CwContext<'a> {
-    type Error = ContractError;
-    fn get_client_state(&self, client_id: &str) -> Result<ClientState, Self::Error> {
+    fn get_client_state(&self, client_id: &str) -> Result<ClientState, ContractError> {
         QueryHandler::get_client_state(self.storage, client_id)
     }
 
@@ -51,7 +48,7 @@ impl<'a> IContext for CwContext<'a> {
         &mut self,
         client_id: &str,
         state: ClientState,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), ContractError> {
         let data = state.encode_to_vec();
         CLIENT_STATES
             .save(self.storage, client_id.to_string(), &data)
@@ -62,7 +59,7 @@ impl<'a> IContext for CwContext<'a> {
         &self,
         client_id: &str,
         height: u64,
-    ) -> Result<ConsensusState, Self::Error> {
+    ) -> Result<ConsensusState, ContractError> {
         QueryHandler::get_consensus_state(self.storage, client_id, height)
     }
 
@@ -71,14 +68,14 @@ impl<'a> IContext for CwContext<'a> {
         client_id: &str,
         height: u64,
         state: ConsensusState,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), ContractError> {
         let data = state.encode_to_vec();
         CONSENSUS_STATES
             .save(self.storage, (client_id.to_string(), height), &data)
             .map_err(|_e| ContractError::FailedToSaveClientState)
     }
 
-    fn get_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<u64, Self::Error> {
+    fn get_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<u64, ContractError> {
         QueryHandler::get_timestamp_at_height(self.storage, client_id, height)
     }
 
@@ -100,11 +97,11 @@ impl<'a> IContext for CwContext<'a> {
             .map(|addr| addr.to_vec())
     }
 
-    fn get_config(&self) -> Result<Config, Self::Error> {
+    fn get_config(&self) -> Result<Config, ContractError> {
         QueryHandler::get_config(self.storage)
     }
 
-    fn insert_config(&mut self, config: &Config) -> Result<(), Self::Error> {
+    fn insert_config(&mut self, config: &Config) -> Result<(), ContractError> {
         CONFIG
             .save(self.storage, config)
             .map_err(|_e| ContractError::FailedToSaveConfig)
@@ -114,7 +111,7 @@ impl<'a> IContext for CwContext<'a> {
         &mut self,
         client_id: &str,
         height: u64,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), ContractError> {
         let time = self.env.block.time.nanos();
         PROCESSED_TIMES
             .save(self.storage, (client_id.to_string(), height), &time)
@@ -125,7 +122,7 @@ impl<'a> IContext for CwContext<'a> {
         &mut self,
         client_id: &str,
         height: u64,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), ContractError> {
         let block_height = self.env.block.height;
         PROCESSED_HEIGHTS
             .save(self.storage, (client_id.to_string(), height), &block_height)
@@ -144,7 +141,7 @@ impl<'a> IContext for CwContext<'a> {
         &self,
         client_id: &str,
         height: u64,
-    ) -> Result<u64, Self::Error> {
+    ) -> Result<u64, ContractError> {
         QueryHandler::get_processed_time_at_height(self.storage, client_id, height)
     }
 
@@ -152,24 +149,27 @@ impl<'a> IContext for CwContext<'a> {
         &self,
         client_id: &str,
         height: u64,
-    ) -> Result<u64, Self::Error> {
+    ) -> Result<u64, ContractError> {
         QueryHandler::get_processed_blocknumber_at_height(self.storage, client_id, height)
     }
 
-    fn ensure_ibc_host(&self, caller: cosmwasm_std::Addr) -> Result<(), Self::Error> {
+    fn ensure_ibc_host(&self, caller: &cosmwasm_std::Addr) -> Result<(), ContractError> {
         let config = self.get_config()?;
-        if caller != config.ibc_host {
+        if *caller != config.ibc_host {
             return Err(ContractError::Unauthorized {});
         }
         Ok(())
     }
-    fn ensure_owner(&self, caller: cosmwasm_std::Addr) -> Result<(), Self::Error> {
+    fn ensure_owner(&self, caller: cosmwasm_std::Addr) -> Result<(), ContractError> {
         let config = self.get_config()?;
         debug_eprintln!("owner {:?} caller {}", config.owner, caller.to_string());
         if caller != config.owner {
             return Err(ContractError::Unauthorized {});
         }
         Ok(())
+    }
+    fn api(&self) -> &dyn Api {
+        self.api
     }
 }
 

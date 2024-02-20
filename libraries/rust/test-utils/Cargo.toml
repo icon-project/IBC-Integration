@@ -7,16 +7,15 @@ edition = "2021"
 
 [dependencies]
 serde = { workspace=true}
-serde_json = "1.0"
-cosmwasm-std = {workspace=true, features = ["iterator", "ibc3"]}
+serde_json = {workspace=true}
+cosmwasm-std = {workspace=true}
 prost = { workspace=true}
 ibc-proto = { workspace=true}
-#ibc = { version = "0.32.0", default-features = false, features = ["parity-scale-codec", "mocks-no-std", "serde", "borsh"]}
-hex="*"
-hex-literal="*"
-common={path="../common"}
-cw-multi-test = "0.16.4"
+hex={workspace=true}
+hex-literal={workspace=true}
+common={workspace=true}
+
 
 [dev-dependencies]
-
+#cw-multi-test = "0.15.1"
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}

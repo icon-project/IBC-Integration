@@ -45,7 +45,7 @@ impl<'a> CwIbcCoreContext<'a> {
         }
 
         let chan_end_on_a = self.get_channel_end(deps.storage, &src_port, &src_channel)?;
-        cw_println!(deps, "fetched channel_end");
+        cw_println!(deps.api, "fetched channel_end");
 
         if !chan_end_on_a.state_matches(&State::Open) {
             return Err(ContractError::IbcPacketError {
@@ -55,7 +55,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
-        cw_println!(deps, " channel_end matched");
+        cw_println!(deps.api, " channel_end matched");
 
         let counterparty = Counterparty::new(dst_port.clone(), Some(dst_channel.clone()));
         if !chan_end_on_a.counterparty_matches(&counterparty) {
@@ -66,7 +66,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 },
             });
         }
-        cw_println!(deps, " counterparty_matched");
+        cw_println!(deps.api, " counterparty_matched");
 
         let conn_id_on_a = &chan_end_on_a.connection_hops()[0];
         let conn_end_on_a = self.connection_end(deps.storage, conn_id_on_a)?;
@@ -89,11 +89,11 @@ impl<'a> CwIbcCoreContext<'a> {
         let counterparty_timestamp = to_ibc_timestamp(timestamp_at_height)?;
         // validate packet not expired before send
         self.validate_packet_not_expired(&packet, counterparty_height, counterparty_timestamp)?;
-        cw_println!(deps, " check pass: packet  expired");
+        cw_println!(deps.api, " check pass: packet  expired");
 
         let next_seq_send_on_a =
             self.get_next_sequence_send(deps.storage, &src_port, &src_channel)?;
-        cw_println!(deps, " fetched next seq send {:?}", next_seq_send_on_a);
+        cw_println!(deps.api, " fetched next seq send {:?}", next_seq_send_on_a);
 
         if Sequence::from(packet.sequence) != next_seq_send_on_a {
             return Err(ContractError::IbcPacketError {
@@ -104,7 +104,7 @@ impl<'a> CwIbcCoreContext<'a> {
             });
         }
 
-        cw_println!(deps, " packet seq and next seq matched");
+        cw_println!(deps.api, " packet seq and next seq matched");
 
         let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone())?;
         let packet_timestamp = to_ibc_timestamp(packet.timeout_timestamp)?;
@@ -121,7 +121,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 &packet_timestamp,
             ),
         )?;
-        cw_println!(deps, " packet commitment stored");
+        cw_println!(deps.api, " packet commitment stored");
         let height = env.block.height;
         self.ibc_store().store_sent_packet(
             deps.storage,

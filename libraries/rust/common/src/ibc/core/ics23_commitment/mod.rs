@@ -4,4 +4,4 @@
 pub mod commitment;
 pub mod error;
 pub mod merkle;
-pub mod specs;
+//pub mod specs;

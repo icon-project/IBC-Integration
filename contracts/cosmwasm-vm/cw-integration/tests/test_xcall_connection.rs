@@ -11,8 +11,8 @@ use setup::{
     init_mock_ibc_core_contract, init_xcall_app_contract, init_xcall_ibc_connection_contract,
     TestContext,
 };
-use test_utils::get_event;
 
+use crate::setup::get_event;
 use crate::setup::setup_context;
 const MOCK_CONTRACT_TO_ADDR: &str = "cosmoscontract";
 
@@ -71,7 +71,7 @@ fn send_packet_success() {
     let src = ctx.get_xcall_ibc_connection().to_string();
     let result = call_send_call_message(
         &mut ctx,
-        &format!("nid/{}", MOCK_CONTRACT_TO_ADDR),
+        &format!("nid/{MOCK_CONTRACT_TO_ADDR}"),
         vec![src],
         vec!["somedestination".to_string()],
         vec![1, 2, 3],
