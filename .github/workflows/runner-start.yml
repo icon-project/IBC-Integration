@@ -40,7 +40,7 @@ jobs:
           repository: icon-project/ibc-relay
       - name: Start EC2 instance
         id: start
-        uses: machulav/ec2-github-runner
+        uses: machulav/ec2-github-runner@v2
         with:
           mode: start
           github-token: ${{ secrets.GH_RUNNER_PAT }}
