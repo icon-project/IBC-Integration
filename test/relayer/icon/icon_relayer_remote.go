@@ -128,7 +128,7 @@ func (RemoteCommander) CreateChannel(pathName string, opts ibc.CreateChannelOpti
 func (RemoteCommander) CreateClients(pathName string, opts ibc.CreateClientOptions, homeDir string) []string {
 	return []string{
 		"rly", "tx", "clients", pathName, "--client-tp", "5040m",
-		"--src-wasm-code-id", "3d2194afeaafca671c55c8dacdb4f3e318e12061a69f1dbeb98317784a6da319", "--override", "-d",
+		"--src-wasm-code-id", "1cff60adf40895b5fccb1e9ce6305a65ae01400a02cc4ded2cf3669221905adc", "--override", "-d",
 	}
 }
 

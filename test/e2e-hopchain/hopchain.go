@@ -73,38 +73,6 @@ func (h *HopchainTestSuite) TestICS20(relayer ibc.Relayer) {
 	relaySourceChannel, relayDestinationChannel, err := getLatestChannels(ctx, eRep, centauriChain.(ibc.Chain).Config().ChainID, relayer)
 	h.Require().NoError(err, "error should be nil")
 
-	h.T.Run("send IBC Ftokens for relay ibc-centauri", func(t *testing.T) {
-		denom := "transfer/" + relayDestinationChannel + "/icx"
-		ibcDenom := "ibc/" + getDenomHash(denom)
-		h.Require().NoError(err, "error should be nil")
-		h.T.Run("send icx tokens from icon to centauri ", func(t *testing.T) {
-			ibcAmount := fmt.Sprint(100) + "000000000000000000" + "/icx"
-			_, err := iconChain.SendIBCTokenTransfer(ctx, relaySourceChannel, relayDestinationChannel, portId, centauriReceiver, centauriChain.(ibc.Chain).Config().ChainID, ibcAmount)
-			h.Require().NoError(err, "error should be nil")
-			// give some time for txn to settle
-			time.Sleep(10 * time.Second)
-			centauriChanBalance, err := centauriChain.GetWalletBalance(ctx, centauriReceiver, ibcDenom)
-			h.Require().NoError(err, "error retrieving balance")
-			valueTocheck := new(big.Int)
-			valueTocheck, _ = valueTocheck.SetString("100000000000000000000", 10)
-			assert.True(t, centauriChanBalance.Cmp(valueTocheck) == 0, "balance should be equal to 100000000000000000000")
-		})
-
-		h.T.Run("send IBC icx tokens from centauri to ibc ", func(t *testing.T) {
-			// send back to icon
-			ibcamount := fmt.Sprint(50) + "000000000000000000" + "transfer/" + relayDestinationChannel + "/icx"
-			txnhash, err := centauriChain.SendIBCTokenTransfer(ctx, relayDestinationChannel, relayDestinationChannel, "transfer", iconReceiver, centauriChain.(ibc.Chain).Config().ChainID, ibcamount)
-			h.Require().NoError(err, "error should be nil")
-			fmt.Println("Txn hash is ", txnhash)
-			time.Sleep(10 * time.Second)
-			valueTocheck := new(big.Int)
-			valueTocheck, _ = valueTocheck.SetString("50000000000000000000", 10)
-			centauriChanBalance, err := centauriChain.GetWalletBalance(ctx, centauriReceiver, ibcDenom)
-			h.Require().NoError(err, "error retrieving balance")
-			assert.True(t, centauriChanBalance.Cmp(valueTocheck) == 0, "balance should be equal to 50000000000000000000")
-		})
-	})
-
 	h.T.Run("send stake Ftokens for relay centauri-ibc", func(t *testing.T) {
 		ibcIconDenom := "transfer/" + relaySourceChannel + "/stake"
 		h.T.Run("send stake tokens from centauri to ibc ", func(t *testing.T) {
@@ -115,7 +83,7 @@ func (h *HopchainTestSuite) TestICS20(relayer ibc.Relayer) {
 			txnhash, err := centauriChain.SendIBCTokenTransfer(ctx, relayDestinationChannel, relayDestinationChannel, "transfer", iconReceiver, centauriChain.(ibc.Chain).Config().ChainID, ibcamount)
 			h.Require().NoError(err, "error should be nil")
 			fmt.Println("Txn hash is ", txnhash)
-			time.Sleep(10 * time.Second)
+			time.Sleep(20 * time.Second)
 			valueTocheck := originalBalance.Sub(originalBalance, big.NewInt(100000000000000000))
 			balanceCentauri, err := centauriChain.GetWalletBalance(ctx, centauriReceiver, "stake")
 			h.Require().NoError(err, "error retrieving balance")
@@ -132,7 +100,7 @@ func (h *HopchainTestSuite) TestICS20(relayer ibc.Relayer) {
 			_, err = iconChain.SendIBCTokenTransfer(ctx, relaySourceChannel, relayDestinationChannel, portId, centauriReceiver, centauriChain.(ibc.Chain).Config().ChainID, ibcamount)
 			h.Require().NoError(err, "error should be nil")
 			// give some time for txn to settle
-			time.Sleep(10 * time.Second)
+			time.Sleep(20 * time.Second)
 
 			balanceIcon, err := iconChain.GetWalletBalance(ctx, iconReceiver, ibcIconDenom)
 			h.Require().NoError(err, "error retrieving balance")
@@ -143,4 +111,39 @@ func (h *HopchainTestSuite) TestICS20(relayer ibc.Relayer) {
 		})
 
 	})
+
+	time.Sleep(time.Second * 20)
+
+	h.T.Run("send IBC Ftokens for relay ibc-centauri", func(t *testing.T) {
+		denom := "transfer/" + relayDestinationChannel + "/icx"
+		ibcDenom := "ibc/" + getDenomHash(denom)
+		h.Require().NoError(err, "error should be nil")
+		h.T.Run("send icx tokens from icon to centauri ", func(t *testing.T) {
+			ibcAmount := fmt.Sprint(100) + "000000000000000000" + "/icx"
+			_, err := iconChain.SendIBCTokenTransfer(ctx, relaySourceChannel, relayDestinationChannel, portId, centauriReceiver, centauriChain.(ibc.Chain).Config().ChainID, ibcAmount)
+			h.Require().NoError(err, "error should be nil")
+			// give some time for txn to settle
+			time.Sleep(20 * time.Second)
+			centauriChanBalance, err := centauriChain.GetWalletBalance(ctx, centauriReceiver, ibcDenom)
+			h.Require().NoError(err, "error retrieving balance")
+			valueTocheck := new(big.Int)
+			valueTocheck, _ = valueTocheck.SetString("100000000000000000000", 10)
+			assert.True(t, centauriChanBalance.Cmp(valueTocheck) == 0, "balance should be equal to 100000000000000000000")
+		})
+
+		h.T.Run("send IBC icx tokens from centauri to ibc ", func(t *testing.T) {
+			// send back to icon
+			ibcamount := fmt.Sprint(50) + "000000000000000000" + "transfer/" + relayDestinationChannel + "/icx"
+			txnhash, err := centauriChain.SendIBCTokenTransfer(ctx, relayDestinationChannel, relayDestinationChannel, "transfer", iconReceiver, centauriChain.(ibc.Chain).Config().ChainID, ibcamount)
+			h.Require().NoError(err, "error should be nil")
+			fmt.Println("Txn hash is ", txnhash)
+			time.Sleep(20 * time.Second)
+			valueTocheck := new(big.Int)
+			valueTocheck, _ = valueTocheck.SetString("50000000000000000000", 10)
+			centauriChanBalance, err := centauriChain.GetWalletBalance(ctx, centauriReceiver, ibcDenom)
+			h.Require().NoError(err, "error retrieving balance")
+			assert.True(t, centauriChanBalance.Cmp(valueTocheck) == 0, "balance should be equal to 50000000000000000000")
+		})
+	})
+
 }

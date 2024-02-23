@@ -122,6 +122,11 @@ Depending on your specific testing requirements, employ the appropriate commands
 go test -v ./test/e2e -timeout 0
 ```
 
+- To execute the end-to-end hopchain tests:
+```bash
+export TEST_CONFIG_PATH=/Users/bcs/Documents/bchain/IBC-integration/test/testsuite/sample-config-ics20.yaml; go test -v ./test/e2e-hopchain -timeout 0
+```
+ℹ️ The hopchain tests expects remote chain deployments with respective keys for each chain in the expected folders and synced with remote chains.
 - To run the integration tests:
 ```bash
 go test -v ./test/integration -timeout 0

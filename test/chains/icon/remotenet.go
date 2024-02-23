@@ -182,7 +182,7 @@ func (c *IconRemotenet) SendFundsFromGodwallet(ctx context.Context, amount ibc.W
 		"--key_password", c.testconfig.KeystorePassword,
 		"--to", amount.Address,
 		"--value", fmt.Sprint(amount.Amount)+"000000000000000000",
-		"--step_limit", "10000000000000",
+		"--step_limit", "25000000000",
 		"--nid", "0x3",
 	)
 	_, _, err := c.Exec(ctx, commands, nil)
@@ -206,7 +206,7 @@ func (c *IconRemotenet) SendIBCTokenTransfer(ctx context.Context, sourceChannel,
 		"--key_store", WalletKeyStore+c.testconfig.KeystoreFile,
 		"--key_password", c.testconfig.KeystorePassword,
 		"--value", amount,
-		"--step_limit", "10000000000000",
+		"--step_limit", "25000000000",
 		"--nid", "0x3",
 	)
 	params := `{"denom":"` + denom + `","receiver":"` + receiver + `","amount":"` + amount + `","sourcePort":"` + port + `","sourceChannel":"` + sourceChannel + `","timeoutHeight":"5000000","timeoutRevisionNumber":"1"}`
@@ -520,7 +520,7 @@ func (c *IconRemotenet) DeployContractRemote(ctx context.Context, contractPath, 
 		"--to", "cx0000000000000000000000000000000000000000",
 		"--key_store", WalletKeyStore+c.testconfig.KeystoreFile,
 		"--key_password", c.testconfig.KeystorePassword,
-		"--step_limit", "5000000000",
+		"--step_limit", "25000000000",
 		"--content_type", "application/java",
 		"--nid", "0x3",
 		"--uri", c.GetHostRPCAddress(),
@@ -556,7 +556,7 @@ func (c *IconRemotenet) ExecuteContractRemote(ctx context.Context, contractAddre
 		"--method", methodName,
 		"--key_store", keyst,
 		"--key_password", c.testconfig.KeystorePassword,
-		"--step_limit", "5000000000",
+		"--step_limit", "25000000000",
 		"--nid", "0x3",
 		"--uri", c.GetHostGRPCAddress(),
 	)
@@ -606,7 +606,7 @@ func (c *IconRemotenet) SetupIBCICS20(ctx context.Context, keyName string) (cont
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("IBC ics20 Clinet deployed at ", ics20client)
+	fmt.Println("IBC ics20 Client deployed at ", ics20client)
 	c.ExecuteContractRemote(context.Background(), ibcAddress, "registerClient", `{"clientType":"`+"07-tendermint"+`", "client":"`+client+`"}`)
 
 	c.ExecuteContractRemote(context.Background(), ibcAddress, "registerClient", `{"hashType":"1","clientType":"`+"ics08-tendermint"+`", "client":"`+ics20client+`"}`)
