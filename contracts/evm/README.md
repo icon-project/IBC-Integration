@@ -44,7 +44,12 @@ You can start the local EVM test network at any time:
 ```shell
 $ anvil
 ```
-
+### Env File
+Copy `.env.example` to `.env` and update with the required values.
+Note that the private key should have `0x` prefix.
+```sh
+cp .env.example .env
+```
 ### Deploy
 
 ```shell

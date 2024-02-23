@@ -2,8 +2,10 @@ Centralized Connection Deployment
 ===
 ## Prerequisities
 - git
-- foundry
-- goloop / gradle
+- [foundry](https://book.getfoundry.sh/getting-started/installation)
+- [goloop cli](https://github.com/icon-project/goloop/tree/master/cmd/cli) <br/>
+    or <br/>
+    [openjdk](https://openjdk.org/install/) (version 11 or higher)
 
 ## Steps to deploy centralized connection on mainnet
 
@@ -31,8 +33,9 @@ forge build
 cp .env.example .env
 ```
 Edit the .env file. You need to change the following fields:
-```env
-PRIVATE_KEY=YOUR_PRIVATE_KEY
+```sh
+PRIVATE_KEY=YOUR_PRIVATE_KEY # should have 0x prefix
+ADMIN= # address which can upgrade contract
 {CHAIN_NAME}_CENTRALIZED_RELAYER=YOUR_RELAYER_ADDRESS
 ```
 
@@ -47,18 +50,19 @@ Now, to deploy the centralized-connection contract:
 ```sh
 # check ./deploy_script.sh options for CHAIN_NAME
 # env can be mainnet or testnet or local
-# ./deploy_script.sh --contract centralized --deploy --env testnet --chain base_goerli
+# ./deploy_script.sh --contract centralized --deploy --env testnet --chain sepolia
 ./deploy_script.sh --contract centralized --deploy --env mainnet --chain {CHAIN_NAME} 
 ```
+Save the centralized connection address. You can find the centralized connection address in the console as `Centralized Connection address: {CONTRACT_ADDRESS}`
 
-**Set fees on the connection contract**:
+**Set fees on the connection contract**: (Optional)
 
 - This can be called only by the relayer.
 ```sh
 cast send <connection_contract_address>  "setFee(string calldata networkId, uint256 messageFee, uint256 responseFee)" "0x1.icon" 10000000000000000 10000000000000000 --rpc-url <rpc_url> --private-key  <private-key>
 ```
 
-**Change relayer address**: 
+**Change relayer address**: (Optional)
 
 > If you need to change the relayer address,
 
@@ -77,11 +81,12 @@ cd $PROJECT_ROOT
 cd contracts/javascore/centralized-connection
 ```
 
-Update the constructor parameters in `build.gradle`. Put correct address on xCall and relayer field. 
+Update the constructor parameters in `build.gradle`. Put correct address on xCall and relayer field. The, xcall addresses can be found [here](https://github.com/icon-project/xcall-multi/wiki). 
+
 ```gradle
 parameters {
     arg('_relayer', "<your-relayer-address>")
-    arg('_xCall', "cxa07f426062a1384bdd762afa6a87d123fbc81c75")
+    arg('_xCall', "<xcall-address>")
 }
 ```
 
@@ -91,7 +96,13 @@ Then, you can deploy it as:
 cd $PROJECT_ROOT/contracts/javascore
 ./gradlew :centralized-connection:build
 ./gradlew :centralized-connection:optimizedJar
-./gradlew :centralized-connection:deployToMainnet -PkeystoreName=<your_wallet_json> -PkeystorePass=<password>
+
+# testnet
+# ./gradlew :centralized-connection:deployToLisbon -PkeystoreName=<absolute/path/to/your_wallet_json> -PkeystorePass=<password>
+
+# mainnet
+./gradlew :centralized-connection:deployToMainnet -PkeystoreName=<absolute/path/to/your_wallet_json> 
+-PkeystorePass=<password>
 ```
 
 
@@ -114,7 +125,7 @@ goloop rpc sendtx deploy centralized-connection-0.1.0-optimized.jar \
     --key_store <your_wallet_json> \
     --key_password <password>
 ```
-- Set fee for centralized connection
+- Set fee for centralized connection (Optional)
 ```sh
 goloop rpc sendtx call \
         --uri https://ctz.solidwallet.io/api/v3 \

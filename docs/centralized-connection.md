@@ -17,10 +17,9 @@ The main security concerns of this application is losing control of Owner privil
 If used with at least a second functioning bridge protocol the implications of this is that the filtering can be assumed to not have any effect anymore and any transaction from the other bridges can go through. This means if a hacker who wants full control over the protocol needs to break the other bridges along with breaking this relayer. 
 
 ## Process To Setup Centralized Connection for your dApp
-1. Deploy connection contract on the source chain and destination chains. It takes relayer address and xCall address as parameter. You can get the relevant xCall address from the [xcall wiki](https://github.com/icon-project/xcall-multi/wiki/xCall-Deployment-Info)
+1. Deploy connection contract on the source chain and destination chains. It takes relayer address and xCall address as parameter. You can get the relevant xCall address from the [xcall wiki](https://github.com/icon-project/xcall-multi/wiki/xCall-Deployment-Info). The guide to deploy the centralized connections is [here](./centralized-connection-setup.md)
 
 2. Setup [centralized-relayer](https://github.com/icon-project/centralized-relay)
 
 After this, you should have a centralized connection ready, which is able to send cross chain message to interact with your application on the destination chain. 
 
-**Detailed steps on deployment can be found [here](./centralized-connection-setup.md)**
