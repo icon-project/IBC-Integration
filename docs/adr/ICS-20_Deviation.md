@@ -102,7 +102,7 @@ function sendFungibleTokens(
   sourceChannel: string,
   timeoutHeight: Height,
   timeoutTimestamp: uint64, // in unix nanoseconds
-  @Optional memo: string,
+  @Optional memo: string
 ): uint64 {
     prefix = "{sourcePort}/{sourceChannel}/"
     // we are the source if the denomination is not prefixed
