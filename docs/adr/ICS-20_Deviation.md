@@ -219,6 +219,10 @@ function refundTokens(packet: Packet) {
     tokenContract.mint(data.sender,data.amount)
   }
 }
+
+function tokenFallback(self, _from: Address, _value: int, _data: bytes){
+    return
+}
 ```
 
 ### Hopchain
