@@ -39,7 +39,7 @@ function sendFungibleTokens(
       escrowAccount = Context.getAddress()
       
       // escrow source tokens (assumed to fail if balance insufficient)
-      tokenContract.TransferFrom(sender, escrowAccount, amount)
+      tokenContract.Transfer(escrowAccount, amount)
 
         }
     
@@ -87,9 +87,13 @@ function onRecvPacket(packet: Packet) {
     tokenContract=getTokenContract(denomOnly)
     escrowAccount = Context.getAddress()
     // unescrow tokens to receiver (assumed to fail if balance insufficient)
-    err = tokenContract.Transfer(escrowAccount, data.receiver,data.amount)
-    if (err !== nil)
-      ack = FungibleTokenPacketAcknowledgement{false, "transfer coins failed"}
+    
+      try {
+            Context.call(tokenContract, "Transfer", data.receiver, data.amount)
+        } catch (Exception e) {
+           ack = FungibleTokenPacketAcknowledgement{false, "transfer coins failed"}
+        }
+    
   } else {
     prefix = "{packet.destPort}/{packet.destChannel}/"
     prefixedDenomination = prefix + data.denom
@@ -112,11 +116,15 @@ function refundTokens(packet: Packet) {
   if source {
     // sender was source chain, unescrow tokens back to sender
     escrowAccount = Context.getAddress()
-    tokenContract.TransferFrom(escrowAccount, data.sender, data.amount)
+    tokenContract.Transfer(data.sender, data.amount)
   } else {
     // receiver was source chain, mint vouchers back to sender
     tokenContract.Mint(data.sender, data.denom, data.amount)
   }
+}
+
+function tokenFallback(self, _from: Address, _value: int, _data: bytes){
+    return
 }
 ```
 
