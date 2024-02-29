@@ -10,7 +10,7 @@ use cosmwasm_std::{
 
 use cw_common::from_binary_response;
 use cw_common::types::Ack;
-use cw_xcall_ibc_connection::ack::{on_ack_failure, on_ack_sucess};
+use cw_xcall_ibc_connection::ack::{on_ack_failure, on_ack_success};
 use cw_xcall_ibc_connection::types::config::Config;
 use cw_xcall_lib::network_address::{NetId, NetworkAddress};
 
@@ -117,7 +117,7 @@ fn success_on_open_channel_open_init_unordered_channel() {
 
     contract
         .configure_connection(
-            deps.as_mut().storage,
+            deps.as_mut(),
             connection_id,
             dst.port_id,
             NetId::from("nid".to_string()),
@@ -183,7 +183,7 @@ fn get_ibc_config_after_setup() {
 
     contract
         .configure_connection(
-            deps.as_mut().storage,
+            deps.as_mut(),
             connection_id,
             dst.port_id.clone(),
             NetId::from("nid".to_string()),
@@ -214,7 +214,7 @@ fn get_ibc_config_after_setup() {
 
 #[test]
 #[cfg(not(feature = "native_ibc"))]
-fn sucess_on_open_channel_open_try_valid_version() {
+fn success_on_open_channel_open_try_valid_version() {
     use cosmwasm_std::from_binary;
     use cw_xcall_lib::network_address::NetId;
 
@@ -248,7 +248,7 @@ fn sucess_on_open_channel_open_try_valid_version() {
     };
     contract
         .configure_connection(
-            deps.as_mut().storage,
+            deps.as_mut(),
             "newconnection".to_string(),
             dst.port_id,
             NetId::from("nid".to_string()),
@@ -281,7 +281,7 @@ fn sucess_on_open_channel_open_try_valid_version() {
 
 #[test]
 #[cfg(not(feature = "native_ibc"))]
-fn sucess_on_ibc_channel_connect() {
+fn success_on_ibc_channel_connect() {
     use std::str::FromStr;
 
     use cw_xcall_lib::network_address::NetId;
@@ -327,7 +327,7 @@ fn sucess_on_ibc_channel_connect() {
         .unwrap();
     contract
         .configure_connection(
-            deps.as_mut().storage,
+            deps.as_mut(),
             "newconnection".to_string(),
             dst.port_id,
             NetId::from("btp".to_string()),
@@ -347,6 +347,163 @@ fn sucess_on_ibc_channel_connect() {
         .unwrap();
 
     assert_eq!(ibc_config.src_endpoint().port_id, src.port_id.as_str())
+}
+
+#[test]
+#[cfg(not(feature = "native_ibc"))]
+fn reconfigure_non_open_channel() {
+    use cosmwasm_std::{ContractResult, SystemResult, WasmQuery};
+    use cw_common::{raw_types::channel::RawChannel, ProstMessage};
+    use cw_xcall_ibc_connection::state::IbcConfig;
+    use cw_xcall_lib::network_address::NetId;
+
+    let mut deps = deps();
+    let contract = CwIbcConnection::default();
+    contract
+        .set_ibc_host(deps.as_mut().storage, Addr::unchecked("ibc"))
+        .unwrap();
+
+    let src = IbcEndpoint {
+        port_id: "our-port".to_string(),
+        channel_id: "channel-1".to_string(),
+    };
+    let dst = IbcEndpoint {
+        port_id: "their-port".to_string(),
+        channel_id: "channel-3".to_string(),
+    };
+    deps.querier.update_wasm(|r| match r {
+        WasmQuery::Smart {
+            contract_addr: _,
+            msg: _,
+        } => {
+            let channel = RawChannel {
+                state: 1,
+                ordering: 1,
+                counterparty: None,
+                connection_hops: vec![],
+                version: "".to_string(),
+            };
+            SystemResult::Ok(ContractResult::Ok(
+                to_binary(&hex::encode(channel.encode_to_vec())).unwrap(),
+            ))
+        }
+        _ => todo!(),
+    });
+
+    let nid = NetId::from("nid".to_string());
+    let cfg = IbcConfig::new(src, dst);
+    let res = contract.store_ibc_config(deps.as_mut().storage, &nid, &cfg);
+    assert!(res.is_ok());
+
+    let res = contract.configure_connection(
+        deps.as_mut(),
+        "newconnection".to_string(),
+        "port".to_string(),
+        nid,
+        "client-id".to_string(),
+        100,
+    );
+
+    assert!(res.is_ok());
+}
+
+#[test]
+#[cfg(not(feature = "native_ibc"))]
+fn reconfigure_open_channel() {
+    use cosmwasm_std::{ContractResult, SystemResult, WasmQuery};
+    use cw_common::{raw_types::channel::RawChannel, ProstMessage};
+    use cw_xcall_ibc_connection::state::IbcConfig;
+    use cw_xcall_lib::network_address::NetId;
+
+    let mut deps = deps();
+
+    let contract = CwIbcConnection::default();
+    contract
+        .set_ibc_host(deps.as_mut().storage, Addr::unchecked("ibc"))
+        .unwrap();
+
+    let src = IbcEndpoint {
+        port_id: "our-port".to_string(),
+        channel_id: "channel-1".to_string(),
+    };
+    let dst = IbcEndpoint {
+        port_id: "their-port".to_string(),
+        channel_id: "channel-3".to_string(),
+    };
+    deps.querier.update_wasm(|r| match r {
+        WasmQuery::Smart {
+            contract_addr: _,
+            msg: _,
+        } => {
+            let channel = RawChannel {
+                state: 3,
+                ordering: 1,
+                counterparty: None,
+                connection_hops: vec![],
+                version: "".to_string(),
+            };
+            SystemResult::Ok(ContractResult::Ok(
+                to_binary(&hex::encode(channel.encode_to_vec())).unwrap(),
+            ))
+        }
+        _ => todo!(),
+    });
+
+    let nid = NetId::from("nid".to_string());
+    let cfg = IbcConfig::new(src, dst);
+    let res = contract.store_ibc_config(deps.as_mut().storage, &nid, &cfg);
+    assert!(res.is_ok());
+
+    let res = contract.configure_connection(
+        deps.as_mut(),
+        "newconnection".to_string(),
+        "port".to_string(),
+        nid,
+        "client-id".to_string(),
+        100,
+    );
+    assert!(res.is_err());
+}
+
+#[test]
+#[cfg(not(feature = "native_ibc"))]
+fn override_open_channel() {
+    use cw_xcall_ibc_connection::state::IbcConfig;
+    use cw_xcall_lib::network_address::NetId;
+
+    let mut deps = deps();
+
+    let contract = CwIbcConnection::default();
+    let src = IbcEndpoint {
+        port_id: "our-port".to_string(),
+        channel_id: "channel-1".to_string(),
+    };
+    let dst = IbcEndpoint {
+        port_id: "their-port".to_string(),
+        channel_id: "channel-3".to_string(),
+    };
+
+    let nid = NetId::from("nid".to_string());
+    let cfg = IbcConfig::new(src, dst);
+    let res = contract.store_ibc_config(deps.as_mut().storage, &nid, &cfg);
+    assert!(res.is_ok());
+
+    let connection_id = "newconnection".to_string();
+    let client_id = "client-id".to_string();
+    let res = contract.override_connection(
+        deps.as_mut().storage,
+        connection_id.clone(),
+        "port".to_string(),
+        nid,
+        client_id.clone(),
+        100,
+    );
+
+    assert!(res.is_ok());
+    let cfg = contract
+        .get_connection_config(deps.as_mut().storage, connection_id.as_str())
+        .unwrap();
+    assert!(cfg.client_id == client_id);
 }
 
 #[test]
@@ -432,7 +589,7 @@ fn fails_on_ibc_channel_connect_invalid_counterparty_version() {
 
 #[test]
 #[cfg(not(feature = "native_ibc"))]
-fn sucess_receive_packet_for_call_message_request() {
+fn success_receive_packet_for_call_message_request() {
     use common::rlp::{self, Nullable};
 
     use cw_xcall_ibc_connection::types::message::Message;
@@ -500,7 +657,7 @@ fn sucess_receive_packet_for_call_message_request() {
         .unwrap();
     contract
         .configure_connection(
-            mock_deps.as_mut().storage,
+            mock_deps.as_mut(),
             "newconnection".to_string(),
             dst.port_id,
             NetId::from("cnid".to_string()),
@@ -534,7 +691,7 @@ fn sucess_receive_packet_for_call_message_request() {
 
 #[test]
 #[cfg(not(feature = "native_ibc"))]
-fn sucess_on_ack_packet() {
+fn _on_ack_packet() {
     use cw_xcall_lib::network_address::{NetId, NetworkAddress};
 
     let mut mock_deps = deps();
@@ -843,7 +1000,7 @@ fn test_ack_success_on_call_request() {
 
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
-    let ack = on_ack_sucess(packet);
+    let ack = on_ack_success(packet);
 
     assert!(ack.is_ok())
 }
@@ -876,7 +1033,7 @@ fn test_ack_success_on_call_response() {
 
     let packet = IbcPacket::new(message, src, dst, 0, timeout);
 
-    let ack = on_ack_sucess(packet);
+    let ack = on_ack_success(packet);
 
     assert!(ack.is_ok())
 }

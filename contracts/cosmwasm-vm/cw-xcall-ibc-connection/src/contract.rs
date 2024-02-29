@@ -1,5 +1,5 @@
 use common::{
-    ibc::Height,
+    ibc::{core::ics04_channel::channel::State, Height},
     rlp::{self},
 };
 use cosmwasm_std::{coins, BankMsg, IbcChannel};
@@ -120,6 +120,24 @@ impl<'a> CwIbcConnection<'a> {
             } => {
                 self.ensure_admin(deps.as_ref().storage, info.sender)?;
                 self.configure_connection(
+                    deps,
+                    connection_id,
+                    counterparty_port_id,
+                    counterparty_nid,
+                    client_id,
+                    timeout_height,
+                )?;
+                Ok(Response::new())
+            }
+            ExecuteMsg::OverrideConnection {
+                connection_id,
+                counterparty_port_id,
+                counterparty_nid,
+                client_id,
+                timeout_height,
+            } => {
+                self.ensure_owner(deps.as_ref().storage, &info)?;
+                self.override_connection(
                     deps.storage,
                     connection_id,
                     counterparty_port_id,
@@ -684,6 +702,52 @@ impl<'a> CwIbcConnection<'a> {
 
     pub fn configure_connection(
         &self,
+        deps: DepsMut,
+        connection_id: String,
+        counterparty_port_id: String,
+        counterparty_nid: NetId,
+        client_id: String,
+        timeout_height: u64,
+    ) -> Result<(), ContractError> {
+        let cfg_res = self.get_ibc_config(deps.storage, &counterparty_nid);
+        if let Ok(cfg) = cfg_res {
+            let state_res = self.query_channel_state(
+                deps.as_ref(),
+                cfg.src_endpoint().port_id.clone(),
+                cfg.src_endpoint().channel_id.clone(),
+            );
+            if let Ok(state) = state_res {
+                if State::from_i32(state).map_or(false, |s| s.is_open()) {
+                    return Err(ContractError::ConnectionAlreadyConfigured {
+                        connection_id,
+                        port_id: counterparty_port_id,
+                    });
+                }
+            }
+
+            self.clear_ibc_config(deps.storage, &counterparty_nid)
+        }
+
+        self.store_counterparty_nid(
+            deps.storage,
+            &connection_id,
+            &counterparty_port_id,
+            &counterparty_nid,
+        )?;
+
+        self.store_connection_config(
+            deps.storage,
+            &connection_id,
+            &ConnectionConfig {
+                timeout_height,
+                client_id,
+            },
+        )?;
+
+        Ok(())
+    }
+    pub fn override_connection(
+        &self,
         store: &mut dyn Storage,
         connection_id: String,
         counterparty_port_id: String,
@@ -691,16 +755,7 @@ impl<'a> CwIbcConnection<'a> {
         client_id: String,
         timeout_height: u64,
     ) -> Result<(), ContractError> {
-        if self.get_connection_config(store, &connection_id).is_ok()
-            && self
-                .get_counterparty_nid(store, &connection_id, &counterparty_port_id)
-                .is_ok()
-        {
-            return Err(ContractError::ConnectionAlreadyConfigured {
-                connection_id,
-                port_id: counterparty_port_id,
-            });
-        }
+        self.clear_ibc_config(store, &counterparty_nid);
         self.store_counterparty_nid(
             store,
             &connection_id,

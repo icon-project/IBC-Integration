@@ -4,6 +4,7 @@ use common::ibc::Height;
 use cosmwasm_std::{to_binary, CosmosMsg, Deps, DepsMut, Storage, SubMsg, WasmMsg};
 use cw_common::cw_types::CwPacket;
 use cw_common::query_helpers::build_smart_query;
+use cw_common::raw_types::channel::RawChannel;
 use cw_common::{hex_string::HexString, raw_types::channel::RawPacket, ProstMessage};
 
 use cw_common::cw_println;
@@ -80,6 +81,24 @@ impl<'a> CwIbcConnection<'a> {
         let latest_height: u64 = deps.querier.query(&query).map_err(ContractError::Std)?;
         let timeout_height = latest_height + channel_config.timeout_height;
         Ok(Height::new(0, timeout_height).unwrap())
+    }
+
+    pub fn query_channel_state(
+        &self,
+        deps: Deps,
+        port: String,
+        channel: String,
+    ) -> Result<i32, ContractError> {
+        let ibc_host = self.get_ibc_host(deps.storage)?;
+        let message = to_binary(&cw_common::core_msg::QueryMsg::GetChannel {
+            port_id: port,
+            channel_id: channel,
+        })
+        .unwrap();
+        let query = build_smart_query(ibc_host.to_string(), message);
+        let encoded_channel: String = deps.querier.query(&query).map_err(ContractError::Std)?;
+        let channel = RawChannel::decode(hex::decode(encoded_channel).unwrap().as_slice()).unwrap();
+        Ok(channel.state)
     }
 
     pub fn query_host_sequence_no(
