@@ -38,8 +38,7 @@ The following function will be used to register tokens on ICON to the ICS 20 App
 ```js
 function registerIconToken(tokenAddress: Address) {
   onlyAdmin()
-  name = Context.call(tokenAddress, "name")
-  tokenContracts[name] = tokenAddress
+  tokenContracts[tokenAddress.toString()] = tokenAddress
 }
 ```
 
@@ -56,7 +55,8 @@ function getTokenContractAddress(denom:String):String {
 ```
 
 #### Sending Tokens
-- To send ICX, send using the `sendFungibleTokens` function. 
+- To send ICX, send using the `sendICX` function. 
+
 - To send tokens other then ICX, it should go through `tokenFallback` function. The `data` bytes, should be parsed into the following structure.
   ```json
   {
@@ -77,7 +77,7 @@ function getTokenContractAddress(denom:String):String {
     }
   }
   ```
-- Implementation of `tokenFallback` and `sendFungibleTokens`
+- Implementation of `tokenFallback` and `sendICX` function
 ```js
 // to send tokens other than icx
 function tokenFallback(from: Address, value: uint64, data: bytes) {
@@ -93,7 +93,19 @@ function tokenFallback(from: Address, value: uint64, data: bytes) {
 }
 
 @payable
-function sendFungibleTokens(
+function sendICX(
+  receiver: string, 
+  sourcePort: string, 
+  sourceChannel: string, 
+  timeoutHeight: Height, 
+  timeoutTimestamp: string, 
+  @Optional memo: string
+) {
+  sendFungibleTokens("icx", Context.getValue(), Context.getCaller().toString(), ...)
+}
+
+
+internal function sendFungibleTokens(
   denomination: string,
   amount: uint256,
   sender: string,
@@ -220,9 +232,6 @@ function refundTokens(packet: Packet) {
   }
 }
 
-function tokenFallback(self, _from: Address, _value: int, _data: bytes){
-    return
-}
 ```
 
 ### Hopchain
