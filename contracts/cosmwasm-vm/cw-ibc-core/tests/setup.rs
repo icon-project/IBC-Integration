@@ -34,8 +34,8 @@ use cosmwasm_std::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
         MOCK_CONTRACT_ADDR,
     },
-    to_binary, Addr, Binary, BlockInfo, ContractInfo, ContractResult, Empty, Env, IbcEndpoint,
-    MessageInfo, OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery,
+    to_binary, Addr, Binary, BlockInfo, ContractInfo, ContractResult, DepsMut, Empty, Env,
+    IbcEndpoint, MessageInfo, OwnedDeps, SystemResult, Timestamp, TransactionInfo, WasmQuery,
 };
 
 use common::{
@@ -580,6 +580,7 @@ use cw_common::ibc_types::IbcClientId;
 use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::ics04_channel::Counterparty;
 use cw_ibc_core::ics04_channel::State;
+use cw_ibc_core::traits::IbcClient;
 use cw_ibc_core::ConnectionEnd;
 use cw_ibc_core::{compute_packet_commitment, ChannelEnd, Sequence};
 use prost::Message;
@@ -631,6 +632,7 @@ pub struct TestContext {
     pub module_address: Option<Addr>,
     pub packet: Option<RawPacket>,
     pub client_id: IbcClientId,
+    pub client_type: ClientType,
     pub connection_id: ConnectionId,
     pub env: Env,
     pub height: Height,
@@ -653,6 +655,7 @@ impl TestContext {
             port_id: PortId::default(),
             channel_id: ChannelId::default(),
             lightclient: Some(LightClient::new("lightclient".to_string())),
+            client_type: ClientType::new("iconclient".to_string()),
             packet: None,
             mock_queries: HashMap::<Binary, Binary>::new(),
             module_address: Some(Addr::unchecked("moduleaddress")),
@@ -827,6 +830,13 @@ impl TestContext {
         ctx.port_id = to_ibc_port_id(&msg.port_id).unwrap();
         ctx.channel_id = ChannelId::new(0);
         ctx.channel_end = Some(to_ibc_channel(msg.channel.clone()).unwrap());
+
+        ctx
+    }
+
+    pub fn for_client_state(env: Env) -> Self {
+        let mut ctx = TestContext::default(env);
+        ctx.client_id = ClientId::from_str("iconclient-0").unwrap();
 
         ctx
     }
@@ -1039,6 +1049,21 @@ impl TestContext {
             .unwrap();
     }
 
+    pub fn init_client_state(&mut self, deps: DepsMut, contract: &CwIbcCoreContext) {
+        self.init_context(deps.storage, &contract);
+        self.save_consensus_state(
+            deps.storage,
+            self.client_state.clone().unwrap().latest_height,
+        );
+        contract.init_client_counter(deps.storage, 0).unwrap();
+        self.save_client_commitment(
+            deps.storage,
+            &contract,
+            &self.client_state.clone().unwrap().encode_to_vec(),
+        );
+        self.save_register_client(deps, &contract);
+    }
+
     pub fn save_next_sequence_send(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
         if let Some(packet) = self.packet.clone() {
             contract
@@ -1115,6 +1140,16 @@ impl TestContext {
                 client_state_hash.clone(),
             )
             .unwrap();
+    }
+
+    pub fn save_register_client(&self, deps: DepsMut, contract: &CwIbcCoreContext) {
+        if let Some(lightclient) = self.lightclient.clone() {
+            let addr = Addr::unchecked(lightclient.get_address());
+
+            contract
+                .register_client(deps, self.client_type.clone(), addr)
+                .unwrap();
+        }
     }
 
     pub fn save_channel_end(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
