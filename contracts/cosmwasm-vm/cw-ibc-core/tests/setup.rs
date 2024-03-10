@@ -1029,6 +1029,16 @@ impl TestContext {
         self.save_consensus_state(storage, self.client_state.clone().unwrap().latest_height);
     }
 
+    pub fn init_connection_delay(
+        &mut self,
+        storage: &mut dyn Storage,
+        contract: &CwIbcCoreContext,
+    ) {
+        contract
+            .store_last_processed_on(storage, &self.env, &self.client_id)
+            .unwrap();
+    }
+
     pub fn save_next_sequence_send(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
         if let Some(packet) = self.packet.clone() {
             contract
@@ -1079,6 +1089,32 @@ impl TestContext {
                 .store_connection(storage, &self.connection_id, &connection_end)
                 .unwrap();
         }
+    }
+
+    pub fn save_connection_to_client(
+        &self,
+        storage: &mut dyn Storage,
+        contract: &CwIbcCoreContext,
+    ) {
+        contract
+            .store_connection_to_client(storage, &self.client_id, &self.connection_id)
+            .unwrap();
+    }
+
+    pub fn save_client_commitment(
+        &self,
+        storage: &mut dyn Storage,
+        contract: &CwIbcCoreContext,
+        client_state_hash: &Vec<u8>,
+    ) {
+        contract
+            .store_client_commitment(
+                storage,
+                &self.env,
+                &self.client_id,
+                client_state_hash.clone(),
+            )
+            .unwrap();
     }
 
     pub fn save_channel_end(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {
