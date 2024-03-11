@@ -3,8 +3,8 @@ package ibc.ics23.commitment.types;
 import ibc.icon.score.util.StringUtil;
 import ibc.ics23.commitment.Ics23;
 import ibc.ics23.commitment.Proof;
-import icon.proto.clients.tendermint.MerkleRoot;
-import icon.proto.core.commitment.*;
+import cosmos.ics23.v1.*;
+import ibc.core.commitment.v1.*;
 import score.UserRevertedException;
 import scorex.util.ArrayList;
 
@@ -20,10 +20,10 @@ public class Merkle {
         Proof.getTendermintSpec()
     );
 
-    public static MerklePath applyPrefix(String path) {
+    public static MerklePath applyPrefix(String prefix, String path) {
         var mpath = new MerklePath();
         List<String> keyPath = new ArrayList<>();
-        keyPath.add(StringUtil.bytesToHex("wasm".getBytes()));
+        keyPath.add(prefix);
         keyPath.add(path);
         mpath.setKeyPath(keyPath);
         return mpath;

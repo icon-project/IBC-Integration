@@ -1,6 +1,6 @@
 package ibc.tendermint;
 
-import ibc.icon.interfaces.ILightClient;
+import icon.ibc.interfaces.ILightClient;;
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.NullChecker;
 import ibc.icon.score.util.StringUtil;
@@ -8,7 +8,7 @@ import ibc.ics23.commitment.types.Merkle;
 import ibc.ics24.host.IBCCommitment;
 import icon.proto.clients.tendermint.*;
 import icon.proto.core.client.Height;
-import icon.proto.core.commitment.MerkleProof;
+import ibc.core.commitment.v1.MerkleProof;
 import score.Address;
 import score.BranchDB;
 import score.Context;
@@ -213,7 +213,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
 
         var root = consensusState.getRoot();
         var merkleProof = MerkleProof.decode(proof);
-        var merklePath = applyPrefix(new String(path));
+        var merklePath = applyPrefix(StringUtil.bytesToHex("wasm".getBytes()), new String(path));
 
         Merkle.verifyMembership(merkleProof, Merkle.SDK_SPEC, root, merklePath, value);
     }
@@ -240,7 +240,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
 
         var root = consensusState.getRoot();
         var merkleProof = MerkleProof.decode(proof);
-        var merklePath = applyPrefix(new String(path));
+        var merklePath = applyPrefix(StringUtil.bytesToHex("wasm".getBytes()), new String(path));
 
         Merkle.verifyNonMembership(merkleProof, Merkle.SDK_SPEC, root, merklePath);
     }

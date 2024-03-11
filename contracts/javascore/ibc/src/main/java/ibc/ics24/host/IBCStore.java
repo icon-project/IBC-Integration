@@ -1,10 +1,10 @@
 package ibc.ics24.host;
 
-import ibc.icon.interfaces.IIBCHost;
-import ibc.icon.interfaces.ILightClient;
-import ibc.icon.interfaces.ILightClientScoreInterface;
 import ibc.icon.score.util.NullChecker;
 import ibc.ics05.port.ModuleManager;
+import icon.ibc.interfaces.IIBCHost;
+import icon.ibc.interfaces.ILightClient;
+import icon.ibc.interfaces.ILightClientScoreInterface;
 import score.*;
 import score.annotation.External;
 import scorex.util.ArrayList;
@@ -35,6 +35,7 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
     private static final String BTP_NETWORK_ID = "btpNetworkId";
     private static final String TIMEOUT_REQUESTS = "timeout_requests";
     private static final String ACK_HEIGHTS = "ackHeights";
+    private static final String HASH_METHOD = "hashMethod";
 
     // DB Variables
     // Commitments
@@ -80,6 +81,8 @@ public abstract class IBCStore extends ModuleManager implements IIBCHost {
 
     public static final DictDB<String, Integer> btpNetworkId = Context.newDictDB(BTP_NETWORK_ID, Integer.class);
     public static final DictDB<byte[], Boolean> timeoutRequests = Context.newDictDB(TIMEOUT_REQUESTS, Boolean.class);
+
+    public static final DictDB<String, Integer> hashType = Context.newDictDB(HASH_METHOD, Integer.class);
 
     @External(readonly = true)
     public byte[] getCommitment(byte[] key) {

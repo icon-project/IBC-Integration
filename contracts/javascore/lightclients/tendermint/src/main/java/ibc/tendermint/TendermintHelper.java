@@ -11,7 +11,6 @@ import icon.proto.clients.tendermint.CommitSig;
 import icon.proto.clients.tendermint.ConsensusState;
 import icon.proto.clients.tendermint.Duration;
 import icon.proto.clients.tendermint.LightHeader;
-import icon.proto.clients.tendermint.MerkleRoot;
 import icon.proto.clients.tendermint.SignedHeader;
 import icon.proto.clients.tendermint.SignedMsgType;
 import icon.proto.clients.tendermint.SimpleValidator;
@@ -19,6 +18,7 @@ import icon.proto.clients.tendermint.Timestamp;
 import icon.proto.clients.tendermint.TmHeader;
 import icon.proto.clients.tendermint.Validator;
 import icon.proto.clients.tendermint.ValidatorSet;
+import ibc.core.commitment.v1.MerkleRoot;
 import icon.proto.core.client.Height;
 import score.Context;
 

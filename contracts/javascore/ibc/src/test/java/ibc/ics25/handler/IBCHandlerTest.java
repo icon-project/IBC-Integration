@@ -1,7 +1,9 @@
 package ibc.ics25.handler;
 
 import com.iconloop.score.test.Account;
-import ibc.icon.structs.messages.*;
+
+import icon.ibc.structs.messages.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -101,14 +103,14 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
         acknowledgePacket();
     }
 
-    @Test  
+    @Test
     @SuppressWarnings("unchecked")
     void ackResponse_checkAckHeightSaved() throws Exception{
 
         establishCommunication();
 
         receivePacket();
-        Map<String, Long> ackHeights = (Map<String, Long>) handler.call("getAckHeights", portId, channelId, 0,10);        
+        Map<String, Long> ackHeights = (Map<String, Long>) handler.call("getAckHeights", portId, channelId, 0,10);
         assertEquals( ackHeights.keySet().size(), 0);
 
 
@@ -250,7 +252,7 @@ public class IBCHandlerTest extends IBCHandlerTestBase {
     void handlerAdminPermissions() {
         // TODO: should be a admin and not a owner.
         assertOnlyCallableBy(owner, "bindPort", portId);
-        assertOnlyCallableBy(owner, "registerClient", clientType, lightClient.getAddress());
+        assertOnlyCallableBy(owner, "registerClient", clientType, lightClient.getAddress(), 0);
         assertOnlyCallableBy(owner, "setExpectedTimePerBlock", BigInteger.TWO);
     }
 

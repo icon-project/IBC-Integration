@@ -2,10 +2,10 @@ package ibc.ics25.handler;
 
 import java.util.List;
 
-import ibc.icon.interfaces.IIBCChannelHandshake;
-import ibc.icon.interfaces.IIBCModuleScoreInterface;
-import ibc.icon.structs.messages.*;
 import icon.proto.core.channel.Channel;
+import icon.ibc.interfaces.IIBCChannelHandshake;
+import icon.ibc.interfaces.IIBCModuleScoreInterface;
+import icon.ibc.structs.messages.*;
 import score.annotation.EventLog;
 import score.annotation.External;
 

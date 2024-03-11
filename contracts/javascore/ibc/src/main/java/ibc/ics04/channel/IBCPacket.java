@@ -1,19 +1,21 @@
 package ibc.ics04.channel;
 
-import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Proto;
-import ibc.icon.structs.messages.MsgRequestTimeoutPacket;
 import ibc.ics24.host.IBCCommitment;
-import icon.proto.core.channel.Channel;
-import icon.proto.core.channel.Packet;
-import icon.proto.core.client.Height;
-import icon.proto.core.connection.ConnectionEnd;
+import ibc.ics24.host.IBCHost;
+import icon.ibc.interfaces.ILightClient;
+import icon.ibc.structs.messages.MsgRequestTimeoutPacket;
 import score.Context;
 import score.DictDB;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+
+import icon.proto.core.channel.Channel;
+import icon.proto.core.channel.Packet;
+import icon.proto.core.client.Height;
+import icon.proto.core.connection.ConnectionEnd;
 
 public class IBCPacket extends IBCChannelHandshake {
 
@@ -57,7 +59,7 @@ public class IBCPacket extends IBCChannelHandshake {
                 packet.getSourceChannel(),
                 packet.getSequence());
 
-        byte[] packetCommitment = createPacketCommitment(packet);
+        byte[] packetCommitment = createPacketCommitment(connection.getClientId(), packet);
         commitments.set(packetCommitmentKey, packetCommitment);
         packetHeights.at(packet.getSourcePort()).at(packet.getSourceChannel()).set(packet.getSequence(),
                 Context.getBlockHeight());
@@ -98,7 +100,7 @@ public class IBCPacket extends IBCChannelHandshake {
 
         byte[] commitmentPath = IBCCommitment.packetCommitmentPath(packet.getSourcePort(),
                 packet.getSourceChannel(), packet.getSequence());
-        byte[] commitmentBytes = createPacketCommitmentBytes(packet);
+        byte[] commitmentBytes = createPacketCommitmentBytes(connection.getClientId(), packet);
 
         verifyPacketCommitment(
                 connection,
@@ -144,7 +146,7 @@ public class IBCPacket extends IBCChannelHandshake {
         byte[] ackCommitmentKey = IBCCommitment.packetAcknowledgementCommitmentKey(destinationPortId,
                 destinationChannel, sequence);
         Context.require(commitments.get(ackCommitmentKey) == null, "acknowledgement for packet already exists");
-        byte[] ackCommitment = IBCCommitment.keccak256(acknowledgement);
+        byte[] ackCommitment = createAcknowledgmentCommitment(connection.getClientId(), acknowledgement);
         commitments.set(ackCommitmentKey, ackCommitment);
         ackHeights.at(destinationPortId).at(destinationChannel).set(sequence,
                 Context.getBlockHeight());
@@ -173,18 +175,19 @@ public class IBCPacket extends IBCChannelHandshake {
                 packet.getSourceChannel(), packet.getSequence());
         byte[] packetCommitment = commitments.get(packetCommitmentKey);
         Context.require(packetCommitment != null, "packet commitment not found");
-        byte[] commitment = createPacketCommitment(packet);
+        byte[] commitment = createPacketCommitment(connection.getClientId(), packet);
 
         Context.require(Arrays.equals(packetCommitment, commitment), "commitment byte[] are not equal");
 
         byte[] packetAckPath = IBCCommitment.packetAcknowledgementCommitmentPath(packet.getDestinationPort(),
                 packet.getDestinationChannel(), packet.getSequence());
+        byte[] commitmentBytes = createAcknowledgmentCommitmentBytes(connection.getClientId(), acknowledgement);
         verifyPacketAcknowledgement(
                 connection,
                 proofHeight,
                 proof,
                 packetAckPath,
-                acknowledgement);
+                commitmentBytes);
 
         if (channel.getOrdering() == Channel.Order.ORDER_ORDERED) {
             DictDB<String, BigInteger> nextSequenceAckSourcePort = nextSequenceAcknowledgements
@@ -235,7 +238,7 @@ public class IBCPacket extends IBCChannelHandshake {
 
         byte[] commitmentPath = IBCCommitment.packetCommitmentPath(packet.getSourcePort(),
                 packet.getSourceChannel(), packet.getSequence());
-        byte[] commitmentBytes = createPacketCommitmentBytes(packet);
+        byte[] commitmentBytes = createPacketCommitmentBytes(connection.getClientId(), packet);
         verifyPacketCommitment(
                 connection,
                 proofHeight,
@@ -299,7 +302,7 @@ public class IBCPacket extends IBCChannelHandshake {
                 packet.getSourceChannel(), packet.getSequence());
         byte[] packetCommitment = commitments.get(packetCommitmentKey);
         Context.require(packetCommitment != null, "packet commitment not found");
-        byte[] commitment = createPacketCommitment(packet);
+        byte[] commitment = createPacketCommitment(connection.getClientId(), packet);
 
         Context.require(Arrays.equals(packetCommitment, commitment), "commitment byte[] are not equal");
 
@@ -431,11 +434,20 @@ public class IBCPacket extends IBCChannelHandshake {
         return blockDelay;
     }
 
-    private byte[] createPacketCommitment(Packet packet) {
-        return IBCCommitment.keccak256(createPacketCommitmentBytes(packet));
+    private byte[] createPacketCommitment(String clientId, Packet packet) {
+        return IBCCommitment.keccak256(createPacketCommitmentBytes(clientId, packet));
     }
 
-    public static byte[] createPacketCommitmentBytes(Packet packet) {
+    private byte[] createPacketCommitmentBytes(String clientId, Packet packet) {
+        int hashType = IBCCommitment.getHashType(clientId);
+        if (hashType == IBCHost.HashType.ICS08.type) {
+           return createIBCPacketCommitmentBytes(packet);
+        }
+
+        return createWasmPacketCommitmentBytes(packet);
+    }
+
+    public static byte[] createWasmPacketCommitmentBytes(Packet packet) {
         return ByteUtil.join(
                 Proto.encodeFixed64(packet.getTimeoutTimestamp(), false),
                 Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionNumber(),
@@ -443,6 +455,29 @@ public class IBCPacket extends IBCChannelHandshake {
                 Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionHeight(),
                         false),
                 IBCCommitment.keccak256(packet.getData()));
+    }
+
+    public static byte[] createIBCPacketCommitmentBytes(Packet packet) {
+        return IBCCommitment.sha256(ByteUtil.join(
+                Proto.encodeFixed64(packet.getTimeoutTimestamp(), false),
+                Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionNumber(),
+                        false),
+                Proto.encodeFixed64(packet.getTimeoutHeight().getRevisionHeight(),
+                        false),
+                IBCCommitment.sha256(packet.getData())));
+    }
+
+    private byte[] createAcknowledgmentCommitment(String clientId, byte[] ack) {
+        return IBCCommitment.keccak256(createAcknowledgmentCommitmentBytes(clientId, ack));
+    }
+
+    public static byte[] createAcknowledgmentCommitmentBytes(String clientId, byte[] ack) {
+        int hashType = IBCCommitment.getHashType(clientId);
+        if (hashType == IBCHost.HashType.ICS08.type) {
+            return IBCCommitment.sha256(ack);
+        }
+
+        return ack;
     }
 
     private boolean lt(Height h1, Height h2) {
