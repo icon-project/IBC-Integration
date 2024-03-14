@@ -19,3 +19,11 @@ project(':mockclient').name = "mockclient"
 include(':mockapp')
 project(':mockapp').projectDir = file("modules/mockapp")
 project(':mockapp').name = "mockapp"
+
+include(':ics20app')
+project(':ics20app').projectDir = file("modules/ics20app")
+project(':ics20app').name = "ics20app"
+
+include(':ics20bank')
+project(':ics20bank').projectDir = file("modules/ics20bank")
+project(':ics20bank').name = "ics20bank"

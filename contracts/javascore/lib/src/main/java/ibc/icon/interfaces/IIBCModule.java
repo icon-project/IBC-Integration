@@ -1,6 +1,7 @@
 package ibc.icon.interfaces;
 
 import foundation.icon.score.client.ScoreInterface;
+import icon.proto.core.channel.*;
 import score.Address;
 
 // IIBCModule defines an interface that implements all the callbacks

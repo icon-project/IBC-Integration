@@ -1,0 +1,80 @@
+version = '0.1.0'
+
+dependencies {
+    compileOnly("foundation.icon:javaee-api:$javaeeVersion")
+    implementation("foundation.icon:javaee-scorex:$scorexVersion")
+    implementation project(':lib')
+    implementation project(':score-util')
+    implementation project(':ibc')
+
+    testImplementation 'com.google.protobuf:protobuf-javalite:3.13.0'
+    testImplementation 'foundation.icon:javaee-rt:0.9.3'
+    testImplementation("org.mockito:mockito-core:$mockitoCoreVersion")
+    testImplementation("org.mockito:mockito-inline:$mockitoCoreVersion")
+    testImplementation("foundation.icon:javaee-unittest:$javaeeUnittestVersion")
+    testAnnotationProcessor("foundation.icon:javaee-score-client:$scoreClientVersion")
+    testImplementation project(':test-lib')
+    testImplementation("foundation.icon:javaee-score-client:$scoreClientVersion")
+    testImplementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+    testImplementation("foundation.icon:icon-sdk:$iconsdkVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:$jupiterApiVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:$jupiterParamsVersion")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$jupiterEngineVersion")
+}
+
+test {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+    }
+}
+
+tasks.named('compileJava') {
+    dependsOn(':ibc:optimizedJar')
+    dependsOn(':score-util:jar')
+    dependsOn(':lib:jar')
+}
+
+optimizedJar {
+    mainClassName = 'ibc.ics20app.ICS20TransferBank'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+
+deployJar {
+    endpoints {
+        berlin {
+            uri = 'https://berlin.net.solidwallet.io/api/v3'
+            nid = 0x7
+        }
+        lisbon {
+            uri = 'https://lisbon.net.solidwallet.io/api/v3'
+            nid = 0x2
+        }
+        local {
+            uri = 'http://localhost:9082/api/v3'
+            nid = 0x3
+        }
+        uat {
+            uri = project.findProperty('uat.host') as String
+            nid = property('uat.nid') as Integer
+            // to = "$ics20app"?:null
+        }
+    }
+    keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''
+    password = rootProject.hasProperty('keystorePass') ? "$keystorePass" : ''
+    parameters {
+//        arg('_ibcHandler', "$ibcCore"?:null)
+//        arg("_bank","$ics20Bank"?:null)
+    }
+}
