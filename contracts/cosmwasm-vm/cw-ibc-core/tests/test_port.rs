@@ -94,3 +94,17 @@ fn channel_capability_path() {
     assert!(result.is_ok());
     assert_eq!("ports/defaultPort/channels/channel-0", result.unwrap())
 }
+
+#[test]
+fn test_get_all_ports() {
+    let mut deps = deps();
+    let ctx = CwIbcCoreContext::default();
+    let address = "contractaddress".to_string();
+    let port_id = PortId::default();
+
+    ctx.bind_port(&mut deps.storage, &port_id.clone(), address.clone())
+        .unwrap();
+
+    let res: Result<Vec<String>, cosmwasm_std::StdError> = ctx.get_all_ports(&deps.storage);
+    assert_eq!(res.unwrap(), vec![port_id.as_str().to_string()]);
+}
