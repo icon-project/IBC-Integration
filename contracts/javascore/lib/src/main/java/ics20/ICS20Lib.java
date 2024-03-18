@@ -1,12 +1,12 @@
-package ibc.ics20app;
+package ics20;
 
-import ibc.ics24.host.IBCCommitment;
+import score.annotation.Optional;
 import ibc.icon.score.util.StringUtil;
 import java.math.BigInteger;
 
 public class ICS20Lib {
 
-    public static class PacketData {
+    public static class FungibleTokenPacketData {
         public String denom;
         public String sender;
         public String receiver;
@@ -14,10 +14,8 @@ public class ICS20Lib {
         public String memo;
     }
 
-
     public static final byte[] SUCCESSFUL_ACKNOWLEDGEMENT_JSON = "{\"result\":\"AQ==\"}".getBytes();
     public static final byte[] FAILED_ACKNOWLEDGEMENT_JSON = "{\"error\":\"failed\"}".getBytes();
-    public static final byte[] KECCAK256_SUCCESSFUL_ACKNOWLEDGEMENT_JSON = IBCCommitment.keccak256(SUCCESSFUL_ACKNOWLEDGEMENT_JSON);
     public static final Integer CHAR_SLASH = 0x2f;
     public static final Integer CHAR_BACKSLASH = 0x5c;
     public static final Integer CHAR_F = 0x66;
@@ -27,7 +25,6 @@ public class ICS20Lib {
     public static final Integer CHAR_T = 0x74;
     public static final Integer CHAR_CLOSING_BRACE = 0x7d;
     public static final Integer CHAR_M = 0x6d;
-    private static final char[] HEX_DIGITS = "0123456789abcdef".toCharArray();
 
     private static final int CHAR_DOUBLE_QUOTE = '"';
 
@@ -41,27 +38,10 @@ public class ICS20Lib {
         return false;
     }
 
-    public byte[] marshalUnsafeJSON(PacketData data) {
-        if (data.memo.isEmpty()) {
-            return marshalJson(data.denom, data.amount, data.sender, data.receiver);
-        } else {
-            return marshalJson(data.denom, data.amount, data.sender, data.receiver, data.memo);
+    public static byte[] marshalFungibleTokenPacketData(String escapedDenom, BigInteger amount, String escapedSender, String escapedReceiver, @Optional String escapedMemo) {
+        if (escapedMemo == null) {
+            escapedMemo = "";
         }
-    }
-
-
-    public static byte[] marshalJson(String escapedDenom, BigInteger amount, String escapedSender, String escapedReceiver) {
-        String jsonString = "{" +
-                "\"amount\":\"" + amount.toString() + "\"," +
-                "\"denom\":\"" + escapedDenom + "\"," +
-                "\"receiver\":\"" + escapedReceiver + "\"," +
-                "\"sender\":\"" + escapedSender + "\"" +
-                "}";
-
-        return jsonString.getBytes();
-    }
-
-    public static byte[] marshalJson(String escapedDenom, BigInteger amount, String escapedSender, String escapedReceiver, String escapedMemo) {
         String jsonString = "{" +
                 "\"amount\":\"" + amount.toString() + "\"," +
                 "\"denom\":\"" + escapedDenom + "\"," +
@@ -73,7 +53,7 @@ public class ICS20Lib {
         return jsonString.getBytes();
     }
 
-    public static PacketData unmarshalJSON(byte[] packet) {
+    public static FungibleTokenPacketData unmarshalFungibleTokenPacketData(byte[] packet) {
         StringBuilder sanitized = new StringBuilder();
         String jsonString = new String(packet);
 
@@ -86,7 +66,7 @@ public class ICS20Lib {
 
         String[] jsonParts = StringUtil.split(jsonString, ',');
 
-        PacketData data = new PacketData();
+        FungibleTokenPacketData data = new FungibleTokenPacketData();
 
         data.amount = new BigInteger(getValue(jsonParts[0]));
 
