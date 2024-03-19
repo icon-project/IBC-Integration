@@ -137,6 +137,16 @@ fn test_set_expected_time_per_block() {
 }
 
 #[test]
+fn test_calc_block_delay_with_zero_deplay_period_time() {
+    let contract = CwIbcCoreContext::default();
+
+    let delay_period_time = Duration::from_secs(0);
+    let res = contract.calc_block_delay(&delay_period_time);
+
+    assert_eq!(res, 0);
+}
+
+#[test]
 fn test_get_expected_time_per_block() {
     let mut deps = deps();
     let expected_time_per_block = Duration::from_secs(60);

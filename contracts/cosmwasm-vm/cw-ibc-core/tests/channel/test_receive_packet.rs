@@ -1,13 +1,14 @@
 use common::ibc::core::ics03_connection::connection::State as ConnectionState;
 
+use common::ibc::core::ics04_channel::commitment::AcknowledgementCommitment;
 use common::ibc::core::ics04_channel::packet::Receipt;
+use common::ibc::core::ics04_channel::timeout::TimeoutHeight;
 use common::ibc::timestamp::Timestamp;
 
+use cosmwasm_std::to_vec;
 use cw_common::raw_types::channel::RawMsgRecvPacket;
 use cw_common::types::Ack;
-use cw_ibc_core::conversions::to_ibc_channel_id;
-
-use cw_ibc_core::conversions::to_ibc_port_id;
+use cw_ibc_core::conversions::{to_ibc_channel_id, to_ibc_port_id, to_ibc_timeout_block};
 
 use cw_ibc_core::VALIDATE_ON_PACKET_RECEIVE_ON_MODULE;
 
@@ -269,6 +270,139 @@ fn test_receive_packet_no_op_on_packet_already_received() {
         .validate_receive_packet(deps.as_mut(), info, env, &msg)
         .unwrap();
 }
+
+#[test]
+fn test_is_packet_already_received_for_none_ordered_channel() {
+    let msg = get_dummy_raw_msg_recv_packet(10);
+    let mut ctx = TestContext::for_receive_packet(get_mock_env(), &msg);
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::new();
+
+    ctx.init_receive_packet(deps.as_mut().storage, &contract);
+    if let Some(channel_end) = &mut ctx.channel_end {
+        channel_end.ordering = Order::None;
+    }
+
+    let packet = msg.packet.clone().unwrap();
+    let des_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let des_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
+
+    let res = contract
+        .is_packet_already_received(
+            deps.as_ref(),
+            &ctx.channel_end(),
+            &des_port,
+            &des_channel,
+            msg.packet.unwrap().sequence.into(),
+        )
+        .unwrap();
+
+    assert_eq!(res, false)
+}
+
+#[test]
+#[should_panic(
+    expected = "InvalidPacketSequence { given_sequence: Sequence(1), next_sequence: Sequence(0) }"
+)]
+fn test_is_packet_already_received_fail_for_invalid_packet_sequence() {
+    let msg = get_dummy_raw_msg_recv_packet(10);
+    let mut ctx = TestContext::for_receive_packet(get_mock_env(), &msg);
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::new();
+
+    if let Some(channel_end) = &mut ctx.channel_end {
+        channel_end.ordering = Order::Ordered;
+    }
+
+    let packet = msg.packet.clone().unwrap();
+    let des_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let des_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
+
+    contract
+        .store_next_sequence_recv(
+            deps.as_mut().storage,
+            &des_port,
+            &des_channel,
+            &Sequence::from(0),
+        )
+        .unwrap();
+
+    contract
+        .is_packet_already_received(
+            deps.as_ref(),
+            &ctx.channel_end(),
+            &des_port,
+            &des_channel,
+            msg.packet.unwrap().sequence.into(),
+        )
+        .unwrap();
+}
+
+#[test]
+fn test_is_packet_already_received() {
+    let msg = get_dummy_raw_msg_recv_packet(10);
+    let mut ctx = TestContext::for_receive_packet(get_mock_env(), &msg);
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::new();
+
+    if let Some(channel_end) = &mut ctx.channel_end {
+        channel_end.ordering = Order::Ordered;
+    }
+
+    let packet = msg.packet.clone().unwrap();
+    let des_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let des_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
+
+    contract
+        .store_next_sequence_recv(
+            deps.as_mut().storage,
+            &des_port,
+            &des_channel,
+            &Sequence::from(1),
+        )
+        .unwrap();
+
+    let res = contract
+        .is_packet_already_received(
+            deps.as_ref(),
+            &ctx.channel_end(),
+            &des_port,
+            &des_channel,
+            msg.packet.unwrap().sequence.into(),
+        )
+        .unwrap();
+
+    assert_eq!(res, false)
+}
+
+#[test]
+#[should_panic(expected = "{ error: AcknowledgementExists { sequence: Sequence(1) } }")]
+fn fail_test_validate_write_acknowledgement() {
+    let msg = get_dummy_raw_msg_recv_packet(10);
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::new();
+
+    let packet = msg.packet.unwrap();
+    let sequence = packet.sequence.into();
+    let dest_port = to_ibc_port_id(&packet.destination_port).unwrap();
+    let dest_channel = to_ibc_channel_id(&packet.destination_channel).unwrap();
+    let ack_commitment = AcknowledgementCommitment::from(to_vec("0").unwrap());
+
+    contract
+        .store_packet_acknowledgement(
+            deps.as_mut().storage,
+            &dest_port,
+            &dest_channel,
+            sequence,
+            ack_commitment,
+        )
+        .unwrap();
+
+    contract
+        .validate_write_acknowledgement(deps.as_mut().storage, &packet)
+        .unwrap();
+}
+
 #[test]
 fn execute_receive_packet() {
     let contract = CwIbcCoreContext::default();
@@ -406,4 +540,15 @@ fn test_lookup_module_packet() {
 
     assert!(res.is_ok());
     assert_eq!("contractaddress", res.unwrap())
+}
+
+#[test]
+fn test_timeout_height_to_str() {
+    let contract = CwIbcCoreContext::new();
+
+    let timeout_height = TimeoutHeight::from(mock_height(1, 1).unwrap());
+    let timeout = to_ibc_timeout_block(&timeout_height);
+
+    let res = contract.timeout_height_to_str(timeout);
+    assert_eq!(res, "1-1".to_string())
 }
