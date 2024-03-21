@@ -1,4 +1,5 @@
 use cosmwasm_std::Timestamp;
+use std::str::FromStr;
 use std::time::Duration;
 
 pub mod setup;
@@ -32,6 +33,7 @@ use common::ibc::core::ics23_commitment::commitment::CommitmentPrefix;
 use common::ibc::core::ics24_host::identifier::ConnectionId;
 use common::ibc::events::IbcEventType;
 use cw_common::ibc_types::IbcClientId;
+use cw_ibc_core::validations::ensure_consensus_height_valid;
 use cw_ibc_core::ConnectionEnd;
 use prost::Message;
 use setup::*;
@@ -904,4 +906,14 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
     contract
         .connection_open_ack(deps.as_mut(), info, env, message)
         .unwrap();
+}
+
+#[test]
+#[should_panic(expected = "InvalidConsensusHeight")]
+fn test_ensure_consensus_height_valid() {
+    ensure_consensus_height_valid(
+        &common::ibc::core::ics02_client::height::Height::from_str("10-10").unwrap(),
+        &common::ibc::core::ics02_client::height::Height::from_str("11-11").unwrap(),
+    )
+    .unwrap()
 }
