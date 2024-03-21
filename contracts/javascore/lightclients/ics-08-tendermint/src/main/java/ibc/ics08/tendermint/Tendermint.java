@@ -13,7 +13,6 @@ import score.Context;
 
 public abstract class Tendermint {
     protected boolean verify(
-            Duration trustingPeriod,
             Duration maxClockDrift,
             Fraction trustLevel,
             SignedHeader trustedHeader,
@@ -26,8 +25,7 @@ public abstract class Tendermint {
         boolean isAdjacent = untrustedHeader.getHeader().getHeight()
                 .equals(trustedHeader.getHeader().getHeight().add(BigInteger.ONE));
         if (isAdjacent) {
-            return verifyAdjacent(trustedHeader, untrustedHeader, untrustedVals, trustingPeriod, currentTime,
-                    maxClockDrift);
+            return verifyAdjacent(trustedHeader, untrustedHeader, untrustedVals);
         }
 
         return verifyNonAdjacent(
@@ -35,9 +33,6 @@ public abstract class Tendermint {
                 trustedVals,
                 untrustedHeader,
                 untrustedVals,
-                trustingPeriod,
-                currentTime,
-                maxClockDrift,
                 trustLevel);
 
     }
@@ -45,10 +40,7 @@ public abstract class Tendermint {
     protected boolean verifyAdjacent(
             SignedHeader trustedHeader,
             SignedHeader untrustedHeader,
-            ValidatorSet untrustedVals,
-            Duration trustingPeriod,
-            Timestamp currentTime,
-            Duration maxClockDrift) {
+            ValidatorSet untrustedVals) {
 
         // Check the validator hashes are the same
         Context.require(
@@ -71,9 +63,6 @@ public abstract class Tendermint {
             ValidatorSet trustedVals,
             SignedHeader untrustedHeader,
             ValidatorSet untrustedVals,
-            Duration trustingPeriod,
-            Timestamp currentTime,
-            Duration maxClockDrift,
             Fraction trustLevel) {
 
         // assert that trustedVals is NextValidators of last trusted header

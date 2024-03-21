@@ -160,8 +160,7 @@ public class LightClientTest extends LightClientTestBase {
         doNothing().when(clientSpy).checkValidity(
                 any(ibc.lightclients.tendermint.v1.ClientState.class),
                 any(ibc.lightclients.tendermint.v1.ConsensusState.class),
-                any(ibc.lightclients.tendermint.v1.Header.class),
-                any());
+                any(ibc.lightclients.tendermint.v1.Header.class));
 
         // Act
         updateClient(3, 1);
