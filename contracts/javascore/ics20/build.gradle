@@ -55,11 +55,10 @@ deployJar {
     }
     keystore = rootProject.hasProperty('keystoreName') ? "$keystoreName" : ''
     password = rootProject.hasProperty('keystorePass') ? "$keystorePass" : ''
-    // parameters {
-    //     arg('_xCall', "$xCallMultiProtocol")
-    //     arg('_ibc', "$ibcCore")
-    //     arg('_port', "mock")
-    // }
+    parameters {
+        arg('_ibcHandler', "$ibcCore")
+        arg('_serializeIrc2', "")
+    }
 }
 
 task integrationTest(type: Test) {
