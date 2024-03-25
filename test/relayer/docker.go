@@ -5,6 +5,9 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"os"
+	"path/filepath"
+
 	iccrypto "github.com/icon-project/icon-bridge/common/crypto"
 
 	"io"
@@ -50,13 +53,14 @@ type DockerRelayer struct {
 	// wallets contains a mapping of chainID to relayer wallet
 	wallets map[string]ibc.Wallet
 
-	homeDir string
+	homeDir         string
+	relayerAccounts map[string]string
 }
 
 var _ ibc.Relayer = (*DockerRelayer)(nil)
 
 // NewDockerRelayer returns a new DockerRelayer.
-func NewDockerRelayer(ctx context.Context, log *zap.Logger, testName string, cli *client.Client, networkID string, c RelayerCommander, options ...RelayerOption) (*DockerRelayer, error) {
+func NewDockerRelayer(ctx context.Context, log *zap.Logger, testName string, cli *client.Client, networkID string, c RelayerCommander, relayerAccounts map[string]string, options ...RelayerOption) (*DockerRelayer, error) {
 	r := DockerRelayer{
 		log: log,
 
@@ -70,8 +74,9 @@ func NewDockerRelayer(ctx context.Context, log *zap.Logger, testName string, cli
 
 		testName: testName,
 
-		wallets: map[string]ibc.Wallet{},
-		homeDir: defaultRlyHomeDirectory,
+		wallets:         map[string]ibc.Wallet{},
+		homeDir:         defaultRlyHomeDirectory,
+		relayerAccounts: relayerAccounts,
 	}
 
 	for _, opt := range options {
@@ -169,10 +174,8 @@ func (r *DockerRelayer) AddChainConfiguration(ctx context.Context, rep ibc.Relay
 	// For rly this file is json, but the file extension should not matter.
 	// Using .config to avoid implying any particular format.
 	chainConfigFile := chainConfig.ChainID + ".config"
-
 	_ = path.Join(r.HomeDir(), chainConfigFile)
-	configContent, err := r.c.ConfigContent(ctx, chainConfig, keyName, rpcAddr, grpcAddr)
-	fmt.Println(string(configContent))
+	configContent, err := r.c.ConfigContent(ctx, chainConfig, keyName, rpcAddr, grpcAddr, r.relayerAccounts)
 
 	if err != nil {
 		return fmt.Errorf("failed to generate config content: %w", err)
@@ -184,7 +187,6 @@ func (r *DockerRelayer) AddChainConfiguration(ctx context.Context, rep ibc.Relay
 	}
 
 	cmd := r.c.AddChainConfiguration(chainConfigFile, r.HomeDir())
-	fmt.Println(cmd)
 	// Adding the chain configuration simply reads from a file on disk,
 	// so this should also complete immediately.
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
@@ -537,7 +539,24 @@ func (r *DockerRelayer) Name() string {
 
 // Bind returns the home folder bind point for running the node.
 func (r *DockerRelayer) Bind() []string {
-	return []string{r.volumeName + ":" + r.HomeDir()}
+	if r.relayerAccounts == nil {
+		return []string{
+			r.volumeName + ":" + r.HomeDir(),
+		}
+	}
+	path, _ := os.Getwd()
+	testfolder := filepath.Dir(path)
+	iconGodWalletKeyPath := testfolder + "/relayer/data"
+	_, err := os.Stat(path)
+	if err != nil {
+		return []string{
+			r.volumeName + ":" + r.HomeDir(),
+		}
+	}
+	return []string{
+		r.volumeName + ":" + r.HomeDir(),
+		iconGodWalletKeyPath + ":" + "/home/relayer/.relayer",
+	}
 }
 
 // HomeDir returns the home directory of the relayer on the underlying Docker container's filesystem.
@@ -569,7 +588,7 @@ type RelayerCommander interface {
 	DockerUser() string
 
 	// ConfigContent generates the content of the config file that will be passed to AddChainConfiguration.
-	ConfigContent(ctx context.Context, cfg ibc.ChainConfig, keyName, rpcAddr, grpcAddr string) ([]byte, error)
+	ConfigContent(ctx context.Context, cfg ibc.ChainConfig, keyName, rpcAddr, grpcAddr string, relayerAccounts map[string]string) ([]byte, error)
 
 	// ParseAddKeyOutput processes the output of AddKey
 	// to produce the wallet that was created.

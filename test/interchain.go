@@ -3,6 +3,7 @@ package interchaintest
 import (
 	"context"
 	"fmt"
+
 	"github.com/docker/docker/client"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"github.com/strangelove-ventures/interchaintest/v7/testreporter"
@@ -80,10 +81,8 @@ func (ic *Interchain) AddChain(chain ibc.Chain, additionalGenesisWallets ...ibc.
 	if chain == nil {
 		panic(fmt.Errorf("cannot add nil chain"))
 	}
-
 	newID := chain.Config().ChainID
 	newName := chain.Config().Name
-
 	for c, id := range ic.chains {
 		if c == chain {
 			panic(fmt.Errorf("chain %v was already added", c))
@@ -95,7 +94,6 @@ func (ic *Interchain) AddChain(chain ibc.Chain, additionalGenesisWallets ...ibc.
 			panic(fmt.Errorf("a chain with name %s already exists", newName))
 		}
 	}
-
 	ic.chains[chain] = newID
 
 	if len(additionalGenesisWallets) == 0 {
@@ -324,7 +322,6 @@ func (ic *Interchain) BuildChains(ctx context.Context, rep *testreporter.Relayer
 		panic(fmt.Errorf("Interchain.Build called more than once"))
 	}
 	ic.built = true
-
 	chains := make([]ibc.Chain, 0, len(ic.chains))
 	for chain := range ic.chains {
 		chains = append(chains, chain)
@@ -358,18 +355,37 @@ func (ic *Interchain) BuildChains(ctx context.Context, rep *testreporter.Relayer
 	return nil
 }
 
+func (ic *Interchain) BuildRemoteChains(ctx context.Context, rep *testreporter.RelayerExecReporter, opts InterchainBuildOptions) error {
+	if ic.built {
+		panic(fmt.Errorf("Interchain.Build called more than once"))
+	}
+	ic.built = true
+	chains := make([]ibc.Chain, 0, len(ic.chains))
+	for chain := range ic.chains {
+		chains = append(chains, chain)
+	}
+	ic.cs = newChainSet(ic.log, chains)
+	return nil
+}
+
+func (ic *Interchain) BuildRemoteRelayer(ctx context.Context, rep *testreporter.RelayerExecReporter, opts InterchainBuildOptions) error {
+	if err := ic.configureRemoteRelayerKeys(ctx, rep); err != nil {
+		// Error already wrapped with appropriate detail.
+		return err
+	}
+	return nil
+}
+
 func (ic *Interchain) BuildRelayer(ctx context.Context, rep *testreporter.RelayerExecReporter, opts InterchainBuildOptions) error {
 	if err := ic.configureRelayerKeys(ctx, rep); err != nil {
 		// Error already wrapped with appropriate detail.
 		return err
 	}
-
 	// Some tests may want to configure the relayer from a lower level,
 	// but still have wallets configured.
 	if opts.SkipPathCreation {
 		return nil
 	}
-
 	// For every relayer link, teach the relayer about the link and create the link.
 	for rp, link := range ic.links {
 		rp := rp
@@ -384,7 +400,6 @@ func (ic *Interchain) BuildRelayer(ctx context.Context, rep *testreporter.Relaye
 			)
 		}
 	}
-
 	// Now link the paths in parallel
 	// Creates clients, connections, and channels for each link/path.
 	var eg errgroup.Group
@@ -541,6 +556,30 @@ func (ic *Interchain) configureRelayerKeys(ctx context.Context, rep *testreporte
 				); err != nil {
 					return fmt.Errorf("failed to restore key to relayer %s for chain %s: %w", ic.relayers[r], chainName, err)
 				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (ic *Interchain) configureRemoteRelayerKeys(ctx context.Context, rep *testreporter.RelayerExecReporter) error {
+	// Possible optimization: each relayer could be configured concurrently.
+	// But we are only testing with a single relayer so far, so we don't need this yet.
+
+	for r, chains := range ic.relayerChains() {
+		for _, c := range chains {
+			rpcAddr, grpcAddr := c.GetRPCAddress(), c.GetGRPCAddress()
+			if !r.UseDockerNetwork() {
+				rpcAddr, grpcAddr = c.GetHostRPCAddress(), c.GetHostGRPCAddress()
+			}
+			chainName := ic.chains[c]
+			if err := r.AddChainConfiguration(ctx,
+				rep,
+				c.Config(), chainName,
+				rpcAddr, grpcAddr,
+			); err != nil {
+				return fmt.Errorf("failed to configure relayer %s for chain %s: %w", ic.relayers[r], chainName, err)
 			}
 		}
 	}

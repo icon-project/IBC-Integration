@@ -14,7 +14,7 @@ import (
 // RelayerFactory describes how to start a Relayer.
 type RelayerFactory interface {
 	// Build returns a Relayer associated with the given arguments.
-	Build(t *testing.T, cli *client.Client, networkID string) ibc.Relayer
+	Build(t *testing.T, cli *client.Client, networkID string, populateKeys bool, relayAccounts map[string]string) ibc.Relayer
 
 	// Name returns a descriptive name of the factory,
 	// indicating details of the Relayer that will be built.
@@ -47,8 +47,11 @@ func NewICONRelayerFactory(logger *zap.Logger, options ...relayer.RelayerOption)
 }
 
 // Build returns a relayer chosen depending on f.impl.
-func (f builtinRelayerFactory) Build(t *testing.T, cli *client.Client, networkID string) ibc.Relayer {
-	return iconRelayer.NewICONRelayer(f.log, t.Name(), cli, networkID, f.options...)
+func (f builtinRelayerFactory) Build(t *testing.T, cli *client.Client, networkID string, useExistingKeys bool, relayAccounts map[string]string) ibc.Relayer {
+	if !useExistingKeys {
+		return iconRelayer.NewICONRelayer(f.log, t.Name(), cli, networkID, f.options...)
+	}
+	return iconRelayer.NewICONRemoteRelayer(f.log, t.Name(), cli, networkID, relayAccounts, f.options...)
 }
 
 func (f builtinRelayerFactory) Name() string {
