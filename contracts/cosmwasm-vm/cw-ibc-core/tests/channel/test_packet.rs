@@ -234,3 +234,20 @@ fn test_packet_send_fails_on_timedout_timestamp() {
         .send_packet(deps.as_mut(), &mock_env(), info, packet)
         .unwrap();
 }
+
+#[test]
+#[should_panic(expected = "Unauthorized")]
+fn test_send_packet_fail_for_unauthenticated_capability() {
+    let packet = get_dummy_raw_packet(110, Timestamp::default().nanoseconds());
+    let mut ctx = TestContext::for_send_packet(get_mock_env(), &packet);
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::new();
+    let info = create_mock_info("module", "test", 100);
+
+    ctx.init_send_packet(deps.as_mut().storage, &contract);
+    mock_lightclient_query(ctx.mock_queries, &mut deps);
+
+    contract
+        .send_packet(deps.as_mut(), &ctx.env, info, packet)
+        .unwrap();
+}

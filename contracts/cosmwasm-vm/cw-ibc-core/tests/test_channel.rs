@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::{str::FromStr, time::Duration};
 
 use common::traits::AnyTypes;
-use cosmwasm_std::testing::mock_env;
+use cosmwasm_std::testing::{mock_dependencies, mock_env};
 use cosmwasm_std::{
     to_binary, Addr, Event, IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout,
     IbcTimeoutBlock, Reply, SubMsgResponse, SubMsgResult,
@@ -19,17 +19,13 @@ use common::ibc::{
     events::IbcEventType,
 };
 use cw_common::ibc_types::{IbcClientId, IbcConnectionId, IbcPortId};
-use cw_common::raw_types::channel::RawPacket;
+use cw_common::raw_types::channel::*;
 use cw_common::raw_types::to_raw_packet;
 
 use cw_ibc_core::conversions::{to_ibc_channel, to_ibc_channel_id, to_ibc_height, to_ibc_port_id};
 
-use cw_ibc_core::ics04_channel::open_init::{
-    create_channel_submesssage, on_chan_open_init_submessage,
-};
-
 use cw_ibc_core::ics04_channel::{
-    create_channel_event, create_packet_event, EXECUTE_ON_CHANNEL_OPEN_INIT,
+    create_channel_event, create_packet_event, open_init, EXECUTE_ON_CHANNEL_OPEN_INIT,
     EXECUTE_ON_CHANNEL_OPEN_TRY,
 };
 use cw_ibc_core::light_client::light_client::LightClient;
@@ -517,7 +513,7 @@ fn test_validate_open_init_channel() {
 
     let res = contract.validate_channel_open_init(deps.as_mut(), info.clone(), &raw);
 
-    let expected = on_chan_open_init_submessage(
+    let expected = open_init::on_chan_open_init_submessage(
         &test_context.channel_end(),
         &test_context.port_id,
         &test_context.channel_id,
@@ -525,7 +521,7 @@ fn test_validate_open_init_channel() {
     );
     let data = cw_common::ibc_dapp_msg::ExecuteMsg::IbcChannelOpen { msg: expected };
     let data = to_binary(&data).unwrap();
-    let on_chan_open_init = create_channel_submesssage(
+    let on_chan_open_init = open_init::create_channel_submesssage(
         "moduleaddress".to_string(),
         data,
         info.funds,
@@ -666,4 +662,47 @@ fn test_get_channel_fail() {
     let mock_deps = deps();
     ctx.get_channel_end(mock_deps.as_ref().storage, &port_id, &channel_id)
         .unwrap();
+}
+
+#[test]
+#[should_panic(expected = "ChannelNotFound")]
+fn fail_test_channel_end_not_found() {
+    let ctx = TestContext::default(get_mock_env());
+    let deps = mock_dependencies();
+    let contract = CwIbcCoreContext::new();
+
+    contract
+        .channel_end(deps.as_ref().storage, &ctx.port_id, &ctx.channel_id)
+        .unwrap();
+}
+
+#[test]
+#[should_panic(expected = "InvalidEventType")]
+fn fail_create_channel_event() {
+    let ctx = TestContext::default(get_mock_env());
+
+    create_channel_event(
+        IbcEventType::AppModule,
+        &ctx.port_id.to_string(),
+        &ctx.channel_id.to_string(),
+        &ctx.channel_end(),
+    )
+    .unwrap();
+}
+
+#[test]
+#[should_panic(expected = "InvalidEventType")]
+fn fail_create_packet_event() {
+    let ctx = TestContext::default(get_mock_env());
+
+    let packet = get_dummy_raw_packet(10, 1);
+
+    create_packet_event(
+        IbcEventType::CreateClient,
+        &packet,
+        &Order::Unordered,
+        &ctx.connection_id,
+        Some(Vec::new()),
+    )
+    .unwrap();
 }
