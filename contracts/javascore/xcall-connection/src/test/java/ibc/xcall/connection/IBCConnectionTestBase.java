@@ -9,10 +9,10 @@ import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
 
-import ibc.icon.interfaces.IIBCHandler;
-import ibc.icon.interfaces.IIBCHandlerScoreInterface;
-import ibc.icon.test.MockContract;
 import icon.proto.core.channel.Channel;
+import ibc.icon.test.MockContract;
+import icon.ibc.interfaces.IIBCHandler;
+import icon.ibc.interfaces.IIBCHandlerScoreInterface;
 
 public class IBCConnectionTestBase extends TestBase {
 

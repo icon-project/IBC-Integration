@@ -1,11 +1,12 @@
 package ibc.ics02.client;
 
-import ibc.icon.interfaces.ILightClient;
 import ibc.icon.score.util.Logger;
 import ibc.icon.score.util.NullChecker;
-import ibc.icon.structs.messages.MsgCreateClient;
-import ibc.icon.structs.messages.MsgUpdateClient;
 import ibc.ics24.host.IBCHost;
+import ibc.ics24.host.IBCStore;
+import icon.ibc.interfaces.ILightClient;
+import icon.ibc.structs.messages.MsgCreateClient;
+import icon.ibc.structs.messages.MsgUpdateClient;
 import score.Address;
 import score.Context;
 
@@ -16,9 +17,10 @@ public class IBCClient extends IBCHost {
 
     static Logger logger = new Logger("ibc-core");
 
-    public void registerClient(String clientType, Address lightClient) {
+    public void registerClient(String clientType, Address lightClient, int hashType) {
         Context.require(clientRegistry.get(clientType) == null, "Already registered.");
         clientRegistry.set(clientType, lightClient);
+        IBCStore.hashType.set(clientType, hashType);
     }
 
     public String _createClient(MsgCreateClient msg) {
@@ -32,6 +34,7 @@ public class IBCClient extends IBCHost {
         clientTypes.set(clientId, msg.getClientType());
         clientImplementations.set(clientId, lightClientAddr);
         btpNetworkId.set(clientId, msg.getBtpNetworkId());
+        // hashMethod.set(clientId, msg.getHashMethod());
 
         ILightClient client = getClient(clientId);
         client.createClient(clientId, msg.getClientState(), msg.getConsensusState());

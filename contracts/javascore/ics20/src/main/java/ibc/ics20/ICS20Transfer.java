@@ -4,7 +4,6 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 
-import ibc.icon.interfaces.IIBCModule;
 import icon.proto.core.channel.Channel;
 import icon.proto.core.channel.Packet;
 import icon.proto.core.client.Height;
@@ -16,6 +15,8 @@ import score.VarDB;
 import score.annotation.External;
 import score.annotation.Optional;
 import score.annotation.Payable;
+import icon.ibc.interfaces.IIBCModule;
+
 
 import java.math.BigInteger;
 
@@ -305,33 +306,17 @@ public class ICS20Transfer implements IIBCModule {
 
         Address receiverAddr = Address.fromString(data.receiver);
 
-        if (isSource) {
-            String denomOnly = data.denom.substring(denomPrefix.length());
-
-            if (isNativeAsset(denomOnly)) {
-                try {
-                    Context.transfer(receiverAddr, data.amount);
-                } catch (Exception e) {
-                    ack = ICS20Lib.FAILED_ACKNOWLEDGEMENT_JSON;
-                }
+        try {
+            if (isSource) {
+                String denomOnly = data.denom.substring(denomPrefix.length());
+                handleSourceToken(denomOnly, receiverAddr, data.amount, data.memo);
             } else {
-                try {
-                    Address tokenContractAddress = getTokenContractAddress(denomOnly);
-                    Context.call(tokenContractAddress, "transfer", receiverAddr, data.amount, data.memo.getBytes());
-                } catch (Exception e) {
-                    ack = ICS20Lib.FAILED_ACKNOWLEDGEMENT_JSON;
-                }
+                denomPrefix = getDenomPrefix(packetDb.getDestinationPort(), packetDb.getDestinationChannel());
+                String prefixedDenom = denomPrefix + data.denom;
+                handleDestinationToken(prefixedDenom, receiverAddr, data.amount);
             }
-        } else {
-            denomPrefix = getDenomPrefix(packetDb.getDestinationPort(), packetDb.getDestinationChannel());
-            String prefixedDenom = denomPrefix + data.denom;
-
-            try {
-                Address tokenContractAddress = getTokenContractAddress(prefixedDenom);
-                Context.call(tokenContractAddress, "mint", receiverAddr, data.amount);
-            } catch (Exception e) {
-                ack = ICS20Lib.FAILED_ACKNOWLEDGEMENT_JSON;
-            }
+        } catch (Exception e) {
+            ack = ICS20Lib.FAILED_ACKNOWLEDGEMENT_JSON;
         }
 
         return ack;
@@ -364,6 +349,40 @@ public class ICS20Transfer implements IIBCModule {
     public void onTimeoutPacket(byte[] packet, Address relayer) {
         Packet packetDb = Packet.decode(packet);
         refundTokens(packetDb);
+    }
+
+    /**
+     * Refunds tokens based on the provided packet.
+     *
+     * @param packet the packet containing the token data
+     */
+    private void refundTokens(Packet packet) {
+        ICS20Lib.FungibleTokenPacketData data = ICS20Lib.unmarshalFungibleTokenPacketData(packet.getData());
+
+        String denomPrefix = getDenomPrefix(packet.getSourcePort(), packet.getSourceChannel());
+        boolean isSource = !data.denom.startsWith(denomPrefix);
+
+        Address sender = Address.fromString(data.sender);
+
+        if (isSource) {
+            handleSourceToken(data.denom, sender, data.amount, data.memo);
+        } else {
+            handleDestinationToken(data.denom, sender, data.amount);
+        }
+    }
+
+    private void handleSourceToken(String denom, Address address, BigInteger amount, String memo) {
+        if (isNativeAsset(denom)) {
+            Context.transfer(address, amount);
+        } else {
+            Address tokenContractAddress = getTokenContractAddress(denom);
+            Context.call(tokenContractAddress, "transfer", address, amount, memo.getBytes());
+        }
+    }
+
+    private void handleDestinationToken(String denom, Address address, BigInteger amount) {
+        Address tokenContractAddress = getTokenContractAddress(denom);
+        Context.call(tokenContractAddress, "mint", address, amount);
     }
 
     /**
@@ -459,33 +478,6 @@ public class ICS20Transfer implements IIBCModule {
     @External
     public void onChanCloseConfirm(String portId, String channelId) {
         onlyIBC();
-    }
-
-    /**
-     * Refunds tokens based on the provided packet.
-     *
-     * @param packet the packet containing the token data
-     */
-    private void refundTokens(Packet packet) {
-        ICS20Lib.FungibleTokenPacketData data = ICS20Lib.unmarshalFungibleTokenPacketData(packet.getData());
-
-        String denomPrefix = getDenomPrefix(packet.getSourcePort(), packet.getSourceChannel());
-        boolean isSource = !data.denom.startsWith(denomPrefix);
-
-        Address sender = Address.fromString(data.sender);
-
-        if (isSource) {
-            if (isNativeAsset(data.denom)) {
-                Context.transfer(sender, data.amount);
-                return;
-            }
-
-            Address tokenContractAddress = getTokenContractAddress(data.denom);
-            Context.call(tokenContractAddress, "transfer", sender, data.amount, data.memo.getBytes());
-        } else {
-            Address tokenContractAddress = getTokenContractAddress(data.denom);
-            Context.call(tokenContractAddress, "mint", sender, data.amount);
-        }
     }
 
     private static String getDenomPrefix(String port, String channel) {

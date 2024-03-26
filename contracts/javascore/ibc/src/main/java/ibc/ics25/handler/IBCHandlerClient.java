@@ -1,9 +1,9 @@
 package ibc.ics25.handler;
 
-import ibc.icon.interfaces.IIBCClient;
-import ibc.icon.structs.messages.MsgCreateClient;
-import ibc.icon.structs.messages.MsgUpdateClient;
 import ibc.ics04.channel.IBCPacket;
+import icon.ibc.interfaces.IIBCClient;
+import icon.ibc.structs.messages.MsgCreateClient;
+import icon.ibc.structs.messages.MsgUpdateClient;
 import score.annotation.EventLog;
 import score.annotation.External;
 

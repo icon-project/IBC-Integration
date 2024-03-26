@@ -3,7 +3,7 @@ package ibc.ics23.commitment;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ibc.icon.score.util.ByteUtil;
-import icon.proto.core.commitment.*;
+import cosmos.ics23.v1.*;
 
 import java.io.IOException;
 import java.io.InputStream;

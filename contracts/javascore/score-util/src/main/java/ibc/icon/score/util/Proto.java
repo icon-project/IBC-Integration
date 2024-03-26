@@ -170,7 +170,7 @@ public class Proto {
     }
 
     public static byte[] encode(int order, Boolean item) {
-        if (item == null) {
+        if (item == null || item == false) {
             return new byte[0];
         }
 
@@ -187,7 +187,7 @@ public class Proto {
         encodedItems[0] = new byte[]{(byte) (order << 3 | 2)};
         int size = 0;
         for (int i = 0; i < length; i++) {
-            byte[] val = encodeVarInt(items.get(i));
+            byte[] val = encodeVarIntRaw(items.get(i));
             encodedItems[i + 2] = val;
             size = size + val.length;
         }
@@ -195,6 +195,28 @@ public class Proto {
 
         return ByteUtil.join(encodedItems);
     }
+
+    public static byte[] encodeVarIntRaw(BigInteger item) {
+
+        int size = estimateVarIntSize(item);
+
+        byte[] res = new byte[size];
+        int index = 0;
+        long value = item.longValue();
+
+        while (true) {
+            if ((value & ~0x7FL) == 0) {
+                res[index] = (byte) value;
+                break;
+            } else {
+                res[index] = (byte) (((int) value & 0x7F) | 0x80);
+                value >>>= 7;
+                index++;
+            }
+        }
+        return res;
+    }
+
 
     public static DecodeResponse<List<BigInteger>> decodeVarIntArray(byte[] data, int index) {
         DecodeResponse<List<BigInteger>> response = new DecodeResponse<>();

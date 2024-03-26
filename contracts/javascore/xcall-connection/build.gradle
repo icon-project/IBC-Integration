@@ -3,6 +3,7 @@ version = '0.1.0'
 dependencies {
     implementation group: 'xyz.venture23', name: 'xcall-lib', version: '0.1.1'
     implementation project(':lib')
+    implementation project(':proto-lib')
     implementation project(':score-util')
     testImplementation project(':test-lib')
 }
@@ -24,6 +25,7 @@ jacocoTestReport {
 
 optimizedJar {
     dependsOn(project(':lib').jar)
+    dependsOn(project(':proto-lib').jar)
     dependsOn(project(':score-util').jar)
     mainClassName = 'ibc.xcall.connection.IBCConnection'
     from {

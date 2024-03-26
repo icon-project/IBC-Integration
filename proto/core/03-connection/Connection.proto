@@ -1,9 +1,8 @@
 syntax = "proto3";
 package icon.proto.core.connection;
-
-import "core/23-commitment/commitment.proto";
-
 option go_package = "libraries/go/common/icon;icon";
+
+import "ibc/core/commitment/v1/commitment.proto";
 
 // ICS03 - Connection Data Structures as defined in
 // https://github.com/cosmos/ibc/blob/master/spec/core/ics-003-connection-semantics#data-structures
@@ -55,7 +54,7 @@ message Counterparty {
     // given connection.
     string connection_id = 2;
     // commitment merkle prefix of the counterparty chain.
-    icon.proto.core.commitment.MerklePrefix prefix = 3;
+    ibc.core.commitment.v1.MerklePrefix prefix = 3;
 }
 
 

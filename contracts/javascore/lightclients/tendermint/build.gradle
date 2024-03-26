@@ -25,7 +25,7 @@ dependencies {
 
 test {
     useJUnitPlatform()
-    finalizedBy jacocoTestReport
+    // finalizedBy jacocoTestReport
 }
 
 jacocoTestReport {
@@ -48,6 +48,7 @@ jacocoTestReport {
     dependsOn ':ics20:compileTestJava'
     dependsOn ':ics20:test'
     dependsOn ':ics20:jacocoTestReport'
+    dependsOn ':ics20:compileTestJava'
 
     doNotTrackState("Disable state tracking")
     reports {
