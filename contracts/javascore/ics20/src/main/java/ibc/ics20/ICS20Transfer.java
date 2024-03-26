@@ -288,12 +288,8 @@ public class ICS20Transfer implements IIBCModule {
 
         try {
             data = ICS20Lib.unmarshalFungibleTokenPacketData(packetDb.getData());
-
-            Context.require(!data.denom.equals(""), TAG + " : ICS20: invalid denomination");
-            Context.require(!data.receiver.equals(""), TAG + " : ICS20: invalid receiver address");
-            Context.require(!data.sender.equals(""), TAG + " : ICS20: invalid sender address");
-            Context.require(data.amount.compareTo(BigInteger.ZERO) > 0, TAG + " : ICS20: invalid amount");
-
+            Context.require(!data.denom.equals("") && !data.receiver.equals("") && !data.sender.equals("")
+                    && data.amount.compareTo(BigInteger.ZERO) > 0);
         } catch (Exception e) {
             return ICS20Lib.FAILED_ACKNOWLEDGEMENT_JSON;
         }
