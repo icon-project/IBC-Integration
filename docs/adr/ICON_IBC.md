@@ -34,10 +34,24 @@ func updateConnectionCommitment(connection):
     sendBTPMessage(join(clientKey, clientState));
     sendBTPMessage(join(consensusKey, latestConsensusState));
     sendBTPMessage(join(connectionKey, connection))
-}
+
 ```
 
 During connection establishment all self client validation is skipped, and will have to be done manually when opening a new channel.
+### Manual connection verification
+(These steps can be omitted if the connection was established by a relay that you trust)
+To verify that a counterparty has stored the correct clientState or consensus state, find the latest BTP block that should be on the client and compare that to what is on the light client.
+Easiest way is to manually verify it on the counterparty client by fetching the client or consensus state directly from the client. But can also be proved through verifyMembership on the lightClient on ICON.
+
+A btp block can be fetched [Block](https://github.com/icon-project/goloop/blob/master/doc/btp2_extension.md) GET request.
+Which can then be compared with the states in the light client:
+```
+GetConsensusState { client_id: String, height: u64 },
+#[returns(Vec<u8>)]
+GetLatestConsensusState { client_id: String },
+#[returns(Vec<u8>)]
+GetClientState { client_id: String },
+```
 
 ## ICS-04
 For BTP blocks and the ICON lightclient we have two restrictions:
