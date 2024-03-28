@@ -125,5 +125,31 @@
          }
          return result.toString().getBytes();
      }
- 
+
+     public static String[] split(String input, char delimiter) {
+         if (input == null || input.isEmpty()) {
+             return new String[0];
+         }
+
+         List<String> substrings = new ArrayList<>();
+         int startIndex = 0;
+         int delimiterIndex;
+
+         while ((delimiterIndex = input.indexOf(delimiter, startIndex)) != -1) {
+             String substring = input.substring(startIndex, delimiterIndex);
+             substrings.add(substring);
+
+             startIndex = delimiterIndex + 1;
+         }
+
+         String lastSubstring = input.substring(startIndex);
+         substrings.add(lastSubstring);
+
+         int size = substrings.size();
+         String[] result = new String[size];
+         for (int i = 0; i < size; i++) {
+             result[i] = substrings.get(i);
+         }
+         return result;
+     }
  }
