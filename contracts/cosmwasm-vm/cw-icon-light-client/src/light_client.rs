@@ -85,11 +85,11 @@ impl<'a> IconClient<'a> {
             .get_processed_block_at_height(client_id, height)?;
         let current_time = self.context.get_current_block_time();
         let current_height = self.context.get_current_block_height();
-        if !current_time >= (processed_time + delay_time) {
+        if current_time < (processed_time + delay_time) {
             return Err(ContractError::NotEnoughtTimeElapsed);
         }
 
-        if !current_height >= (processed_height + delay_block) {
+        if current_height < (processed_height + delay_block) {
             return Err(ContractError::NotEnoughtBlocksElapsed);
         }
 
@@ -221,5 +221,67 @@ impl ILightClient for IconClient<'_> {
             consensus_state_bytes: consensus_state.encode_to_vec(),
             height: btp_header.main_height,
         })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use cosmwasm_std::testing::{mock_dependencies, mock_env};
+    use test_utils::get_test_headers;
+
+    #[test]
+    fn test_validate_delay_args() {
+        let mut deps = mock_dependencies();
+        let ctx = CwContext::new(deps.as_mut(), mock_env());
+        let mut icon_client = IconClient::new(ctx);
+
+        let height = 12_345;
+        let client_id = "icon_client";
+
+        icon_client
+            .context
+            .insert_blocknumber_at_height(client_id, height)
+            .unwrap();
+
+        icon_client
+            .context
+            .insert_timestamp_at_height(client_id, height)
+            .unwrap();
+
+        let res = icon_client
+            .validate_delay_args(client_id, height, 0, 0)
+            .unwrap();
+        assert_eq!(res, ());
+
+        let err = icon_client
+            .validate_delay_args(client_id, height, 1, 0)
+            .unwrap_err();
+        assert_eq!(err, ContractError::NotEnoughtTimeElapsed);
+
+        let err = icon_client
+            .validate_delay_args(client_id, height, 0, 1)
+            .unwrap_err();
+        assert_eq!(err, ContractError::NotEnoughtBlocksElapsed)
+    }
+
+    #[test]
+    #[should_panic(expected = "InSuffcientQuorum")]
+    fn check_block_proof_with_empty_validators() {
+        let header = &get_test_headers()[0];
+        let mut deps = mock_dependencies();
+        let ctx = CwContext::new(deps.as_mut(), mock_env());
+        let mut icon_client = IconClient::new(ctx);
+
+        let client_id = "icon_client";
+        let client_state = ClientState::default();
+        icon_client
+            .context
+            .insert_client_state(client_id, client_state)
+            .unwrap();
+
+        icon_client
+            .check_block_proof(client_id, header, &Vec::new(), &Vec::new())
+            .unwrap();
     }
 }
