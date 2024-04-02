@@ -58,7 +58,6 @@ public class TendermintHelper {
         return validatorSet.getTotalVotingPower();
     }
 
-
     public static BigInteger getRevisionNumber(String chainId) {
         int id = chainId.lastIndexOf("-");
         if (id >= 0) {
