@@ -9,69 +9,38 @@ use setup::*;
 #[test]
 #[should_panic(expected = "OnlyAdmin")]
 fn update_admin_unauthorzied() {
-    let mut mock_deps = deps();
-
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
-
+    let ctx = TestContext::default();
+    let mut deps = deps();
     let contract = CwIbcConnection::default();
 
-    contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender)
-        .unwrap();
+    ctx.init_context(deps.as_mut().storage, &contract);
 
-    contract
-        .update_admin(
-            mock_deps.as_mut().storage,
-            Addr::unchecked(Addr::unchecked(admin_one().to_string())),
-        )
-        .unwrap();
+    let result = contract.query_admin(deps.as_ref().storage).unwrap();
+    assert_eq!(result, ctx.info.sender);
 
-    let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
-
-    assert_eq!(result, Addr::unchecked(admin_one().to_string()));
-
-    let mock_info = create_mock_info(&bob().to_string(), "umlg", 2000);
+    let info = create_mock_info(&bob().to_string(), "umlg", 2000);
 
     let execute_msg = ExecuteMsg::SetAdmin {
         address: admin_one().to_string(),
     };
 
-    execute(mock_deps.as_mut(), mock_env(), mock_info, execute_msg).unwrap();
+    execute(deps.as_mut(), mock_env(), info, execute_msg).unwrap();
 }
 
 #[test]
 fn update_admin() {
-    let mut mock_deps = deps();
-
-    let mock_info = create_mock_info(&admin_one().to_string(), "umlg", 2000);
-
+    let ctx = TestContext::default();
+    let mut deps = deps();
     let contract = CwIbcConnection::default();
 
-    contract
-        .add_owner(mock_deps.as_mut().storage, mock_info.sender)
-        .unwrap();
-
-    contract
-        .update_admin(
-            mock_deps.as_mut().storage,
-            Addr::unchecked(admin_one().to_string()),
-        )
-        .unwrap();
-
-    let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
-
-    assert_eq!(result, Addr::unchecked(admin_one().to_string()));
-
-    let mock_info = create_mock_info(&admin_one().to_string(), "umlg", 2000);
+    ctx.init_context(deps.as_mut().storage, &contract);
 
     let execute_msg = ExecuteMsg::SetAdmin {
         address: admin_two().to_string(),
     };
+    execute(deps.as_mut(), mock_env(), ctx.info, execute_msg).unwrap();
 
-    execute(mock_deps.as_mut(), mock_env(), mock_info, execute_msg).unwrap();
-
-    let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
-
+    let result = contract.query_admin(deps.as_ref().storage).unwrap();
     assert_eq!(result, admin_two().to_string());
 }
 
@@ -91,22 +60,17 @@ fn query_admin() {
 #[test]
 #[should_panic(expected = "InvalidAddress { address: \"*************\"")]
 fn add_invalid_char_as_admin() {
-    let mut mock_deps = deps();
-
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
-    let mock_env = mock_env();
-
+    let ctx = TestContext::default();
+    let mut deps = deps();
     let mut contract = CwIbcConnection::default();
 
-    contract
-        .update_admin(mock_deps.as_mut().storage, mock_info.clone().sender)
-        .unwrap();
+    ctx.init_context(deps.as_mut().storage, &contract);
 
     contract
         .execute(
-            mock_deps.as_mut(),
-            mock_env,
-            mock_info,
+            deps.as_mut(),
+            ctx.env,
+            ctx.info,
             cw_common::xcall_connection_msg::ExecuteMsg::SetAdmin {
                 address: "*************".into(),
             },
@@ -119,22 +83,17 @@ fn add_invalid_char_as_admin() {
     expected = "Std(GenericErr { msg: \"Invalid input: human address too short for this mock implementation (must be >= 3).\" })"
 )]
 fn validate_address_add_admin_size_lessthan_3() {
-    let mut mock_deps = deps();
-
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
-    let mock_env = mock_env();
-
+    let ctx = TestContext::default();
+    let mut deps = deps();
     let mut contract = CwIbcConnection::default();
 
-    contract
-        .update_admin(mock_deps.as_mut().storage, mock_info.clone().sender)
-        .unwrap();
+    ctx.init_context(deps.as_mut().storage, &contract);
 
     contract
         .execute(
-            mock_deps.as_mut(),
-            mock_env,
-            mock_info,
+            deps.as_mut(),
+            ctx.env,
+            ctx.info,
             cw_common::xcall_connection_msg::ExecuteMsg::SetAdmin {
                 address: "sm".into(),
             },
@@ -147,22 +106,17 @@ fn validate_address_add_admin_size_lessthan_3() {
     expected = "Std(GenericErr { msg: \"Invalid input: human address too long for this mock implementation (must be <= 90).\" })"
 )]
 fn validate_address_add_admin_size_more_than_45() {
-    let mut mock_deps = deps();
-
-    let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
-    let mock_env = mock_env();
-
+    let ctx = TestContext::default();
+    let mut deps = deps();
     let mut contract = CwIbcConnection::default();
 
-    contract
-        .update_admin(mock_deps.as_mut().storage, mock_info.clone().sender)
-        .unwrap();
+    ctx.init_context(deps.as_mut().storage, &contract);
 
     contract
         .execute(
-            mock_deps.as_mut(),
-            mock_env,
-            mock_info,
+            deps.as_mut(),
+            ctx.env,
+            ctx.info,
             cw_common::xcall_connection_msg::ExecuteMsg::SetAdmin {
                 address: "eddiuo6lbp05golmz3rb5n7hbi4c5hhyh0rb1w6cslyjt5mhwd0chn3x254lyorpx4dzvrvsc9h2em44be2rj193dwe".into(),
             },
@@ -173,30 +127,17 @@ fn validate_address_add_admin_size_more_than_45() {
 #[test]
 #[should_panic(expected = "InvalidAddress { address: \"new_addmin!@234\" }")]
 fn update_admin_fails() {
-    let mut mock_deps = deps();
-
-    let mock_info = create_mock_info(&admin_one().to_string(), "umlg", 2000);
-
+    let ctx = TestContext::default();
+    let mut deps = deps();
     let contract = CwIbcConnection::default();
 
-    contract
-        .update_admin(
-            mock_deps.as_mut().storage,
-            Addr::unchecked(admin_one().to_string()),
-        )
-        .unwrap();
-
-    let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
-
-    assert_eq!(result, Addr::unchecked(admin_one().to_string()));
+    ctx.init_context(deps.as_mut().storage, &contract);
 
     let execute_msg = ExecuteMsg::SetAdmin {
         address: "new_addmin!@234".into(),
     };
+    execute(deps.as_mut(), mock_env(), ctx.info, execute_msg).unwrap();
 
-    execute(mock_deps.as_mut(), mock_env(), mock_info, execute_msg).unwrap();
-
-    let result = contract.query_admin(mock_deps.as_ref().storage).unwrap();
-
+    let result = contract.query_admin(deps.as_ref().storage).unwrap();
     assert_eq!(result, admin_two().to_string());
 }
