@@ -16,6 +16,7 @@ import score.annotation.External;
 import score.annotation.Optional;
 import score.annotation.Payable;
 import icon.ibc.interfaces.IIBCModule;
+import java.util.Arrays;
 
 
 import java.math.BigInteger;
@@ -332,7 +333,7 @@ public class ICS20Transfer implements IIBCModule {
     @External
     public void onAcknowledgementPacket(byte[] packet, byte[] acknowledgement, Address relayer) {
         onlyIBC();
-        if (!acknowledgement.equals(ICS20Lib.SUCCESSFUL_ACKNOWLEDGEMENT_JSON)) {
+        if (!Arrays.equals(acknowledgement,ICS20Lib.SUCCESSFUL_ACKNOWLEDGEMENT_JSON)) {
             Packet packetDb = Packet.decode(packet);
             refundTokens(packetDb);
         }
