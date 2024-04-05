@@ -130,10 +130,10 @@ func (s *E2ETestSuite) SetupICS20ChainsAndRelayer(ctx context.Context, channelOp
 			err = relayer.CreateClients(ctx, eRep, pathName, ibc.CreateClientOptions{
 				TrustingPeriod: trustingPeriod,
 			})
-			time.Sleep(10 * time.Second)
+			time.Sleep(30 * time.Second)
 			s.Require().NoErrorf(err, "Error while creating client relayer : %s, %v", pathName, err)
 			s.Require().NoError(relayer.CreateConnections(ctx, eRep, pathName))
-			time.Sleep(30 * time.Second)
+			time.Sleep(60 * time.Second)
 			s.Require().NoError(relayer.CreateChannel(ctx, eRep, pathName, ibc.CreateChannelOptions{
 				SourcePortName: "transfer",
 				DestPortName:   "transfer",

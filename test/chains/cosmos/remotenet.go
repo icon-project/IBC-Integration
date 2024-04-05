@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/docker/docker/client"
 
@@ -210,13 +209,7 @@ func (c *CosmosRemotenet) RestoreConfig(backup []byte) error {
 }
 
 func (c *CosmosRemotenet) SetupIBCICS20(ctx context.Context, keyName string) (context.Context, error) {
-	time.Sleep(1 * time.Second)
 	fmt.Println("Nothing to do in cosmos for ibc ics20 remote setup")
-	// ibcWasmCodeId, err := c.CosmosRemoteChain.StoreContract(ctx, keyName, c.filepath["ibc_ics20_client"])
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// fmt.Println(ibcWasmCodeId)
 	return ctx, nil
 }
 

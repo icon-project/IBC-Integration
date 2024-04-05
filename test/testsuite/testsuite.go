@@ -128,21 +128,28 @@ func (s *E2ETestSuite) SetupICS20Relayer(ctx context.Context) (ibc.Relayer, erro
 	createdChains := s.GetChains()
 	r := relayer.New(s.T(), s.cfg.RelayerConfig, s.logger, s.DockerClient, s.network)
 	ic := interchaintest.NewInterchain()
-
-	for index := range createdChains {
-		ic.AddChain(createdChains[index].(ibc.Chain))
+	var iconChain, centauriChain, archwayChain chains.Chain
+	for _, chain := range createdChains {
+		if chain.(ibc.Chain).Config().Name == "icon" {
+			iconChain = chain
+		} else if chain.(ibc.Chain).Config().Name == "centauri" {
+			centauriChain = chain
+		} else if chain.(ibc.Chain).Config().Name == "archway" {
+			archwayChain = chain
+		}
+		ic.AddChain(chain.(ibc.Chain))
 	}
 	ic.AddRelayer(r, "r").
 		AddLink(
 			interchaintest.InterchainLink{
-				Chains:  []chains.Chain{createdChains[0], createdChains[0]},
+				Chains:  []chains.Chain{iconChain, centauriChain},
 				Relayer: r,
 				Path:    CentauriIconRelayPath,
 			},
 		).
 		AddLink(
 			interchaintest.InterchainLink{
-				Chains:  []chains.Chain{createdChains[1], createdChains[2]},
+				Chains:  []chains.Chain{centauriChain, archwayChain},
 				Relayer: r,
 				Path:    CentauriArchwayRelayPath,
 			},

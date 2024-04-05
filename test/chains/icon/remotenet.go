@@ -712,7 +712,7 @@ func (c *IconRemotenet) SetupIBCICS20(ctx context.Context, keyName string) (cont
 	var contracts chains.ContractKey
 
 	if c.scorePaths["ics20_app"] == "" {
-		time.Sleep(4 * time.Second)
+		time.Sleep(1 * time.Second)
 		ibcAddress, err := c.DeployContractRemote(ctx, c.scorePaths["ibc_ics"], "")
 		if err != nil {
 			return nil, err
