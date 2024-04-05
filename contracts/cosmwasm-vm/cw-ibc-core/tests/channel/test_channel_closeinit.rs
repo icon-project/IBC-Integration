@@ -228,3 +228,24 @@ fn test_on_chan_close_init_submessage() {
         channel_close_init_validate.channel().order
     );
 }
+
+#[test]
+#[should_panic(expected = "ClientFrozen")]
+fn fail_test_validate_chanel_close_init_for_frozen_client() {
+    let msg = get_dummy_raw_msg_chan_close_init();
+    let mut ctx = TestContext::for_channel_close_init(get_mock_env(), &msg);
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let info = create_mock_info("channel-creater", "umlg", 2000);
+
+    if let Some(client_state) = &mut ctx.client_state {
+        client_state.frozen_height = 1
+    }
+
+    ctx.init_channel_close_init(deps.as_mut().storage, &contract);
+    mock_lightclient_query(ctx.mock_queries, &mut deps);
+
+    contract
+        .validate_channel_close_init(deps.as_mut(), info, &msg)
+        .unwrap();
+}
