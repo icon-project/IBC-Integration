@@ -21,7 +21,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewCosmosRemotenet(testName string, log *zap.Logger, chainConfig ibc.ChainConfig, cli *client.Client, network string, keyPassword string, testconfig *testconfig.Chain) (chains.Chain, error) {
+func NewCosmosRemotenet(testName string, log *zap.Logger, chainConfig ibc.ChainConfig, cli *client.Client, network string, keyPassword string, testconfig testconfig.Chain) (chains.Chain, error) {
 
 	chain := NewCosmosRemoteChain(testName, chainConfig, cli, network, log, testconfig)
 	return &CosmosRemotenet{
@@ -220,7 +220,8 @@ func (c *CosmosRemotenet) SetupIBCICS20(ctx context.Context, keyName string) (co
 	return ctx, nil
 }
 
-func (c *CosmosRemotenet) SendIBCTokenTransfer(ctx context.Context, sourceChannel, destinationChannel, port, receiver, chainID, ibcamount string) (string, error) {
+func (c *CosmosRemotenet) SendIBCTokenTransfer(ctx context.Context, sourceChannel, destinationChannel, port, sender, receiver, chainID, ibcamount string, hopRequired bool) (string, error) {
+	memo := `{"forward":{"receiver":"` + receiver + `","port":"transfer","channel":"` + destinationChannel + `","timeout":"10m","retries":2}}`
 	commands := []string{"tx", "ibc-transfer", port, port, sourceChannel, receiver, ibcamount}
 	commands = append(commands,
 		"--node", c.GetHostRPCAddress(),
@@ -235,14 +236,16 @@ func (c *CosmosRemotenet) SendIBCTokenTransfer(ctx context.Context, sourceChanne
 		"--chain-id", chainID,
 		"-y",
 	)
+	if hopRequired {
+		commands = append(commands,
+			"--memo", memo,
+		)
+	}
 	stdout, _, err := c.Exec(ctx, commands, nil)
 	if err != nil {
 		return "", err
 	}
 	var output TxResul
-	if err != nil {
-		return "", err
-	}
 	err = json.Unmarshal(stdout, &output)
 	if err != nil {
 		return "", err
@@ -253,4 +256,8 @@ func (c *CosmosRemotenet) SendIBCTokenTransfer(ctx context.Context, sourceChanne
 // GetBalance fetches the current balance for a specific account address and denom.
 func (c *CosmosRemotenet) GetBalance(ctx context.Context, address string, denom string) (int64, error) {
 	panic("not implemented")
+}
+
+func (c *CosmosRemotenet) RegisterToken(ctx context.Context, name, denom, decimal string) error {
+	return nil
 }

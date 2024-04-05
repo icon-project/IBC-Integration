@@ -70,7 +70,8 @@ func newPath(chainA, chainB chains.Chain) path {
 // SetupRelayer sets up the relayer, creates interchain networks, builds chains, and starts the relayer.
 // It returns a Relayer interface and an error if any.
 func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
-	chainA, chainB := s.GetChains()
+	createdChains := s.GetChains()
+	chainA, chainB := createdChains[0], createdChains[1]
 	r := relayer.New(s.T(), s.cfg.RelayerConfig, s.logger, s.DockerClient, s.network)
 	//pathName := s.GeneratePathName()
 	ic := interchaintest.NewInterchain().
@@ -78,8 +79,7 @@ func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
 		AddChain(chainB.(ibc.Chain)).
 		AddRelayer(r, "r").
 		AddLink(interchaintest.InterchainLink{
-			Chain1:  chainA.(ibc.Chain),
-			Chain2:  chainB.(ibc.Chain),
+			Chains:  createdChains,
 			Relayer: r,
 			//Path:    pathName,
 		})
@@ -125,17 +125,28 @@ func (s *E2ETestSuite) SetupRelayer(ctx context.Context) (ibc.Relayer, error) {
 }
 
 func (s *E2ETestSuite) SetupICS20Relayer(ctx context.Context) (ibc.Relayer, error) {
-	chainA, chainB := s.GetChains()
+	createdChains := s.GetChains()
 	r := relayer.New(s.T(), s.cfg.RelayerConfig, s.logger, s.DockerClient, s.network)
-	ic := interchaintest.NewInterchain().
-		AddChain(chainA.(ibc.Chain)).
-		AddChain(chainB.(ibc.Chain)).
-		AddRelayer(r, "r").
-		AddLink(interchaintest.InterchainLink{
-			Chain1:  chainA.(ibc.Chain),
-			Chain2:  chainB.(ibc.Chain),
-			Relayer: r,
-		})
+	ic := interchaintest.NewInterchain()
+
+	for index := range createdChains {
+		ic.AddChain(createdChains[index].(ibc.Chain))
+	}
+	ic.AddRelayer(r, "r").
+		AddLink(
+			interchaintest.InterchainLink{
+				Chains:  []chains.Chain{createdChains[0], createdChains[0]},
+				Relayer: r,
+				Path:    CentauriIconRelayPath,
+			},
+		).
+		AddLink(
+			interchaintest.InterchainLink{
+				Chains:  []chains.Chain{createdChains[1], createdChains[2]},
+				Relayer: r,
+				Path:    CentauriArchwayRelayPath,
+			},
+		)
 	eRep := s.GetRelayerExecReporter()
 	buildOptions := interchaintest.InterchainBuildOptions{
 		TestName:          s.T().Name(),
@@ -148,23 +159,26 @@ func (s *E2ETestSuite) SetupICS20Relayer(ctx context.Context) (ibc.Relayer, erro
 		return nil, err
 	}
 
-	if _, err := chainA.SetupIBCICS20(ctx, interchaintest.IBCOwnerAccount); err != nil {
-		return nil, err
+	for _, chain := range createdChains {
+		if _, err := chain.SetupIBCICS20(ctx, interchaintest.IBCOwnerAccount); err != nil {
+			return nil, err
+		}
 	}
-	if _, err := chainB.SetupIBCICS20(ctx, interchaintest.IBCOwnerAccount); err != nil {
-		return nil, err
-	}
-	if err := ic.BuildRemoteRelayer(ctx, eRep, buildOptions); err != nil {
-		return nil, err
+
+	if !s.cfg.RelayerConfig.UseExistingConfig {
+		if err := ic.BuildRemoteRelayer(ctx, eRep, buildOptions); err != nil {
+			return nil, err
+		}
 	}
 	s.startRelayerFn = func(relayer ibc.Relayer, pathName string) error {
 		if err := relayer.StartRelayer(ctx, eRep, pathName); err != nil {
 			return fmt.Errorf("failed to start relayer: %s", err)
 		}
 		// give some time to start the relayer
-		time.Sleep(5 * time.Second)
+		time.Sleep(2 * time.Second)
 		return nil
 	}
+
 	s.relayer = r
 	return r, nil
 }
@@ -194,7 +208,8 @@ func (s *E2ETestSuite) buildWallets(ctx context.Context, chainA chains.Chain, ch
 func (s *E2ETestSuite) DeployXCallMockApp(ctx context.Context, port string) error {
 	testcase := ctx.Value("testcase").(string)
 	connectionKey := fmt.Sprintf("connection-%s", testcase)
-	chainA, chainB := s.GetChains()
+	createdChains := s.GetChains()
+	chainA, chainB := createdChains[0], createdChains[1]
 	if err := chainA.DeployXCallMockApp(ctx, chains.XCallConnection{
 		KeyName:                interchaintest.XCallOwnerAccount,
 		CounterpartyNid:        chainB.(ibc.Chain).Config().ChainID,
@@ -240,7 +255,8 @@ func (s *E2ETestSuite) GetPathName(idx int64) string {
 
 // generatePath generates the path name using the test suites name
 func (s *E2ETestSuite) generatePath(ctx context.Context, relayer ibc.Relayer) string {
-	chainA, chainB := s.GetChains()
+	createdChains := s.GetChains()
+	chainA, chainB := createdChains[0], createdChains[1]
 	chainAID := chainA.(ibc.Chain).Config().ChainID
 	chainBID := chainB.(ibc.Chain).Config().ChainID
 
@@ -260,31 +276,51 @@ func (s *E2ETestSuite) UpdateClients(ctx context.Context, relayer ibc.Relayer, p
 
 // GetChains returns two chains that can be used in a test. The pair returned
 // is unique to the current test being run. Note: this function does not create containers.
-func (s *E2ETestSuite) GetChains(chainOpts ...testconfig.ChainOptionConfiguration) (chains.Chain, chains.Chain) {
+func (s *E2ETestSuite) GetChains(chainOpts ...testconfig.ChainOptionConfiguration) []chains.Chain {
 	if s.paths == nil {
 		s.paths = map[string]path{}
 	}
 
-	path, ok := s.paths[s.T().Name()]
-	if ok {
-		return path.chainA, path.chainB
+	preCreatedChains := []chains.Chain{}
+	for i := 0; i <= 10; i++ {
+		pathKey := fmt.Sprintf("%s-%d", s.T().Name(), i)
+		path, ok := s.paths[pathKey]
+		if ok {
+			if len(preCreatedChains) == 0 {
+				preCreatedChains = append(preCreatedChains, path.chainA, path.chainB)
+			} else {
+				preCreatedChains = append(preCreatedChains, path.chainB)
+			}
+		} else {
+			if len(preCreatedChains) != 0 {
+				return preCreatedChains
+			}
+		}
 	}
-
 	chainOptions, err := testconfig.DefaultChainOptions()
 	s.Require().NoError(err)
 	for _, opt := range chainOpts {
 		opt(chainOptions)
 	}
 
-	chainA, chainB := s.createChains(chainOptions)
-	path = newPath(chainA, chainB)
-	s.paths[s.T().Name()] = path
-	return path.chainA, path.chainB
+	createdChains := s.createChains(chainOptions)
+	for index := range createdChains {
+		if index < len(createdChains)-1 {
+			path := newPath(createdChains[index], createdChains[index+1])
+			pathKey := fmt.Sprintf("%s-%d", s.T().Name(), index)
+			s.paths[pathKey] = path
+		}
+	}
+	// chainA, chainB := createdChains[0], createdChains[1]
+	// path = newPath(chainA, chainB)
+	// s.paths[s.T().Name()] = path
+	return createdChains
 }
 
 // GetRelayerWallets returns the relayer wallets associated with the chains.
 func (s *E2ETestSuite) GetRelayerWallets(relayer ibc.Relayer) (ibc.Wallet, ibc.Wallet, error) {
-	chainA, chainB := s.GetChains()
+	createdChains := s.GetChains()
+	chainA, chainB := createdChains[0], createdChains[1]
 	chainARelayerWallet, ok := relayer.GetWallet(chainA.(ibc.Chain).Config().ChainID)
 	if !ok {
 		return nil, nil, fmt.Errorf("unable to find chain A relayer wallet")
@@ -313,7 +349,7 @@ func (s *E2ETestSuite) StopRelayer(ctx context.Context, relayer ibc.Relayer) err
 
 // createChains creates two separate chains in docker containers.
 // test and can be retrieved with GetChains.
-func (s *E2ETestSuite) createChains(chainOptions *testconfig.ChainOptions) (chains.Chain, chains.Chain) {
+func (s *E2ETestSuite) createChains(chainOptions *testconfig.ChainOptions) []chains.Chain {
 	client, network := interchaintest.DockerSetup(s.T())
 	t := s.T()
 
@@ -323,21 +359,29 @@ func (s *E2ETestSuite) createChains(chainOptions *testconfig.ChainOptions) (chai
 
 	logger := zaptest.NewLogger(t)
 
-	chainA, _ := buildChain(logger, t.Name(), s, chainOptions.ChainAConfig)
+	chains := []chains.Chain{}
 
-	chainB, _ := buildChain(logger, t.Name(), s, chainOptions.ChainBConfig)
+	for _, config := range *chainOptions.ChainConfig {
+		chain, _ := buildChain(logger, t.Name(), s, config)
+		chains = append(chains,
+			chain,
+		)
+	}
 
-	// this is intentionally called after the interchaintest.DockerSetup function. The above function registers a
+	// chainA, _ := buildChain(logger, t.Name(), s, chainOptions.ChainAConfig)
+
+	// chainB, _ := buildChain(logger, t.Name(), s, chainOptions.ChainBConfig)
+
+	// this is intentionally called after the setup.DockerSetup function. The above function registers a
 	// cleanup task which deletes all containers. By registering a cleanup function afterwards, it is executed first
 	// this allows us to process the logs before the containers are removed.
 	//t.Cleanup(func() {
 	//	diagnostics.Collect(t, s.DockerClient, chainOptions)
 	//})
-
-	return chainA, chainB
+	return chains
 }
 
-func buildChain(log *zap.Logger, testName string, s *E2ETestSuite, cfg *testconfig.Chain) (chains.Chain, error) {
+func buildChain(log *zap.Logger, testName string, s *E2ETestSuite, cfg testconfig.Chain) (chains.Chain, error) {
 	var (
 		chain chains.Chain
 		err   error

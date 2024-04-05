@@ -24,7 +24,7 @@ type CosmosRemoteChain struct {
 	log        *zap.Logger
 	Client     *client.Client
 	Network    string
-	testConfig *testconfig.Chain
+	testConfig testconfig.Chain
 }
 
 func NewCosmosHeighlinerChainConfig(name string,
@@ -54,7 +54,7 @@ func NewCosmosHeighlinerChainConfig(name string,
 	}
 }
 
-func NewCosmosRemoteChain(testName string, chainConfig ibc.ChainConfig, client *client.Client, network string, log *zap.Logger, testConfig *testconfig.Chain) *CosmosRemoteChain {
+func NewCosmosRemoteChain(testName string, chainConfig ibc.ChainConfig, client *client.Client, network string, log *zap.Logger, testConfig testconfig.Chain) *CosmosRemoteChain {
 	if chainConfig.EncodingConfig == nil {
 		cfg := DefaultEncoding()
 		chainConfig.EncodingConfig = &cfg
@@ -205,12 +205,16 @@ func (c *CosmosRemoteChain) Timeouts(ctx context.Context, height uint64) ([]ibc.
 
 // // Exec implements ibc.Chain.
 func (c *CosmosRemoteChain) Exec(ctx context.Context, cmd []string, env []string) (stdout, stderr []byte, err error) {
-	cmd = append([]string{"centaurid"}, cmd...)
+	cmd = append([]string{c.cfg.Bin}, cmd...)
 	job := dockerutil.NewImage(c.log, c.Client, c.Network, c.testName, c.cfg.Images[0].Repository, c.cfg.Images[0].Version)
+	mountPath := ":/root/.archway"
+	if c.cfg.Name == "centauri" {
+		mountPath = ":/" + c.cfg.Name + "/.banksy"
+	}
 	opts := dockerutil.ContainerOptions{
 		Binds: []string{
 			c.testConfig.ContractsPath + ":/contracts",
-			c.testConfig.ConfigPath + ":/centauri/.banksy",
+			c.testConfig.ConfigPath + mountPath,
 		},
 		Env: env,
 	}

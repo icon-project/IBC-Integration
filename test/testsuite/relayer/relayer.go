@@ -22,8 +22,9 @@ type Config struct {
 	// Image is the image that should be used for the relayer.
 	Image string `mapstructure:"image"`
 
-	UseExistingKeys bool              `mapstructure:"use_existing_keys"`
-	RelayAccounts   map[string]string `mapstructure:"keys"`
+	UseExistingKeys   bool              `mapstructure:"use_existing_keys"`
+	UseExistingConfig bool              `mapstructure:"use_existing_config"`
+	RelayAccounts     map[string]string `mapstructure:"keys"`
 }
 
 // New returns an implementation of ibc.Relayer depending on the provided RelayerType.
@@ -32,7 +33,7 @@ func New(t *testing.T, cfg Config, logger *zap.Logger, dockerClient *dockerclien
 	flagOptions := relayer.StartupFlags("-p", "events") // relayer processes via events
 	imageOptions := relayer.ImagePull(false)
 	relayerFactory := interchaintest.NewICONRelayerFactory(logger, optionDocker, flagOptions, imageOptions)
-	return relayerFactory.Build(t, dockerClient, network, cfg.UseExistingKeys, cfg.RelayAccounts)
+	return relayerFactory.Build(t, dockerClient, network, cfg.UseExistingKeys, cfg.RelayAccounts, cfg.UseExistingConfig)
 }
 
 // RelayerMap is a mapping from test names to a relayer set for that test.

@@ -60,7 +60,7 @@ type DockerRelayer struct {
 var _ ibc.Relayer = (*DockerRelayer)(nil)
 
 // NewDockerRelayer returns a new DockerRelayer.
-func NewDockerRelayer(ctx context.Context, log *zap.Logger, testName string, cli *client.Client, networkID string, c RelayerCommander, relayerAccounts map[string]string, options ...RelayerOption) (*DockerRelayer, error) {
+func NewDockerRelayer(ctx context.Context, log *zap.Logger, testName string, cli *client.Client, networkID string, c RelayerCommander, relayerAccounts map[string]string, useExistingConfig bool, options ...RelayerOption) (*DockerRelayer, error) {
 	r := DockerRelayer{
 		log: log,
 
@@ -122,20 +122,21 @@ func NewDockerRelayer(ctx context.Context, log *zap.Logger, testName string, cli
 		return nil, fmt.Errorf("set volume owner: %w", err)
 	}
 
-	if init := r.c.Init(r.HomeDir()); len(init) > 0 {
-		// Initialization should complete immediately,
-		// but add a 1-minute timeout in case Docker hangs on a developer workstation.
-		ctx, cancel := context.WithTimeout(ctx, time.Minute)
-		defer cancel()
+	if !useExistingConfig {
+		if init := r.c.Init(r.HomeDir()); len(init) > 0 {
+			// Initialization should complete immediately,
+			// but add a 1-minute timeout in case Docker hangs on a developer workstation.
+			ctx, cancel := context.WithTimeout(ctx, time.Minute)
+			defer cancel()
 
-		// Using a nop reporter here because it keeps the API simpler,
-		// and the init command is typically not of high interest.
-		res := r.Exec(ctx, ibc.NopRelayerExecReporter{}, init, nil)
-		if res.Err != nil {
-			return nil, res.Err
+			// Using a nop reporter here because it keeps the API simpler,
+			// and the init command is typically not of high interest.
+			res := r.Exec(ctx, ibc.NopRelayerExecReporter{}, init, nil)
+			if res.Err != nil {
+				return nil, res.Err
+			}
 		}
 	}
-
 	return &r, nil
 }
 

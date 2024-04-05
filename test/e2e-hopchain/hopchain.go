@@ -15,6 +15,7 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"github.com/strangelove-ventures/interchaintest/v7/testreporter"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v3"
 )
 
 type HopchainTestSuite struct {
@@ -22,19 +23,31 @@ type HopchainTestSuite struct {
 	T *testing.T
 }
 
-const IconChainName = "icon"
-const CentauriChainName = "centauri"
+const (
+	IconChainName     = "icon"
+	CentauriChainName = "centauri"
+	ArchwayChainName  = "archway"
+	iconCurrency      = "icx"
+	archwayCurrency   = "stake"
+)
 
-func getLatestChannels(ctx context.Context, eRep *testreporter.RelayerExecReporter, chainID string, relayer ibc.Relayer) (string, string, error) {
+func getLatestChannels(ctx context.Context, eRep *testreporter.RelayerExecReporter, chainID string, relayer ibc.Relayer, connectionId string) (string, string, error) {
 	channels, err := relayer.GetChannels(ctx, eRep, chainID)
 	if err != nil {
 		return "", "", err
+	}
+	for _, channel := range channels {
+		for _, hop := range channel.ConnectionHops {
+			if strings.Contains(hop, connectionId) {
+				return channel.ChannelID, channel.Counterparty.ChannelID, nil
+			}
+		}
 	}
 	latestChannel := channels[len(channels)-1]
 	return latestChannel.Counterparty.ChannelID, latestChannel.ChannelID, nil
 }
 
-func getIconChain(chains ...chains.Chain) chains.Chain {
+func getIconChain(chains []chains.Chain) chains.Chain {
 	for _, chain := range chains {
 		if chain.(ibc.Chain).Config().Name == IconChainName {
 			return chain
@@ -43,9 +56,18 @@ func getIconChain(chains ...chains.Chain) chains.Chain {
 	return nil
 }
 
-func getCentauriChain(chains ...chains.Chain) chains.Chain {
+func getCentauriChain(chains []chains.Chain) chains.Chain {
 	for _, chain := range chains {
 		if chain.(ibc.Chain).Config().Name == CentauriChainName {
+			return chain
+		}
+	}
+	return nil
+}
+
+func getArchwayChain(chains []chains.Chain) chains.Chain {
+	for _, chain := range chains {
+		if chain.(ibc.Chain).Config().Name == ArchwayChainName {
 			return chain
 		}
 	}
@@ -60,89 +82,212 @@ func getDenomHash(input string) string {
 	return strings.ToUpper(hex.EncodeToString(hash[:]))
 }
 
+type SrcDst struct {
+	ChainID      string `yaml:"chain-id"`
+	ClientID     string `yaml:"client-id"`
+	ConnectionID string `yaml:"connection-id"`
+}
+
+type Path struct {
+	Src SrcDst `yaml:"src"`
+	Dst SrcDst `yaml:"dst"`
+}
+
+type Paths struct {
+	Paths map[string]Path `yaml:"paths"`
+}
+
 func (h *HopchainTestSuite) TestICS20(relayer ibc.Relayer) {
 	testcase := "ics20"
+	time.Sleep(5 * time.Second)
 	ctx := context.WithValue(context.TODO(), "testcase", testcase)
-	chainA, chainB := h.GetChains()
+	createdChains := h.GetChains()
+	fmt.Println(len(createdChains))
 	eRep := h.GetRelayerExecReporter()
+	result := relayer.Exec(ctx, eRep, []string{"cat", "/home/relayer/.relayer/config/config.yaml"}, []string{})
+	var paths Paths
+	yaml.Unmarshal(result.Stdout, &paths)
 	portId := "transfer"
-	centauriReceiver := "centauri1g5r2vmnp6lta9cpst4lzc4syy3kcj2ljte3tlh"
-	iconReceiver := "hxb6b5791be0b5ef67063b3c10b840fb81514db2fd"
-	iconChain := getIconChain(chainA, chainB)
-	centauriChain := getCentauriChain(chainA, chainB)
-	relaySourceChannel, relayDestinationChannel, err := getLatestChannels(ctx, eRep, centauriChain.(ibc.Chain).Config().ChainID, relayer)
+	centauriReceiver := "centauri16tv5rylr402xcu4yqvtk945q6mtzatf0p5hnet"
+	archwayReceiver := "archway1t2tljzac36aapdmlxr9688s7qez8ctft8ehwsm"
+	iconReceiver := "hxac1f0b75d2c05692fdea027fdd0d8475650c72d6"
+	iconSender := "hxb6b5791be0b5ef67063b3c10b840fb81514db2fd"
+	iconChain := getIconChain(createdChains)
+	centauriChain := getCentauriChain(createdChains)
+	archwayChain := getArchwayChain(createdChains)
+
+	centToIconChannel, iconToCentChannel, err := getLatestChannels(ctx, eRep, centauriChain.(ibc.Chain).Config().ChainID, relayer, paths.Paths[testsuite.CentauriIconRelayPath].Src.ConnectionID)
+	h.Require().NoError(err, "error should be nil")
+	centToArchChanel, archwayToCentChannel, err := getLatestChannels(ctx, eRep, centauriChain.(ibc.Chain).Config().ChainID, relayer, paths.Paths[testsuite.CentauriArchwayRelayPath].Src.ConnectionID)
 	h.Require().NoError(err, "error should be nil")
 
-	h.T.Run("send stake Ftokens for relay centauri-ibc", func(t *testing.T) {
-		ibcIconDenom := "transfer/" + relaySourceChannel + "/stake"
-		h.T.Run("send stake tokens from centauri to ibc ", func(t *testing.T) {
-			originalBalance, err := centauriChain.GetWalletBalance(ctx, centauriReceiver, "stake")
-			h.Require().NoError(err, "error should be nil")
-			// send stake to icon
-			ibcamount := fmt.Sprint(100) + "000000000000000stake"
-			txnhash, err := centauriChain.SendIBCTokenTransfer(ctx, relayDestinationChannel, relayDestinationChannel, "transfer", iconReceiver, centauriChain.(ibc.Chain).Config().ChainID, ibcamount)
-			h.Require().NoError(err, "error should be nil")
-			fmt.Println("Txn hash is ", txnhash)
-			time.Sleep(20 * time.Second)
-			valueTocheck := originalBalance.Sub(originalBalance, big.NewInt(100000000000000000))
-			balanceCentauri, err := centauriChain.GetWalletBalance(ctx, centauriReceiver, "stake")
-			h.Require().NoError(err, "error retrieving balance")
-			balanceIcon, err := iconChain.GetWalletBalance(ctx, iconReceiver, ibcIconDenom)
-			h.Require().NoError(err, "error retrieving balance")
-			assert.True(t, balanceCentauri.Cmp(valueTocheck) < 0, "balance should be less than calculated ")
-			assert.True(t, balanceIcon.Cmp(big.NewInt(100000000000000000)) == 0, "balance should be equal in icon ")
-		})
-
-		h.T.Run("send transfer/stake tokens from icon to centauri ", func(t *testing.T) {
-			ibcamount := fmt.Sprint(50) + "000000000000000" + "/transfer/" + relaySourceChannel + "/stake"
-			prevCentauriChainBalance, err := centauriChain.GetWalletBalance(ctx, centauriReceiver, "stake")
-			h.Require().NoError(err, "error should be nil")
-			_, err = iconChain.SendIBCTokenTransfer(ctx, relaySourceChannel, relayDestinationChannel, portId, centauriReceiver, centauriChain.(ibc.Chain).Config().ChainID, ibcamount)
-			h.Require().NoError(err, "error should be nil")
-			// give some time for txn to settle
-			time.Sleep(20 * time.Second)
-
-			balanceIcon, err := iconChain.GetWalletBalance(ctx, iconReceiver, ibcIconDenom)
-			h.Require().NoError(err, "error retrieving balance")
-			centauriChanBalance, err := centauriChain.GetWalletBalance(ctx, centauriReceiver, "stake")
-			h.Require().NoError(err, "error retrieving balance")
-			assert.True(t, balanceIcon.Cmp(big.NewInt(50000000000000000)) == 0, "balance should be equal in icon to 50000000000000000")
-			assert.True(t, centauriChanBalance.Cmp(prevCentauriChainBalance) > 0, "balance should be greater than earlier")
-		})
-
-	})
-
-	time.Sleep(time.Second * 20)
-
 	h.T.Run("send IBC Ftokens for relay ibc-centauri", func(t *testing.T) {
-		denom := "transfer/" + relayDestinationChannel + "/icx"
+		denom := "transfer/" + centToIconChannel + "/" + iconCurrency
 		ibcDenom := "ibc/" + getDenomHash(denom)
 		h.Require().NoError(err, "error should be nil")
 		h.T.Run("send icx tokens from icon to centauri ", func(t *testing.T) {
-			ibcAmount := fmt.Sprint(100) + "000000000000000000" + "/icx"
-			_, err := iconChain.SendIBCTokenTransfer(ctx, relaySourceChannel, relayDestinationChannel, portId, centauriReceiver, centauriChain.(ibc.Chain).Config().ChainID, ibcAmount)
+			initialIconBalance, err := iconChain.GetWalletBalance(ctx, iconReceiver, iconCurrency)
+			h.Require().NoError(err, "error retrieving balance")
+			fmt.Println("Initial Icon Balance ", initialIconBalance)
+			initialCentauriBalance, err := centauriChain.GetWalletBalance(ctx, centauriReceiver, ibcDenom)
+			fmt.Println("Initial Centauri Balance ", initialCentauriBalance)
+			h.Require().NoError(err, "error retrieving balance")
+			ibcAmount := fmt.Sprint(1000) + "/" + iconCurrency
+			_, err = iconChain.SendIBCTokenTransfer(ctx, iconToCentChannel, centToArchChanel, portId, iconSender, centauriReceiver, centauriChain.(ibc.Chain).Config().ChainID, ibcAmount, false)
 			h.Require().NoError(err, "error should be nil")
 			// give some time for txn to settle
-			time.Sleep(20 * time.Second)
-			centauriChanBalance, err := centauriChain.GetWalletBalance(ctx, centauriReceiver, ibcDenom)
+			time.Sleep(40 * time.Second)
+			newCentauriChanBalance, err := centauriChain.GetWalletBalance(ctx, centauriReceiver, ibcDenom)
+			fmt.Println("New Centauri Balance ", newCentauriChanBalance)
 			h.Require().NoError(err, "error retrieving balance")
 			valueTocheck := new(big.Int)
-			valueTocheck, _ = valueTocheck.SetString("100000000000000000000", 10)
-			assert.True(t, centauriChanBalance.Cmp(valueTocheck) == 0, "balance should be equal to 100000000000000000000")
+			valueTocheck, _ = valueTocheck.SetString("1000", 10)
+			balanceIncreased := new(big.Int).Sub(newCentauriChanBalance, initialCentauriBalance)
+			assert.True(t, balanceIncreased.Cmp(valueTocheck) == 0, "balance increment should be equal to 1000")
+			newIconBalance, err := iconChain.GetWalletBalance(ctx, iconReceiver, iconCurrency)
+			h.Require().NoError(err, "error should be nil")
+			fmt.Println("New Icon Balance", newIconBalance)
+			// as gas needs to be paid from the same account
+			assert.True(t, newIconBalance.Cmp(initialIconBalance) == 0, "icon balance should be same as balance transferred from main wallet")
 		})
 
-		h.T.Run("send IBC icx tokens from centauri to ibc ", func(t *testing.T) {
+		h.T.Run("send ibc/../icx tokens from centauri to icon", func(t *testing.T) {
 			// send back to icon
-			ibcamount := fmt.Sprint(50) + "000000000000000000" + "transfer/" + relayDestinationChannel + "/icx"
-			txnhash, err := centauriChain.SendIBCTokenTransfer(ctx, relayDestinationChannel, relayDestinationChannel, "transfer", iconReceiver, centauriChain.(ibc.Chain).Config().ChainID, ibcamount)
+			initialIconBalance, err := iconChain.GetWalletBalance(ctx, iconReceiver, iconCurrency)
+			h.Require().NoError(err, "error should be nil")
+			initialCentauriBalance, err := centauriChain.GetWalletBalance(ctx, centauriReceiver, ibcDenom)
+			h.Require().NoError(err, "error should be nil")
+			fmt.Println("Initial Icon Balance", initialIconBalance)
+			fmt.Println("Initial Centauri Balance", initialCentauriBalance)
+			ibcamount := fmt.Sprint(500) + ibcDenom
+			txnhash, err := centauriChain.SendIBCTokenTransfer(ctx, centToIconChannel, centToIconChannel, "transfer", centauriReceiver, iconReceiver, centauriChain.(ibc.Chain).Config().ChainID, ibcamount, false)
 			h.Require().NoError(err, "error should be nil")
 			fmt.Println("Txn hash is ", txnhash)
-			time.Sleep(20 * time.Second)
+			time.Sleep(40 * time.Second)
 			valueTocheck := new(big.Int)
-			valueTocheck, _ = valueTocheck.SetString("50000000000000000000", 10)
-			centauriChanBalance, err := centauriChain.GetWalletBalance(ctx, centauriReceiver, ibcDenom)
+			valueTocheck, _ = valueTocheck.SetString("500", 10)
+			newCentauriChanBalance, err := centauriChain.GetWalletBalance(ctx, centauriReceiver, ibcDenom)
 			h.Require().NoError(err, "error retrieving balance")
-			assert.True(t, centauriChanBalance.Cmp(valueTocheck) == 0, "balance should be equal to 50000000000000000000")
+			fmt.Println("New Centauri Balance", newCentauriChanBalance)
+			centauriBalanceDecreased := new(big.Int).Sub(initialCentauriBalance, newCentauriChanBalance)
+			assert.True(t, centauriBalanceDecreased.Cmp(valueTocheck) == 0, "balance should be equal to 500")
+			newIconBalance, err := iconChain.GetWalletBalance(ctx, iconReceiver, iconCurrency)
+			h.Require().NoError(err, "error should be nil")
+			fmt.Println("New Icon Balance", newIconBalance)
+			increasedIconBalance := new(big.Int).Sub(newIconBalance, initialIconBalance)
+			assert.True(t, increasedIconBalance.Cmp(valueTocheck) == 0, "icon balance should be increased")
+		})
+	})
+
+	h.T.Run("send IBC Ftokens for relay ibc-archway via centauri", func(t *testing.T) {
+		denom := "transfer/" + archwayToCentChannel + "/transfer/" + centToIconChannel + "/icx"
+		ibcDenom := "ibc/" + getDenomHash(denom)
+		h.Require().NoError(err, "error should be nil")
+		h.T.Run("send icx tokens from icon to centauri ", func(t *testing.T) {
+			initialArchwayBalance, err := archwayChain.GetWalletBalance(ctx, archwayReceiver, ibcDenom)
+			fmt.Println("Initial archway Balance ", initialArchwayBalance)
+			h.Require().NoError(err, "error retrieving balance")
+			ibcAmount := fmt.Sprint(1000) + "/icx"
+			_, err = iconChain.SendIBCTokenTransfer(ctx, iconToCentChannel, centToArchChanel, portId, iconSender, archwayReceiver, centauriChain.(ibc.Chain).Config().ChainID, ibcAmount, true)
+			h.Require().NoError(err, "error should be nil")
+			// give some time for txn to settle
+			time.Sleep(40 * time.Second)
+			archwayChanBalance, err := archwayChain.GetWalletBalance(ctx, archwayReceiver, ibcDenom)
+			fmt.Println("New archway Balance ", archwayChanBalance)
+			h.Require().NoError(err, "error retrieving balance")
+			valueTocheck := new(big.Int)
+			valueTocheck, _ = valueTocheck.SetString("1000", 10)
+			balanceIncreased := new(big.Int).Sub(archwayChanBalance, initialArchwayBalance)
+			assert.True(t, balanceIncreased.Cmp(valueTocheck) == 0, "balance should be equal to 1000")
+		})
+
+		h.T.Run("send ibc/../icx tokens from archway to ibc via centauri", func(t *testing.T) {
+			// send back to icon
+			initialIconBalance, err := iconChain.GetWalletBalance(ctx, iconReceiver, "icx")
+			h.Require().NoError(err, "error should be nil")
+			initialArchwayChainBalance, err := archwayChain.GetWalletBalance(ctx, archwayReceiver, ibcDenom)
+			h.Require().NoError(err, "error should be nil")
+			fmt.Println("Initial Icon Balance", initialIconBalance)
+			fmt.Println("Initial archway Balance", initialArchwayChainBalance)
+			ibcamount := fmt.Sprint(500) + ibcDenom
+			txnhash, err := archwayChain.SendIBCTokenTransfer(ctx, archwayToCentChannel, centToIconChannel, "transfer", archwayReceiver, iconReceiver, archwayChain.(ibc.Chain).Config().ChainID, ibcamount, true)
+			h.Require().NoError(err, "error should be nil")
+			fmt.Println("Txn hash is ", txnhash)
+			time.Sleep(40 * time.Second)
+			valueTocheck := new(big.Int)
+			valueTocheck, _ = valueTocheck.SetString("500", 10)
+			newArchwayChainBalance, err := archwayChain.GetWalletBalance(ctx, archwayReceiver, ibcDenom)
+			h.Require().NoError(err, "error retrieving balance")
+			archwayBalanceDecreased := new(big.Int).Sub(initialArchwayChainBalance, newArchwayChainBalance)
+			assert.True(t, archwayBalanceDecreased.Cmp(valueTocheck) == 0, "balance should be equal to 500")
+			newIconBalance, err := iconChain.GetWalletBalance(ctx, iconReceiver, "icx")
+			h.Require().NoError(err, "error should be nil")
+			fmt.Println("New Icon Balance", newIconBalance)
+			increasedIconBalance := new(big.Int).Sub(newIconBalance, initialIconBalance)
+			assert.True(t, increasedIconBalance.Cmp(valueTocheck) == 0, "icon balance should be increased by 500")
+		})
+	})
+
+	h.T.Run("send stake Ftokens for relay archway-ibc via centauri", func(t *testing.T) {
+		// denom := "transfer/channel-0/transfer/channel-3/stake"
+		denom := "transfer/" + iconToCentChannel + "/transfer/" + centToArchChanel + "/stake"
+		// ibcDenom := "ibc/" + getDenomHash(denom)
+		h.Require().NoError(err, "error should be nil")
+		// register cosmos token
+		iconChain.RegisterToken(ctx, denom, "stake", "2")
+		h.T.Run("send stake tokens from archway to ibc via centauri", func(t *testing.T) {
+			// send back to icon
+			initialIconBalance, err := iconChain.GetWalletBalance(ctx, iconSender, denom)
+			h.Require().NoError(err, "error should be nil")
+			fmt.Println("Initial Icon Balance", initialIconBalance)
+			initialArchwayChainBalance, err := archwayChain.GetWalletBalance(ctx, archwayReceiver, "stake")
+			h.Require().NoError(err, "error should be nil")
+			fmt.Println("Initial Archway Balance", initialArchwayChainBalance)
+			ibcamount := fmt.Sprint(1000) + "stake"
+			txnhash, err := archwayChain.SendIBCTokenTransfer(ctx, archwayToCentChannel, centToIconChannel, "transfer", archwayReceiver, iconSender, archwayChain.(ibc.Chain).Config().ChainID, ibcamount, true)
+			h.Require().NoError(err, "error should be nil")
+			fmt.Println("Txn hash is ", txnhash)
+			time.Sleep(40 * time.Second)
+			valueTocheck := new(big.Int)
+			valueTocheck, _ = valueTocheck.SetString("1000", 10)
+			newArchwayChainBalance, err := archwayChain.GetWalletBalance(ctx, archwayReceiver, "stake")
+			h.Require().NoError(err, "error retrieving balance")
+			archwayBalanceDecreased := new(big.Int).Sub(initialArchwayChainBalance, newArchwayChainBalance)
+			assert.True(t, archwayBalanceDecreased.Cmp(valueTocheck) > 0, "decreased balance should be more than 1000 plus fee")
+			fmt.Println("Decreased archway balance", archwayBalanceDecreased)
+			newIconBalance, err := iconChain.GetWalletBalance(ctx, iconSender, denom)
+			h.Require().NoError(err, "error should be nil")
+			fmt.Println("New Icon Balance", newIconBalance)
+			iconBalanceIncreased := new(big.Int).Sub(newIconBalance, initialIconBalance)
+			fmt.Println("Increased icon balance", iconBalanceIncreased)
+			assert.True(t, iconBalanceIncreased.Cmp(valueTocheck) == 0, "balance should be equal to 1000")
+		})
+
+		h.T.Run("send ibc/../stake tokens from icon to archway ", func(t *testing.T) {
+			initialIconBalance, err := iconChain.GetWalletBalance(ctx, iconSender, denom)
+			h.Require().NoError(err, "error should be nil")
+			initialArchwayBalance, err := archwayChain.GetWalletBalance(ctx, archwayReceiver, "stake")
+			fmt.Println("Archway Initial Balance ", initialArchwayBalance)
+			h.Require().NoError(err, "error retrieving balance")
+			ibcAmount := fmt.Sprint(500) + denom
+			// need to call token contract tokenFallback method
+			_, err = iconChain.SendIBCTokenTransfer(ctx, iconToCentChannel, centToArchChanel, portId, iconSender, archwayReceiver, centauriChain.(ibc.Chain).Config().ChainID, ibcAmount, true)
+			h.Require().NoError(err, "error should be nil")
+			// give some time for txn to settle
+			time.Sleep(40 * time.Second)
+			newArchwayChanBalance, err := archwayChain.GetWalletBalance(ctx, archwayReceiver, "stake")
+			fmt.Println("New archway Balance ", newArchwayChanBalance)
+			h.Require().NoError(err, "error retrieving balance")
+			valueTocheck := new(big.Int)
+			valueTocheck, _ = valueTocheck.SetString("500", 10)
+			balanceIncreased := new(big.Int).Sub(newArchwayChanBalance, initialArchwayBalance)
+			assert.True(t, balanceIncreased.Cmp(valueTocheck) == 0, "balance should be equal")
+			newIconBalance, err := iconChain.GetWalletBalance(ctx, iconSender, denom)
+			h.Require().NoError(err, "error should be nil")
+			fmt.Println("New Icon Balance", newIconBalance)
+			decreasedIconBalance := new(big.Int).Sub(initialIconBalance, newIconBalance)
+			fmt.Println("Increased icon balance", decreasedIconBalance)
+			assert.True(t, decreasedIconBalance.Cmp(valueTocheck) == 0, "decreased balance should be equal to 500")
 		})
 	})
 

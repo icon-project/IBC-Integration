@@ -17,7 +17,6 @@ type E2EHopchainTest struct {
 }
 
 func (s *E2EHopchainTest) TestE2E_hopchain() {
-	//go panicOnTimeout(10 * time.Hour) // custom timeout
 
 	t := s.T()
 	ctx := context.TODO()

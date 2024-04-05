@@ -35,7 +35,7 @@ func NewICONRelayer(log *zap.Logger, testName string, cli *client.Client, networ
 			c.extraStartFlags = o.Flags
 		}
 	}
-	dr, err := relayer.NewDockerRelayer(context.TODO(), log, testName, cli, networkID, c, nil, options...)
+	dr, err := relayer.NewDockerRelayer(context.TODO(), log, testName, cli, networkID, c, nil, false, options...)
 	if err != nil {
 		panic(err) // TODO: return
 	}

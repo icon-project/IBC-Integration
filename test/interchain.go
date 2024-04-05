@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/docker/docker/client"
+	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"github.com/strangelove-ventures/interchaintest/v7/testreporter"
 	"go.uber.org/zap"
@@ -40,7 +41,7 @@ type Interchain struct {
 }
 
 type interchainLink struct {
-	chains [2]ibc.Chain
+	chains []chains.Chain
 	// If set, these options will be used when creating the client in the path link step.
 	// If a zero value initialization is used, e.g. CreateClientOptions{},
 	// then the default values will be used via ibc.DefaultClientOpts.
@@ -132,7 +133,7 @@ func (ic *Interchain) AddRelayer(relayer ibc.Relayer, name string) *Interchain {
 // and the name of the path to create.
 type InterchainLink struct {
 	// Chains involved.
-	Chain1, Chain2 ibc.Chain
+	Chains []chains.Chain
 
 	// Relayer to use for link.
 	Relayer ibc.Relayer
@@ -154,33 +155,32 @@ type InterchainLink struct {
 // AddLink adds the given link to the Interchain.
 // If any validation fails, AddLink panics.
 func (ic *Interchain) AddLink(link InterchainLink) *Interchain {
-	if _, exists := ic.chains[link.Chain1]; !exists {
-		cfg := link.Chain1.Config()
-		panic(fmt.Errorf("chain with name=%s and id=%s was never added to Interchain", cfg.Name, cfg.ChainID))
-	}
-	if _, exists := ic.chains[link.Chain2]; !exists {
-		cfg := link.Chain2.Config()
-		panic(fmt.Errorf("chain with name=%s and id=%s was never added to Interchain", cfg.Name, cfg.ChainID))
-	}
+	// if _, exists := ic.chains[link.Chains[0].(ibc.Chain)]; !exists {
+	// 	cfg := link.Chains[0].(ibc.Chain).Config()
+	// 	panic(fmt.Errorf("chain with name=%s and id=%s was never added to Interchain", cfg.Name, cfg.ChainID))
+	// }
+	// if _, exists := ic.chains[link.Chains[1].(ibc.Chain)]; !exists {
+	// 	cfg := link.Chains[1].(ibc.Chain).Config()
+	// 	panic(fmt.Errorf("chain with name=%s and id=%s was never added to Interchain", cfg.Name, cfg.ChainID))
+	// }
 	if _, exists := ic.relayers[link.Relayer]; !exists {
 		panic(fmt.Errorf("relayer %v was never added to Interchain", link.Relayer))
 	}
 
-	if link.Chain1 == link.Chain2 {
-		panic(fmt.Errorf("chains must be different (both were %v)", link.Chain1))
-	}
+	// if link.Chains[0] == link.Chains[1] {
+	// 	panic(fmt.Errorf("chains must be different (both were %v)", link.Chains[0]))
+	// }
 
 	key := relayerPath{
 		Relayer: link.Relayer,
 		Path:    link.Path,
 	}
-
 	if _, exists := ic.links[key]; exists {
 		panic(fmt.Errorf("relayer %q already has a path named %q", key.Relayer, key.Path))
 	}
 
 	ic.links[key] = interchainLink{
-		chains:            [2]ibc.Chain{link.Chain1, link.Chain2},
+		chains:            link.Chains,
 		createChannelOpts: link.CreateChannelOpts,
 		createClientOpts:  link.CreateClientOpts,
 	}
@@ -265,10 +265,10 @@ func (ic *Interchain) Build(ctx context.Context, rep *testreporter.RelayerExecRe
 		c0 := link.chains[0]
 		c1 := link.chains[1]
 
-		if err := rp.Relayer.GeneratePath(ctx, rep, c0.Config().ChainID, c1.Config().ChainID, rp.Path); err != nil {
+		if err := rp.Relayer.GeneratePath(ctx, rep, c0.(ibc.Chain).Config().ChainID, c1.(ibc.Chain).Config().ChainID, rp.Path); err != nil {
 			return fmt.Errorf(
 				"failed to generate path %s on relayer %s between chains %s and %s: %w",
-				rp.Path, rp.Relayer, ic.chains[c0], ic.chains[c1], err,
+				rp.Path, rp.Relayer, ic.chains[c0.(ibc.Chain)], ic.chains[c1.(ibc.Chain)], err,
 			)
 		}
 	}
@@ -307,7 +307,7 @@ func (ic *Interchain) Build(ctx context.Context, rep *testreporter.RelayerExecRe
 			if err := rp.Relayer.LinkPath(ctx, rep, rp.Path, link.createChannelOpts, link.createClientOpts); err != nil {
 				return fmt.Errorf(
 					"failed to link path %s on relayer %s between chains %s and %s: %w",
-					rp.Path, rp.Relayer, ic.chains[c0], ic.chains[c1], err,
+					rp.Path, rp.Relayer, ic.chains[c0.(ibc.Chain)], ic.chains[c1.(ibc.Chain)], err,
 				)
 			}
 			return nil
@@ -393,10 +393,10 @@ func (ic *Interchain) BuildRelayer(ctx context.Context, rep *testreporter.Relaye
 		c0 := link.chains[0]
 		c1 := link.chains[1]
 
-		if err := rp.Relayer.GeneratePath(ctx, rep, c0.Config().ChainID, c1.Config().ChainID, rp.Path); err != nil {
+		if err := rp.Relayer.GeneratePath(ctx, rep, c0.(ibc.Chain).Config().ChainID, c1.(ibc.Chain).Config().ChainID, rp.Path); err != nil {
 			return fmt.Errorf(
 				"failed to generate path %s on relayer %s between chains %s and %s: %w",
-				rp.Path, rp.Relayer, ic.chains[c0], ic.chains[c1], err,
+				rp.Path, rp.Relayer, ic.chains[c0.(ibc.Chain)], ic.chains[c1.(ibc.Chain)], err,
 			)
 		}
 	}
@@ -434,7 +434,7 @@ func (ic *Interchain) BuildRelayer(ctx context.Context, rep *testreporter.Relaye
 			if err := rp.Relayer.LinkPath(ctx, rep, rp.Path, link.createChannelOpts, link.createClientOpts); err != nil {
 				return fmt.Errorf(
 					"failed to link path %s on relayer %s between chains %s and %s: %w",
-					rp.Path, rp.Relayer, ic.chains[c0], ic.chains[c1], err,
+					rp.Path, rp.Relayer, ic.chains[c0.(ibc.Chain)], ic.chains[c1.(ibc.Chain)], err,
 				)
 			}
 			return nil
@@ -603,10 +603,15 @@ func (ic *Interchain) relayerChains() map[ibc.Relayer][]ibc.Chain {
 	for rp, link := range ic.links {
 		r := rp.Relayer
 		if uniq[r] == nil {
-			uniq[r] = make(map[ibc.Chain]struct{}, 2) // Adding at least 2 chains per relayer.
+			uniq[r] = make(map[ibc.Chain]struct{}, 4) // Adding at least 2 chains per relayer.
 		}
-		uniq[r][link.chains[0]] = struct{}{}
-		uniq[r][link.chains[1]] = struct{}{}
+		fmt.Println("Configured Chains are")
+		for _, chain := range link.chains {
+			fmt.Println(chain.(ibc.Chain).Config().Name)
+			uniq[r][chain.(ibc.Chain)] = struct{}{}
+		}
+		// uniq[r][link.chains[0].(ibc.Chain)] = struct{}{}
+		// uniq[r][link.chains[1].(ibc.Chain)] = struct{}{}
 	}
 
 	// Then convert the sets to slices.

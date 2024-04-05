@@ -26,7 +26,7 @@ type ICONRemoteRelayer struct {
 	*relayer.DockerRelayer
 }
 
-func NewICONRemoteRelayer(log *zap.Logger, testName string, cli *client.Client, networkID string, relayerAccounts map[string]string, options ...relayer.RelayerOption) *ICONRemoteRelayer {
+func NewICONRemoteRelayer(log *zap.Logger, testName string, cli *client.Client, networkID string, relayerAccounts map[string]string, useExistingConfig bool, options ...relayer.RelayerOption) *ICONRemoteRelayer {
 	c := RemoteCommander{log: log}
 	for _, opt := range options {
 		switch o := opt.(type) {
@@ -34,7 +34,7 @@ func NewICONRemoteRelayer(log *zap.Logger, testName string, cli *client.Client, 
 			c.extraStartFlags = o.Flags
 		}
 	}
-	dr, err := relayer.NewDockerRelayer(context.TODO(), log, testName, cli, networkID, c, relayerAccounts, options...)
+	dr, err := relayer.NewDockerRelayer(context.TODO(), log, testName, cli, networkID, c, relayerAccounts, useExistingConfig, options...)
 	if err != nil {
 		panic(err) // TODO: return
 	}
@@ -126,10 +126,17 @@ func (RemoteCommander) CreateChannel(pathName string, opts ibc.CreateChannelOpti
 }
 
 func (RemoteCommander) CreateClients(pathName string, opts ibc.CreateClientOptions, homeDir string) []string {
-	return []string{
-		"rly", "tx", "clients", pathName, "--client-tp", "5040m",
-		"--src-wasm-code-id", "1cff60adf40895b5fccb1e9ce6305a65ae01400a02cc4ded2cf3669221905adc", "--override", "-d",
+	if strings.Contains(pathName, "icon") {
+		return []string{
+			"rly", "tx", "clients", pathName, "--client-tp", opts.TrustingPeriod,
+			"--src-wasm-code-id", "1cff60adf40895b5fccb1e9ce6305a65ae01400a02cc4ded2cf3669221905adc", "--override", "-d",
+		}
 	}
+	return []string{
+		"rly", "tx", "clients", pathName, "--client-tp", opts.TrustingPeriod,
+		"--override", "-d",
+	}
+
 }
 
 // passing a value of 0 for customeClientTrustingPeriod will use default
@@ -213,10 +220,11 @@ func (RemoteCommander) RestoreKey(chainID, keyName, coinType, mnemonic, homeDir 
 
 func (c RemoteCommander) StartRelayer(homeDir string, pathNames ...string) []string {
 	cmd := []string{
-		"rly", "start", "--debug",
+		"rly", "start",
+		// "rly", "start", "--debug",
 	}
-	cmd = append(cmd, c.extraStartFlags...)
-	cmd = append(cmd, pathNames...)
+	// cmd = append(cmd, c.extraStartFlags...)
+	// cmd = append(cmd, pathNames...)
 	return cmd
 }
 

@@ -25,7 +25,7 @@ type CosmosLocalnet struct {
 type CosmosRemotenet struct {
 	*CosmosRemoteChain
 	cfg          ibc.ChainConfig
-	testCfg      *testconfig.Chain
+	testCfg      testconfig.Chain
 	keyName      string
 	filepath     map[string]string
 	IBCAddresses map[string]string     `json:"addresses"`

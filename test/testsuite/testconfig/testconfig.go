@@ -48,8 +48,7 @@ type TestConfig struct {
 }
 
 type ChainOptions struct {
-	ChainAConfig *Chain
-	ChainBConfig *Chain
+	ChainConfig *[]Chain
 }
 
 // ChainOptionConfiguration enables arbitrary configuration of ChainOptions.
@@ -63,8 +62,7 @@ func DefaultChainOptions() (*ChainOptions, error) {
 		return nil, err
 	}
 	return &ChainOptions{
-		ChainAConfig: &tc.ChainConfigs[0],
-		ChainBConfig: &tc.ChainConfigs[1],
+		ChainConfig: &tc.ChainConfigs,
 	}, nil
 }
 

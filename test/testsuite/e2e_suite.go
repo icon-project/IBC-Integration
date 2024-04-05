@@ -3,6 +3,7 @@ package testsuite
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	interchaintest "github.com/icon-project/ibc-integration/test"
@@ -10,8 +11,17 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 )
 
+const (
+	IconChainName            = "icon"
+	CentauriChainName        = "centauri"
+	ArchwayChainName         = "archway"
+	CentauriIconRelayPath    = "centauri-icon"
+	CentauriArchwayRelayPath = "centauri-archway"
+)
+
 func (s *E2ETestSuite) SetupXCall(ctx context.Context, portId string, duration int) error {
-	chainA, chainB := s.GetChains()
+	createdChains := s.GetChains()
+	chainA, chainB := createdChains[0], createdChains[1]
 	if err := chainA.SetupXCall(ctx, portId, interchaintest.XCallOwnerAccount); err != nil {
 		return err
 	}
@@ -60,7 +70,8 @@ func (s *E2ETestSuite) SetupChainsAndRelayer(ctx context.Context, channelOpts ..
 	eRep := s.GetRelayerExecReporter()
 
 	pathName := s.GeneratePathName()
-	chainA, chainB := s.GetChains()
+	createdChains := s.GetChains()
+	chainA, chainB := createdChains[0], createdChains[1]
 
 	s.Require().NoErrorf(relayer.GeneratePath(ctx, eRep, chainA.(ibc.Chain).Config().ChainID, chainB.(ibc.Chain).Config().ChainID, pathName), "Error on generating path, %v", err)
 	err = relayer.CreateClients(ctx, eRep, pathName, ibc.CreateClientOptions{
@@ -73,30 +84,66 @@ func (s *E2ETestSuite) SetupChainsAndRelayer(ctx context.Context, channelOpts ..
 	return relayer
 }
 
+func getIconChain(chains []chains.Chain) chains.Chain {
+	for _, chain := range chains {
+		if chain.(ibc.Chain).Config().Name == IconChainName {
+			return chain
+		}
+	}
+	return nil
+}
+
+func getCentauriChain(chains []chains.Chain) chains.Chain {
+	for _, chain := range chains {
+		if chain.(ibc.Chain).Config().Name == CentauriChainName {
+			return chain
+		}
+	}
+	return nil
+}
+
+func getArchwayChain(chains []chains.Chain) chains.Chain {
+	for _, chain := range chains {
+		if chain.(ibc.Chain).Config().Name == ArchwayChainName {
+			return chain
+		}
+	}
+	return nil
+}
 func (s *E2ETestSuite) SetupICS20ChainsAndRelayer(ctx context.Context, channelOpts ...func(*ibc.CreateChannelOptions)) ibc.Relayer {
 	relayer, err := s.SetupICS20Relayer(ctx)
 	s.Require().NoErrorf(err, "Error while configuring relayer %v", err)
-	eRep := s.GetRelayerExecReporter()
-
-	pathName := s.GeneratePathName()
-	chainA, chainB := s.GetChains()
-	s.Require().NoErrorf(relayer.GeneratePath(ctx, eRep, chainA.(ibc.Chain).Config().ChainID, chainB.(ibc.Chain).Config().ChainID, pathName), "Error on generating path, %v", err)
-	time.Sleep(4 * time.Second)
-	err = relayer.CreateClients(ctx, eRep, pathName, ibc.CreateClientOptions{
-		TrustingPeriod: "100000m",
-	})
-	time.Sleep(10 * time.Second)
-	s.Require().NoErrorf(err, "Error while creating client relayer : %s, %v", pathName, err)
-	s.Require().NoError(relayer.CreateConnections(ctx, eRep, pathName))
-	time.Sleep(20 * time.Second)
-	s.Require().NoError(relayer.CreateChannel(ctx, eRep, pathName, ibc.CreateChannelOptions{
-		SourcePortName: "transfer",
-		DestPortName:   "transfer",
-	}))
-	if err != nil {
-		fmt.Println(err)
+	if !s.cfg.RelayerConfig.UseExistingConfig {
+		eRep := s.GetRelayerExecReporter()
+		relayChains := s.GetChains()
+		iconChain := getIconChain(relayChains)
+		archwayChain := getArchwayChain(relayChains)
+		centauriChain := getCentauriChain(relayChains)
+		s.Require().NoErrorf(relayer.GeneratePath(ctx, eRep, iconChain.(ibc.Chain).Config().ChainID, centauriChain.(ibc.Chain).Config().ChainID, CentauriIconRelayPath), "Error on generating path, %v", err)
+		s.Require().NoErrorf(relayer.GeneratePath(ctx, eRep, archwayChain.(ibc.Chain).Config().ChainID, centauriChain.(ibc.Chain).Config().ChainID, CentauriArchwayRelayPath), "Error on generating path, %v", err)
+		time.Sleep(4 * time.Second)
+		for _, pathName := range []string{CentauriIconRelayPath, CentauriArchwayRelayPath} {
+			trustingPeriod := "5040m"
+			if strings.Contains(pathName, "archway") {
+				trustingPeriod = "500h"
+			}
+			err = relayer.CreateClients(ctx, eRep, pathName, ibc.CreateClientOptions{
+				TrustingPeriod: trustingPeriod,
+			})
+			time.Sleep(10 * time.Second)
+			s.Require().NoErrorf(err, "Error while creating client relayer : %s, %v", pathName, err)
+			s.Require().NoError(relayer.CreateConnections(ctx, eRep, pathName))
+			time.Sleep(30 * time.Second)
+			s.Require().NoError(relayer.CreateChannel(ctx, eRep, pathName, ibc.CreateChannelOptions{
+				SourcePortName: "transfer",
+				DestPortName:   "transfer",
+			}))
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
 	}
-	time.Sleep(2 * time.Second)
-	s.Require().NoError(s.StartRelayer(relayer, pathName))
+
+	s.Require().NoError(s.StartRelayer(relayer, CentauriIconRelayPath))
 	return relayer
 }

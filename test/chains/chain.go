@@ -66,8 +66,9 @@ type Chain interface {
 	//integration test specific
 	SendPacketMockDApp(ctx context.Context, targetChain Chain, keyName string, params map[string]interface{}) (PacketTransferResponse, error)
 	SetupIBCICS20(ctx context.Context, keyName string) (context.Context, error)
-	SendIBCTokenTransfer(ctx context.Context, sourceChannel, destinationChannel, port, receiver, chainID, ibcamount string) (string, error)
+	SendIBCTokenTransfer(ctx context.Context, sourceChannel, destinationChannel, port, sender, receiver, chainID, ibcamount string, hopRequired bool) (string, error)
 	GetWalletBalance(ctx context.Context, address string, denom string) (*big.Int, error)
+	RegisterToken(ctx context.Context, name, denom, decimal string) error
 }
 
 func GetEnvOrDefault(key, defaultValue string) string {

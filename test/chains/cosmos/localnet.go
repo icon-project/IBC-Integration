@@ -783,10 +783,14 @@ func (c *CosmosLocalnet) SetupIBCICS20(ctx context.Context, keyName string) (con
 	panic("not implemented")
 }
 
-func (c *CosmosLocalnet) SendIBCTokenTransfer(ctx context.Context, sourceChannel, destinationChannel, port, receiver, chainID, ibcamount string) (string, error) {
+func (c *CosmosLocalnet) SendIBCTokenTransfer(ctx context.Context, sourceChannel, destinationChannel, port, sender, receiver, chainID, ibcamount string, hopRequired bool) (string, error) {
 	panic("not implemented")
 }
 
 func (c *CosmosLocalnet) GetWalletBalance(ctx context.Context, address string, denom string) (*big.Int, error) {
 	panic("not implemented")
+}
+
+func (c *CosmosLocalnet) RegisterToken(ctx context.Context, name, denom, decimal string) error {
+	return nil
 }
