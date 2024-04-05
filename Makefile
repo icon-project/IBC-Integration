@@ -84,6 +84,10 @@ e2e:
 	@echo "Running e2e tests..."
 	go test -v ./test/e2e -testify.m TestE2E_all
 
+e2e-hopchain:
+	@echo "Running hopchain e2e tests..."	
+	go test -v ./test/e2e-hopchain -testify.m TestE2E_hopchain
+
 e2e-demo-setup:
 	@echo "Configuring e2e demo..."
 	export PRESERVE_DOCKER=true && \
