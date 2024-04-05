@@ -605,9 +605,7 @@ func (ic *Interchain) relayerChains() map[ibc.Relayer][]ibc.Chain {
 		if uniq[r] == nil {
 			uniq[r] = make(map[ibc.Chain]struct{}, 4) // Adding at least 2 chains per relayer.
 		}
-		fmt.Println("Configured Chains are")
 		for _, chain := range link.chains {
-			fmt.Println(chain.(ibc.Chain).Config().Name)
 			uniq[r][chain.(ibc.Chain)] = struct{}{}
 		}
 		// uniq[r][link.chains[0].(ibc.Chain)] = struct{}{}
