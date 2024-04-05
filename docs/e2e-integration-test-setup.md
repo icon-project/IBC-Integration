@@ -14,9 +14,10 @@ To run the demo, the following software needs to be installed.
    $ git clone https://github.com/icon-project/ibc-relay/
    $ cd ibc-relay/
    $ docker build -t relayer .
+   $ cd ..
    ```
 
-2. Build the builder image for bundling contracts:
+2. Build the builder image in IBC-Integration repo for bundling contracts:
 
    ```bash
    make build-builder-img
@@ -44,7 +45,8 @@ To run the demo, the following software needs to be installed.
    ```bash
    git clone https://github.com/icon-project/goloop.git
    cd goloop
-   make gochain-icon-image
+   make gochain-icon-image  
+   cd .. 
    ``` 
 
 * Build a `goloop` image
@@ -53,6 +55,7 @@ To run the demo, the following software needs to be installed.
    git clone https://github.com/icon-project/goloop/
    cd goloop/ 
    make goloop-icon-image
+   cd ..
    ```
 
 * Build an `archway` or `neutron` image
@@ -63,6 +66,7 @@ To run the demo, the following software needs to be installed.
    git clone https://github.com/archway-network/archway/
    cd archway
    docker build -f Dockerfile.deprecated -t archway . --build-arg arch=aarch64
+   cd ..
    ```
 
   **For Neutron:**
@@ -71,6 +75,7 @@ To run the demo, the following software needs to be installed.
    git clone https://github.com/neutron-org/neutron.git
    cd neutron
    make build-docker-image
+   cd ..
    ```
 
 ℹ️ Change the image name and version of Archway/Neutron in `e2e-config.yaml` or `e2e-config-neutron.yaml`.
@@ -83,14 +88,14 @@ To conduct tests for IBC integration system, carefully adhere to the provided in
 
 Prior to initiating the tests, ensure proper configuration of essential environment variables, which play a pivotal role in the testing process:
 
-- **`E2E_CONFIG_PATH`**: Set this variable to the absolute path of your chosen configuration file. For Archway, utilize `sample-config-archway.yaml`, and for Neutron, employ `sample-config-neutron.yaml`.
+- **`TEST_CONFIG_PATH`**: Set this variable to the absolute path of your chosen configuration file. For Archway, utilize `sample-config-archway.yaml`, and for Neutron, employ `sample-config-neutron.yaml`.
 - **`GOLOOP_IMAGE_ENV`**: Indicate the name of the Goloop image.
 - **`GOLOOP_IMAGE_TAG_ENV`**: Specify the version of the Goloop image.
 
 Here's an example of environment variable configuration:
 
 ```bash
-export E2E_CONFIG_PATH=/home/User/IBC-integration/sample-config-archway.yaml
+export TEST_CONFIG_PATH=/home/User/IBC-integration/sample-config-archway.yaml
 export GOLOOP_IMAGE_ENV=goloop-icon
 export GOLOOP_IMAGE_TAG_ENV=latest
 ```
@@ -122,17 +127,26 @@ Depending on your specific testing requirements, employ the appropriate commands
 go test -v ./test/e2e -timeout 0
 ```
 
-- To execute the end-to-end hopchain tests:
-```bash
-export TEST_CONFIG_PATH=/Users/bcs/Documents/bchain/IBC-integration/test/testsuite/sample-config-ics20.yaml; go test -v ./test/e2e-hopchain -timeout 0
-```
-ℹ️ The hopchain tests expects remote chain deployments with respective keys for each chain in the expected folders and synced with remote chains.
 - To run the integration tests:
 ```bash
 go test -v ./test/integration -timeout 0
 ```
 
-#### 3. Set Up the Demo Test Environment (Optional)
+#### 5. Set Up the Hpchain Test Environment (Optional)
+- To execute the end-to-end hopchain tests:
+```bash
+export TEST_CONFIG_PATH=/home/User/IBC-integration/test/testsuite/sample-config-ics20.yaml;
+make e2e-hopchain
+```
+ℹ️ The hopchain tests expects remote chain deployments with respective keys for each chain in the expected folders and synced with remote chains. To use existing relay config, the config should be placed at /home/User/IBC-integration/test/relayer/data/config/config.yaml and the parameters **ics20_app** should be populated with ics20_app deployed address and the flag **use_existing_config** should be true. To create new connection and channels, the param should be set to false and ics20_app value should be empty. The test case assumes following temporary address for reception. 
+- centauriReceiver = "centauri16tv5rylr402xcu4yqvtk945q6mtzatf0p5hnet"
+- archwayReceiver = "archway1t2tljzac36aapdmlxr9688s7qez8ctft8ehwsm"
+- iconReceiver = "hxac1f0b75d2c05692fdea027fdd0d8475650c72d6"
+
+Necessary configured keys should exist at appropriate location for chain/relayer at /home/User/IBC-integration/test/chains/{chain_name}/data and test/relayer/data/keys/{chain_id}
+
+
+#### 5. Set Up the Demo Test Environment (Optional)
 
 If necessary, establish the e2e demo test environment by executing the following command:
 
@@ -142,7 +156,7 @@ make e2e-demo-setup
 
 During the setup process, distinct configuration files are generated in the `test/e2e-demo/ibc-config` directory. These files include contract addresses, along with wallets containing mnemonic/private keys. These keys are essential for conducting subsequent tests.
 
-#### 4. Clean Up the Demo Test Environment (Optional)
+#### 6. Clean Up the Demo Test Environment (Optional)
 
 Upon completion of the testing process, if you've set up the e2e demo environment, you can execute the following command to perform a cleanup:
 

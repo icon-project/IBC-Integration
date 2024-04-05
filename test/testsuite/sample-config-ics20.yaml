@@ -30,7 +30,7 @@ chains:
       ibc_ics: "$BASE_PATH/artifacts/icon/ibc-0.1.0-optimized.jar"
       ibc_ics_client: "$BASE_PATH/artifacts/icon/tendermint-0.1.0-optimized.jar"
       ibc_ics20_client: "$BASE_PATH/artifacts/icon/ics-08-tendermint-0.1.0-optimized.jar"
-      # ics20_app: "cxa5d0ef8e648657703e12ebcef5a6c1383e2896d0"
+      ics20_app: "cx954ca124424f243009c546c331f2854fc975b006"
   - name: centauri
     version: "3"
     environment: remote
@@ -63,15 +63,14 @@ chains:
       connection: "$BASE_PATH/artifacts/archway/cw_xcall_ibc_connection_latest.wasm"
       dapp: "$BASE_PATH/artifacts/archway/cw_mock_dapp_multi.wasm"
       mockdapp: "$BASE_PATH/artifacts/archway/cw_mock_ibc_dapp.wasm"
-      ibc_ics20_client: "$BASE_PATH/artifacts/centauri/cw_wasm_light_client_icon.wasm"
   - name: archway
     version: "3"
     environment: remote
     contracts_path: "$BASE_PATH/artifacts/archway"
     config_path: "$BASE_PATH/test/chains/archway/data"
-    keystore_file: fd
+    keystore_file: relayer
     keystore_password: test
-    rpc_uri: https://tt.net.solidwallet.io:443/archway-rpc/
+    rpc_uri: https://tt.net.solidwallet.io:443/archway-rpc
     chain_config:
       type: cosmos
       name: archway
@@ -101,8 +100,8 @@ relayer:
   image: relayer/relayer
   tag: ics20
   use_existing_keys: true
-  # use_existing_config: true
+  use_existing_config: true
   keys:
     icon: godwallet:gochain
     centauri: default
-    archway: relayer
+    archway: fd

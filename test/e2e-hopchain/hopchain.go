@@ -99,7 +99,7 @@ type Paths struct {
 
 func (h *HopchainTestSuite) TestICS20(relayer ibc.Relayer) {
 	testcase := "ics20"
-	time.Sleep(5 * time.Second)
+	time.Sleep(15 * time.Second)
 	ctx := context.WithValue(context.TODO(), "testcase", testcase)
 	createdChains := h.GetChains()
 	fmt.Println(len(createdChains))
