@@ -3,7 +3,7 @@ chains:
     version: "3"
     environment: remote
     nid: "3"
-    rpc_uri: http://docker.for.mac.host.internal:9082/api/v3/
+    rpc_uri: https://tt.net.solidwallet.io/jvm-rpc/api/v3/
     keystore_file: godwallet.json
     keystore_password: gochain
     contracts_path: "$BASE_PATH/artifacts/icon"
@@ -26,23 +26,23 @@ chains:
       connection: "$BASE_PATH/artifacts/icon/xcall-connection-latest.jar"
       dapp: "$BASE_PATH/artifacts/icon/dapp-multi-protocol-latest.jar"
       mockdapp: "$BASE_PATH/artifacts/icon/mockapp-latest.jar"
-      ics20bank: "$BASE_PATH/artifacts/icon/ics20bank-0.1.0-optimized.jar"
-      ics20app: "$BASE_PATH/artifacts/icon/ics20app-0.1.0-optimized.jar"
+      ics20app: "$BASE_PATH/artifacts/icon/ics20-0.1.0-optimized.jar"
       ibc_ics: "$BASE_PATH/artifacts/icon/ibc-0.1.0-optimized.jar"
       ibc_ics_client: "$BASE_PATH/artifacts/icon/tendermint-0.1.0-optimized.jar"
       ibc_ics20_client: "$BASE_PATH/artifacts/icon/ics-08-tendermint-0.1.0-optimized.jar"
+      # ics20_app: "cxa5d0ef8e648657703e12ebcef5a6c1383e2896d0"
   - name: centauri
     version: "3"
     environment: remote
     contracts_path: "$BASE_PATH/artifacts/centauri"
     config_path: "$BASE_PATH/test/chains/cosmos/data"
-    keystore_file: default
+    keystore_file: relayer
     keystore_password: test
-    rpc_uri: http://docker.for.mac.host.internal:50001
+    rpc_uri: https://tt.net.solidwallet.io:443/centauri2-rpc/
     chain_config:
       type: cosmos
       name: centauri
-      chain_id: centauri-testnet-1
+      chain_id: test-1
       image:
         repository: composable-centauri
         version: latest
@@ -64,10 +64,45 @@ chains:
       dapp: "$BASE_PATH/artifacts/archway/cw_mock_dapp_multi.wasm"
       mockdapp: "$BASE_PATH/artifacts/archway/cw_mock_ibc_dapp.wasm"
       ibc_ics20_client: "$BASE_PATH/artifacts/centauri/cw_wasm_light_client_icon.wasm"
+  - name: archway
+    version: "3"
+    environment: remote
+    contracts_path: "$BASE_PATH/artifacts/archway"
+    config_path: "$BASE_PATH/test/chains/archway/data"
+    keystore_file: fd
+    keystore_password: test
+    rpc_uri: https://tt.net.solidwallet.io:443/archway-rpc/
+    chain_config:
+      type: cosmos
+      name: archway
+      chain_id: localnet-1
+      image:
+        repository: ghcr.io/archway-network/archwayd-dev
+        version: v6.0.1-arm64v8
+        uid_gid: ""
+      bin: archwayd
+      bech32_prefix: archway
+      denom: stake
+      coin_type: 118
+      gas_prices: 0.00stake
+      gas_adjustment: 1.3
+      trusting_period: 508h
+      no_host_mount: false
+    nid: "3"
+    contracts:
+      ibc: "$BASE_PATH/artifacts/archway/cw_ibc_core_latest.wasm"
+      client: "$BASE_PATH/artifacts/archway/cw_icon_light_client_latest.wasm"
+      xcall: "$BASE_PATH/artifacts/archway/cw_xcall_latest.wasm"
+      connection: "$BASE_PATH/artifacts/archway/cw_xcall_ibc_connection_latest.wasm"
+      dapp: "$BASE_PATH/artifacts/archway/cw_mock_dapp_multi.wasm"
+      mockdapp: "$BASE_PATH/artifacts/archway/cw_mock_ibc_dapp.wasm"
+      ibc_ics20_client: "$BASE_PATH/artifacts/centauri/cw_wasm_light_client_icon.wasm"
 relayer:
   image: relayer/relayer
-  tag: latest
+  tag: ics20
   use_existing_keys: true
+  # use_existing_config: true
   keys:
     icon: godwallet:gochain
     centauri: default
+    archway: relayer
