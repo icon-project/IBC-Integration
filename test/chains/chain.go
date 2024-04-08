@@ -63,6 +63,7 @@ type Chain interface {
 
 	BackupConfig() ([]byte, error)
 	RestoreConfig([]byte) error
+	GetSenderReceiverAddress() (string, string)
 	//integration test specific
 	SendPacketMockDApp(ctx context.Context, targetChain Chain, keyName string, params map[string]interface{}) (PacketTransferResponse, error)
 	SetupIBCICS20(ctx context.Context, keyName string) (context.Context, error)

@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	// "github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/docker/docker/client"
@@ -118,6 +117,7 @@ func (RemoteCommander) AddKey(chainID, keyName, coinType, homeDir string) []stri
 }
 
 func (RemoteCommander) CreateChannel(pathName string, opts ibc.CreateChannelOptions, homeDir string) []string {
+	cleanUpStoredHeight()
 	return []string{
 		"rly", "tx", "channel", pathName,
 		"--src-port", opts.SourcePortName,
@@ -126,6 +126,7 @@ func (RemoteCommander) CreateChannel(pathName string, opts ibc.CreateChannelOpti
 }
 
 func (RemoteCommander) CreateClients(pathName string, opts ibc.CreateClientOptions, homeDir string) []string {
+	cleanUpStoredHeight()
 	if strings.Contains(pathName, "icon") {
 		return []string{
 			"rly", "tx", "clients", pathName, "--client-tp", opts.TrustingPeriod,
@@ -141,13 +142,14 @@ func (RemoteCommander) CreateClients(pathName string, opts ibc.CreateClientOptio
 
 // passing a value of 0 for customeClientTrustingPeriod will use default
 func (RemoteCommander) CreateClient(pathName, homeDir, customeClientTrustingPeriod string) []string {
+	cleanUpStoredHeight()
 	return []string{
 		"rly", "tx", "client", pathName, "--client-tp", customeClientTrustingPeriod,
 	}
 }
 
 func (RemoteCommander) CreateConnections(pathName string, homeDir string) []string {
-	time.Sleep(10 * time.Second)
+	cleanUpStoredHeight()
 	return []string{
 		"rly", "tx", "connection", pathName,
 	}
@@ -221,10 +223,7 @@ func (RemoteCommander) RestoreKey(chainID, keyName, coinType, mnemonic, homeDir 
 func (c RemoteCommander) StartRelayer(homeDir string, pathNames ...string) []string {
 	cmd := []string{
 		"rly", "start",
-		// "rly", "start", "--debug",
 	}
-	// cmd = append(cmd, c.extraStartFlags...)
-	// cmd = append(cmd, pathNames...)
 	return cmd
 }
 
@@ -414,4 +413,15 @@ func (RemoteCommander) Init(homeDir string) []string {
 
 func (c RemoteCommander) CreateWallet(keyName, address, mnemonic string) ibc.Wallet {
 	return NewWallet(keyName, address, mnemonic)
+}
+
+func cleanUpStoredHeight() {
+	path, _ := os.Getwd()
+	baseTestDir := filepath.Dir(path)
+	if _, err := os.Stat(baseTestDir + "/relayer/data/ibc-icon"); err == nil {
+		err = os.RemoveAll(baseTestDir + "/relayer/data/ibc-icon")
+		if err != nil {
+			log.Fatal("failed to remove file:", err)
+		}
+	}
 }

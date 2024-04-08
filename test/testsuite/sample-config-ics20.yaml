@@ -7,7 +7,12 @@ chains:
     keystore_file: godwallet.json
     keystore_password: gochain
     contracts_path: "$BASE_PATH/artifacts/icon"
+    # path containing cofig for the chains such as keys details
     config_path: "$BASE_PATH/test/chains/icon/data"
+    # fund receiver, to get more accurate calculation in test cases
+    receiver: hxac1f0b75d2c05692fdea027fdd0d8475650c72d6
+    # sender address
+    sender: hxb6b5791be0b5ef67063b3c10b840fb81514db2fd
     chain_config:      
       type: icon
       name: icon
@@ -30,7 +35,8 @@ chains:
       ibc_ics: "$BASE_PATH/artifacts/icon/ibc-0.1.0-optimized.jar"
       ibc_ics_client: "$BASE_PATH/artifacts/icon/tendermint-0.1.0-optimized.jar"
       ibc_ics20_client: "$BASE_PATH/artifacts/icon/ics-08-tendermint-0.1.0-optimized.jar"
-      ics20_app: "cx954ca124424f243009c546c331f2854fc975b006"
+      # ics20 app deployed address, should be used along with use_existing_config to re-use the existing setup
+      ics20_app: "cx95e8df0b63b6f615e984894250f438730353de78"
   - name: centauri
     version: "3"
     environment: remote
@@ -39,6 +45,7 @@ chains:
     keystore_file: relayer
     keystore_password: test
     rpc_uri: https://tt.net.solidwallet.io:443/centauri2-rpc/
+    receiver: centauri16tv5rylr402xcu4yqvtk945q6mtzatf0p5hnet
     chain_config:
       type: cosmos
       name: centauri
@@ -71,6 +78,7 @@ chains:
     keystore_file: relayer
     keystore_password: test
     rpc_uri: https://tt.net.solidwallet.io:443/archway-rpc
+    receiver: archway1t2tljzac36aapdmlxr9688s7qez8ctft8ehwsm
     chain_config:
       type: cosmos
       name: archway
@@ -100,8 +108,10 @@ relayer:
   image: relayer/relayer
   tag: ics20
   use_existing_keys: true
+  # uses existing config in specified path /home/User/IBC-integration/test/relayer/data/config/config.yaml
   use_existing_config: true
   keys:
-    icon: godwallet:gochain
+    # keys to be used in relayer 
+    icon: godwallet:gochain 
     centauri: default
     archway: fd

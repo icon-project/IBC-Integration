@@ -1051,3 +1051,7 @@ func (c *IconLocalnet) SendIBCTokenTransfer(ctx context.Context, sourceChannel, 
 func (c *IconLocalnet) RegisterToken(ctx context.Context, name, denom, decimal string) error {
 	return nil
 }
+
+func (c *IconLocalnet) GetSenderReceiverAddress() (string, string) {
+	return "", ""
+}

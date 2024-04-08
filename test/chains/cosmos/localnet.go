@@ -794,3 +794,7 @@ func (c *CosmosLocalnet) GetWalletBalance(ctx context.Context, address string, d
 func (c *CosmosLocalnet) RegisterToken(ctx context.Context, name, denom, decimal string) error {
 	return nil
 }
+
+func (c *CosmosLocalnet) GetSenderReceiverAddress() (string, string) {
+	return "", ""
+}

@@ -138,10 +138,7 @@ go test -v ./test/integration -timeout 0
 export TEST_CONFIG_PATH=/home/User/IBC-integration/test/testsuite/sample-config-ics20.yaml;
 make e2e-hopchain
 ```
-ℹ️ The hopchain tests expects remote chain deployments with respective keys for each chain in the expected folders and synced with remote chains. To use existing relay config, the config should be placed at /home/User/IBC-integration/test/relayer/data/config/config.yaml and the parameters **ics20_app** should be populated with ics20_app deployed address and the flag **use_existing_config** should be true. To create new connection and channels, the param should be set to false and ics20_app value should be empty. The test case assumes following temporary address for reception. 
-- centauriReceiver = "centauri16tv5rylr402xcu4yqvtk945q6mtzatf0p5hnet"
-- archwayReceiver = "archway1t2tljzac36aapdmlxr9688s7qez8ctft8ehwsm"
-- iconReceiver = "hxac1f0b75d2c05692fdea027fdd0d8475650c72d6"
+ℹ️ The hopchain tests expects remote chain deployments with respective keys for each chain in the expected folders and synced with remote chains. To use existing relay config, the config should be placed at /home/User/IBC-integration/test/relayer/data/config/config.yaml and the parameters **ics20_app** should be populated with ics20_app deployed address and the flag **use_existing_config** should be true. To create new connection and channels, the param should be set to false and ics20_app value should be empty. The test case assumes following receiver address to be specified in config which might reqiure some funds to be available.
 
 Necessary configured keys should exist at appropriate location for chain/relayer at /home/User/IBC-integration/test/chains/{chain_name}/data and test/relayer/data/keys/{chain_id}
 

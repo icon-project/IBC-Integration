@@ -263,6 +263,11 @@ func (c *IconRemotenet) SendIBCTokenTransfer(ctx context.Context, sourceChannel,
 	ftparams := `{"method":"sendFungibleTokens","params":{"denomination":"` + sendDenom + `","amount": ` + sendAmount + `,"sender": "` + sender + `","receiver": "` + receiver + `","sourcePort": "transfer","sourceChannel":"channel-0","timeoutHeight":{"latestHeight":80,"revisionNumber":80},"timeoutTimestamp":0,"memo":"{\\\"forward\\\":{\\\"receiver\\\":\\\"` +
 		receiver + `\\\",\\\"port\\\":\\\"` + port + `\\\",\\\"channel\\\":\\\"` +
 		destinationChannel + `\\\",\\\"timeout\\\":\\\"10m\\\",\\\"retries\\\":2}}"}}`
+
+	if !hopRequired {
+		// remove memo for no hop
+		ftparams = `{"method":"sendFungibleTokens","params":{"denomination":"` + sendDenom + `","amount": ` + sendAmount + `,"sender": "` + sender + `","receiver": "` + receiver + `","sourcePort": "transfer","sourceChannel":"channel-0","timeoutHeight":{"latestHeight":80,"revisionNumber":80},"timeoutTimestamp":0}}`
+	}
 	tokenParams := hex.EncodeToString([]byte(ftparams))
 	params := `{"params":{"_to":"` + ics20App + `","_value":"` + sendAmount + `","_data":"` + tokenParams + `"}}`
 	commands = append(commands, "--raw", params)
@@ -797,5 +802,8 @@ func (c *IconRemotenet) RegisterToken(ctx context.Context, name, symbol, decimal
 	json.Unmarshal(stdout, &output)
 	_, err = c.waitForTxn(ctx, output)
 	return err
+}
 
+func (c *IconRemotenet) GetSenderReceiverAddress() (string, string) {
+	return c.testconfig.Sender, c.testconfig.Receiver
 }

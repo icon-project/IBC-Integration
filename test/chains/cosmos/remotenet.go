@@ -254,3 +254,7 @@ func (c *CosmosRemotenet) GetBalance(ctx context.Context, address string, denom 
 func (c *CosmosRemotenet) RegisterToken(ctx context.Context, name, denom, decimal string) error {
 	return nil
 }
+
+func (c *CosmosRemotenet) GetSenderReceiverAddress() (string, string) {
+	return c.testCfg.Sender, c.testCfg.Receiver
+}
