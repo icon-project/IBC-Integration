@@ -65,7 +65,8 @@ To run the demo, the following software needs to be installed.
    ```bash
    git clone https://github.com/archway-network/archway/
    cd archway
-   docker build -f Dockerfile.deprecated -t archway . --build-arg arch=aarch64
+   git checkout v0.5.1
+   docker build -f Dockerfile.deprecated -t archwaynetwork/archwayd:v0.5.1 . --build-arg arch=aarch64
    cd ..
    ```
 

@@ -30,7 +30,7 @@ chains:
       chain_id: archway-1
       image:
         repository: archwaynetwork/archwayd
-        version: sha-8f53ac8
+        version: v0.5.1
         uid_gid: ""
       bin: archwayd
       bech32_prefix: archway

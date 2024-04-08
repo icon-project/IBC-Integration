@@ -105,8 +105,8 @@ chains:
       mockdapp: "$BASE_PATH/artifacts/archway/cw_mock_ibc_dapp.wasm"
       ibc_ics20_client: "$BASE_PATH/artifacts/centauri/cw_wasm_light_client_icon.wasm"
 relayer:
-  image: relayer/relayer
-  tag: ics20
+  image: relayer
+  tag: latest
   use_existing_keys: true
   # uses existing config in specified path /home/User/IBC-integration/test/relayer/data/config/config.yaml
   use_existing_config: true
