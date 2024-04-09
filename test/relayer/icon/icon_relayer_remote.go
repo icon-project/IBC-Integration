@@ -401,9 +401,9 @@ func (RemoteCommander) Init(homeDir string) []string {
 		}
 	}
 	if _, err := os.Stat(baseTestDir + "/relayer/data/ibc-icon"); err == nil {
-		err = os.RemoveAll(baseTestDir + "/relayer/data/ibc-icon")
+		err = os.Truncate(baseTestDir+"/relayer/data/ibc-icon/latest_height", 0)
 		if err != nil {
-			log.Fatal("failed to remove file:", err)
+			fmt.Println("Failed to cleanup icon height", err)
 		}
 	}
 	return []string{
@@ -419,9 +419,9 @@ func cleanUpStoredHeight() {
 	path, _ := os.Getwd()
 	baseTestDir := filepath.Dir(path)
 	if _, err := os.Stat(baseTestDir + "/relayer/data/ibc-icon"); err == nil {
-		err = os.RemoveAll(baseTestDir + "/relayer/data/ibc-icon")
+		err = os.Truncate(baseTestDir+"/relayer/data/ibc-icon/latest_height", 0)
 		if err != nil {
-			log.Fatal("failed to remove file:", err)
+			fmt.Println("Failed to cleanup icon height", err)
 		}
 	}
 }
