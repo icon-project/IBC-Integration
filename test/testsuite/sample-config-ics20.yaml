@@ -4,7 +4,7 @@ chains:
     environment: remote
     nid: "3"
     rpc_uri: https://tt.net.solidwallet.io/jvm-rpc/api/v3/
-    keystore_file: godwallet.json
+    keystore_file: godWallet.json
     keystore_password: gochain
     contracts_path: "$BASE_PATH/artifacts/icon"
     # path containing cofig for the chains such as keys details
