@@ -16,6 +16,7 @@ import score.annotation.External;
 import score.annotation.Optional;
 import score.annotation.Payable;
 import icon.ibc.interfaces.IIBCModule;
+import java.util.Arrays;
 
 
 import java.math.BigInteger;
@@ -190,7 +191,10 @@ public class ICS20Transfer implements IIBCModule {
 
             Context.require(amount.equals(value), TAG + " : Mismatched amount");
             Context.require(sender.equals(from.toString()), TAG + " : Sender address mismatched");
-            Context.require(tokenContracts.get(denomination) == Context.getCaller(),
+
+            Address tokenAddress = tokenContracts.get(denomination);
+            
+            Context.require(tokenAddress!=null && tokenAddress.equals(Context.getCaller()),
                     TAG + " : Sender Token Contract not registered");
 
             sendFungibleToken(denomination, amount, sender, receiver, sourcePort, sourceChannel, height,
@@ -332,7 +336,7 @@ public class ICS20Transfer implements IIBCModule {
     @External
     public void onAcknowledgementPacket(byte[] packet, byte[] acknowledgement, Address relayer) {
         onlyIBC();
-        if (!acknowledgement.equals(ICS20Lib.SUCCESSFUL_ACKNOWLEDGEMENT_JSON)) {
+        if (!Arrays.equals(acknowledgement,ICS20Lib.SUCCESSFUL_ACKNOWLEDGEMENT_JSON)) {
             Packet packetDb = Packet.decode(packet);
             refundTokens(packetDb);
         }
