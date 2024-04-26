@@ -97,8 +97,7 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         Context.require(clientStates.get(clientId) == null, "Client already exists");
         ClientState clientState = ClientState.decode(clientStateBytes);
 
-        Context.require(!clientState.getTrustLevel().getDenominator().equals(BigInteger.ZERO),
-                "trustLevel has zero Denominator");
+        validateTrustLevel(clientState.getTrustLevel());
 
         clientStates.set(clientId, clientStateBytes);
         consensusStates.at(clientId).set(clientState.getLatestHeight(), consensusStateBytes);
@@ -116,77 +115,26 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
     public Map<String, byte[]> updateClient(String clientId, byte[] clientMessageBytes) {
         onlyHandler();
         TmHeader tmHeader = TmHeader.decode(clientMessageBytes);
-        boolean conflictingHeader = false;
-
-        // Check if the Client store already has a consensus state for the header's
-        // height
-        // If the consensus state exists, and it matches the header then we return early
-        // since header has already been submitted in a previous UpdateClient.
-        byte[] prevConsState = consensusStates.at(clientId)
-                .get(tmHeader.getSignedHeader().getHeader().getHeight());
-        if (prevConsState != null) {
-            // This header has already been submitted and the necessary state is already
-            // stored
-            Context.require(!Arrays.equals(prevConsState, toConsensusState(tmHeader).encode()),
-                    "LC: This header has already been submitted");
-
-            // A consensus state already exists for this height, but it does not match the
-            // provided header.
-            // Thus, we must check that this header is valid, and if so we will freeze the
-            // client.
-            conflictingHeader = true;
-        }
+        boolean conflictingHeader = checkForDuplicateHeader(clientId, tmHeader);
 
         byte[] encodedClientState = clientStates.get(clientId);
         require(encodedClientState != null, "LC: client state is invalid");
         ClientState clientState = ClientState.decode(encodedClientState);
-        byte[] encodedTrustedonsensusState = consensusStates.at(clientId).get(tmHeader.getTrustedHeight());
-        require(encodedTrustedonsensusState != null, "LC: consensusState not found at trusted height");
-        ConsensusState trustedConsensusState = ConsensusState.decode(encodedTrustedonsensusState);
 
-        Timestamp currentTime = getCurrentTime();
-        checkValidity(clientState, trustedConsensusState, tmHeader, currentTime);
+        byte[] encodedTrustedConsensusState = consensusStates.at(clientId).get(tmHeader.getTrustedHeight());
+        require(encodedTrustedConsensusState != null, "LC: consensusState not found at trusted height");
+        ConsensusState trustedConsensusState = ConsensusState.decode(encodedTrustedConsensusState);
+
+        checkValidity(clientState, trustedConsensusState, tmHeader);
 
         // Header is different from existing consensus state and also valid, so freeze
         // the client and return
         if (conflictingHeader) {
-            clientState.setFrozenHeight(tmHeader.getSignedHeader().getHeader().getHeight());
-            encodedClientState = clientState.encode();
-            clientStates.set(clientId, encodedClientState);
-
-            byte[] encodedConsensusState = toConsensusState(tmHeader).encode();
-            consensusStates.at(clientId).set(clientState.getLatestHeight(), encodedConsensusState);
-            processedHeights.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
-                    BigInteger.valueOf(Context.getBlockHeight()));
-            processedTimes.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
-                    BigInteger.valueOf(Context.getBlockTimestamp()));
-
-            return Map.of(
-                    "clientStateCommitment", IBCCommitment.keccak256(encodedClientState),
-                    "consensusStateCommitment", IBCCommitment.keccak256(encodedConsensusState),
-                    "height",
-                    newHeight(tmHeader.getSignedHeader().getHeader().getHeight()).encode());
+            return handleConflict(clientId, tmHeader, clientState);
         }
 
         // update the consensus state from a new header and set processed time metadata
-        if (tmHeader.getSignedHeader().getHeader().getHeight().compareTo(clientState.getLatestHeight()) > 0) {
-            clientState.setLatestHeight(tmHeader.getSignedHeader().getHeader().getHeight());
-            encodedClientState = clientState.encode();
-            clientStates.set(clientId, encodedClientState);
-        }
-
-        byte[] encodedConsensusState = toConsensusState(tmHeader).encode();
-        consensusStates.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
-                encodedConsensusState);
-        processedHeights.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
-                BigInteger.valueOf(Context.getBlockHeight()));
-        processedTimes.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
-                BigInteger.valueOf(Context.getBlockTimestamp()));
-
-        return Map.of(
-                "clientStateCommitment", IBCCommitment.keccak256(encodedClientState),
-                "consensusStateCommitment", IBCCommitment.keccak256(encodedConsensusState),
-                "height", newHeight(clientState.getLatestHeight()).encode());
+        return updateHeader(clientId, tmHeader, clientState, encodedClientState);
     }
 
     @External(readonly = true)
@@ -245,12 +193,75 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         Merkle.verifyNonMembership(merkleProof, Merkle.SDK_SPEC, root, merklePath);
     }
 
+    private Map<String, byte[]> updateHeader(String clientId, TmHeader tmHeader, ClientState clientState,
+            byte[] encodedClientState) {
+        if (tmHeader.getSignedHeader().getHeader().getHeight().compareTo(clientState.getLatestHeight()) > 0) {
+            clientState.setLatestHeight(tmHeader.getSignedHeader().getHeader().getHeight());
+            encodedClientState = clientState.encode();
+            clientStates.set(clientId, encodedClientState);
+        }
+
+        byte[] encodedConsensusState = toConsensusState(tmHeader).encode();
+        consensusStates.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
+                encodedConsensusState);
+        processedHeights.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
+                BigInteger.valueOf(Context.getBlockHeight()));
+        processedTimes.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
+                BigInteger.valueOf(Context.getBlockTimestamp()));
+
+        return Map.of(
+                "clientStateCommitment", IBCCommitment.keccak256(encodedClientState),
+                "consensusStateCommitment", IBCCommitment.keccak256(encodedConsensusState),
+                "height", newHeight(clientState.getLatestHeight()).encode());
+    }
+
+    private Map<String, byte[]> handleConflict(String clientId, TmHeader tmHeader, ClientState clientState) {
+        clientState.setFrozenHeight(tmHeader.getSignedHeader().getHeader().getHeight());
+        byte[] encodedClientState = clientState.encode();
+        clientStates.set(clientId, encodedClientState);
+
+        byte[] encodedConsensusState = toConsensusState(tmHeader).encode();
+        consensusStates.at(clientId).set(clientState.getLatestHeight(), encodedConsensusState);
+        processedHeights.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
+                BigInteger.valueOf(Context.getBlockHeight()));
+        processedTimes.at(clientId).set(tmHeader.getSignedHeader().getHeader().getHeight(),
+                BigInteger.valueOf(Context.getBlockTimestamp()));
+
+        return Map.of(
+                "clientStateCommitment", IBCCommitment.keccak256(encodedClientState),
+                "consensusStateCommitment", IBCCommitment.keccak256(encodedConsensusState),
+                "height",
+                newHeight(tmHeader.getSignedHeader().getHeader().getHeight()).encode());
+    }
+
+    private boolean checkForDuplicateHeader(String clientId, TmHeader tmHeader) {
+        // Check if the Client store already has a consensus state for the header's
+        // height
+        // If the consensus state exists, and it matches the header then we return early
+        // since header has already been submitted in a previous UpdateClient.
+        byte[] prevConsState = consensusStates.at(clientId)
+                .get(tmHeader.getSignedHeader().getHeader().getHeight());
+        if (prevConsState == null) {
+            return false;
+        }
+
+        // This header has already been submitted and the necessary state is already
+        // stored
+        Context.require(!Arrays.equals(prevConsState, toConsensusState(tmHeader).encode()),
+                "LC: This header has already been submitted");
+
+        // A consensus state already exists for this height, but it does not match the
+        // provided header.
+        // Thus, we must check that this header is valid, and if so we will freeze the
+        // client.
+        return true;
+    };
+
     // checkValidity checks if the Tendermint header is valid.
     public void checkValidity(
             ClientState clientState,
             ConsensusState trustedConsensusState,
-            TmHeader tmHeader,
-            Timestamp currentTime) {
+            TmHeader tmHeader) {
         // assert header height is newer than consensus state
         require(
                 tmHeader.getSignedHeader().getHeader().getHeight()
@@ -270,11 +281,11 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         SignedHeader untrustedHeader = tmHeader.getSignedHeader();
         ValidatorSet untrustedVals = tmHeader.getValidatorSet();
 
+        Timestamp currentTime = getCurrentTime();
         Context.require(!isExpired(trustedHeader, clientState.getTrustingPeriod(), currentTime),
                 "header can't be expired");
 
         boolean ok = verify(
-                clientState.getTrustingPeriod(),
                 clientState.getMaxClockDrift(),
                 clientState.getTrustLevel(),
                 trustedHeader,
@@ -290,15 +301,15 @@ public class TendermintLightClient extends Tendermint implements ILightClient {
         Context.require(cs.getLatestHeight().compareTo(height) >= 0,
                 "Latest height must be greater or equal to proof height");
         Context.require(cs.getFrozenHeight().equals(BigInteger.ZERO) ||
-                        cs.getFrozenHeight().compareTo(height) >= 0,
+                cs.getFrozenHeight().compareTo(height) >= 0,
                 "Client is Frozen");
         Context.require(prefix.length > 0, "Prefix cant be empty");
         Context.require(proof.length > 0, "Proof cant be empty");
     }
 
     private void validateDelayPeriod(String clientId, Height height,
-                                     BigInteger delayPeriodTime,
-                                     BigInteger delayPeriodBlocks) {
+            BigInteger delayPeriodTime,
+            BigInteger delayPeriodBlocks) {
         BigInteger currentTime = BigInteger.valueOf(Context.getBlockTimestamp());
         BigInteger validTime = mustGetProcessedTime(clientId,
                 height.getRevisionHeight()).add(delayPeriodTime);

@@ -291,11 +291,15 @@ public class IBCPacket extends IBCChannelHandshake {
         ConnectionEnd connection = ConnectionEnd.decode(connectionPb);
 
         // check that timeout height or timeout timestamp has passed on the other end
+        ILightClient client = getClient(connection.getClientId());
         Height height = Height.decode(proofHeight);
+        BigInteger timestamp = client.getTimestampAtHeight(connection.getClientId(), proofHeight);
         boolean heightTimeout = packet.getTimeoutHeight().getRevisionHeight().compareTo(BigInteger.ZERO) > 0
                 && height.getRevisionHeight()
                 .compareTo(packet.getTimeoutHeight().getRevisionHeight()) >= 0;
-        Context.require(heightTimeout, "Packet has not yet timed out");
+        boolean timeTimeout = packet.getTimeoutTimestamp().compareTo(BigInteger.ZERO) > 0
+                && timestamp.compareTo(packet.getTimeoutTimestamp()) >= 0;
+        Context.require(heightTimeout || timeTimeout, "Packet has not yet timed out");
 
         // verify we actually sent this packet, check the store
         byte[] packetCommitmentKey = IBCCommitment.packetCommitmentKey(packet.getSourcePort(),

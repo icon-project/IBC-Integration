@@ -52,14 +52,27 @@ public class LightClientTest extends LightClientTestBase {
     }
 
     @Test
-    void createClient_withZeroDenomTrustLevel() throws Exception {
+    void createClient_trustLevelRestriction() throws Exception {
         // Arrange
-        // Default is zero denominator
-        trustLevel = Fraction.getDefaultInstance();
-        String expectedErrorMessage = "trustLevel has zero Denominator";
+        String expectedErrorMessage = "trustLevel must be within [1/3, 1]";
 
         // Act & Assert
+        trustLevel = trustLevel = Fraction.newBuilder()
+            .setNumerator(1)
+            .setDenominator(0).build();
         AssertionError e = assertThrows(AssertionError.class, () -> initializeClient(1));
+        assertTrue(e.getMessage().contains(expectedErrorMessage));
+
+        trustLevel = trustLevel = Fraction.newBuilder()
+            .setNumerator(2)
+            .setDenominator(1).build();
+        e = assertThrows(AssertionError.class, () -> initializeClient(1));
+        assertTrue(e.getMessage().contains(expectedErrorMessage));
+
+        trustLevel = trustLevel = Fraction.newBuilder()
+            .setNumerator(1)
+            .setDenominator(4).build();
+        e = assertThrows(AssertionError.class, () -> initializeClient(1));
         assertTrue(e.getMessage().contains(expectedErrorMessage));
     }
 
@@ -147,8 +160,7 @@ public class LightClientTest extends LightClientTestBase {
         doNothing().when(clientSpy).checkValidity(
                 any(ibc.lightclients.tendermint.v1.ClientState.class),
                 any(ibc.lightclients.tendermint.v1.ConsensusState.class),
-                any(ibc.lightclients.tendermint.v1.Header.class),
-                any());
+                any(ibc.lightclients.tendermint.v1.Header.class));
 
         // Act
         updateClient(3, 1);
