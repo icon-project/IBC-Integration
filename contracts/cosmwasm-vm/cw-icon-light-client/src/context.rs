@@ -540,7 +540,7 @@ mod tests {
         contract.insert_config(&config).unwrap();
 
         contract
-            .ensure_ibc_host(Addr::unchecked("regular_host"))
+            .ensure_ibc_host(&Addr::unchecked("regular_host"))
             .unwrap()
     }
 
