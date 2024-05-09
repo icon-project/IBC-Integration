@@ -370,6 +370,18 @@ mod tests {
     }
 
     #[test]
+    fn test_recover_signer_for_none_value() {
+        let mut deps = mock_dependencies();
+        let context = CwContext::new(deps.as_mut(), mock_env());
+
+        let msg = keccak256(b"test message");
+        let signature = hex!("c8b2b5eeb7b5462ce6d3bdf1648cd8eae2");
+
+        let result = context.recover_signer(msg.as_slice(), &signature);
+        assert!(result.is_none());
+    }
+
+    #[test]
     fn test_cwcontext_recover_signer_relay_data() {
         let mut deps = mock_dependencies();
 
@@ -490,5 +502,135 @@ mod tests {
             PROCESSED_HEIGHTS.load(deps.as_ref().storage, (client_id.to_string(), height))?;
         assert_eq!(mock_env().block.height, loaded);
         Ok(())
+    }
+
+    #[test]
+    fn test_ensure_owner() {
+        let mut deps = mock_dependencies();
+        let config = Config::default();
+        let mut contract = CwContext::new(deps.as_mut(), mock_env());
+
+        contract.insert_config(&config).unwrap();
+
+        let res = contract.ensure_owner(Addr::unchecked("test"));
+        assert!(res.is_ok())
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized")]
+    fn test_ensure_owner_unauthorized() {
+        let mut deps = mock_dependencies();
+        let config = Config::default();
+        let mut contract = CwContext::new(deps.as_mut(), mock_env());
+
+        contract.insert_config(&config).unwrap();
+
+        contract
+            .ensure_owner(Addr::unchecked("regular_user"))
+            .unwrap()
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized")]
+    fn test_ensure_host_unauthorized() {
+        let mut deps = mock_dependencies();
+        let config = Config::default();
+        let mut contract = CwContext::new(deps.as_mut(), mock_env());
+
+        contract.insert_config(&config).unwrap();
+
+        contract
+            .ensure_ibc_host(Addr::unchecked("regular_host"))
+            .unwrap()
+    }
+
+    #[test]
+    fn test_get_current_block_time() {
+        let mut deps = mock_dependencies();
+        let contract = CwContext::new(deps.as_mut(), mock_env());
+
+        let res = contract.get_current_block_time();
+        assert_eq!(res, contract.env.block.time.nanos());
+    }
+
+    #[test]
+    fn test_get_current_block_height() {
+        let mut deps = mock_dependencies();
+        let contract = CwContext::new(deps.as_mut(), mock_env());
+
+        let res = contract.get_current_block_height();
+        assert_eq!(res, contract.env.block.height);
+    }
+
+    #[test]
+    fn test_get_processed_time_at_height() {
+        let mut deps = mock_dependencies();
+        let mut contract = CwContext::new(deps.as_mut(), mock_env());
+
+        let height = 2;
+        let client_id = "test_client";
+
+        contract
+            .insert_timestamp_at_height(client_id, height)
+            .unwrap();
+
+        let res = contract
+            .get_processed_time_at_height(client_id, height)
+            .unwrap();
+
+        assert_eq!(res, contract.env.block.time.nanos())
+    }
+
+    #[test]
+    #[should_panic(expected = "ProcessedTimeNotFound")]
+    fn fail_test_get_processed_time_at_height() {
+        let mut deps = mock_dependencies();
+        let mut contract = CwContext::new(deps.as_mut(), mock_env());
+
+        let height = 2;
+        let client_id = "test_client";
+
+        contract
+            .insert_timestamp_at_height(client_id, height)
+            .unwrap();
+
+        contract.get_processed_time_at_height(client_id, 3).unwrap();
+    }
+
+    #[test]
+    fn test_get_processed_block_number_at_height() {
+        let mut deps = mock_dependencies();
+        let mut contract = CwContext::new(deps.as_mut(), mock_env());
+
+        let height = 2;
+        let client_id = "test_client";
+
+        contract
+            .insert_blocknumber_at_height(client_id, height)
+            .unwrap();
+
+        let res = contract
+            .get_processed_block_at_height(client_id, height)
+            .unwrap();
+
+        assert_eq!(res, contract.env.block.height)
+    }
+
+    #[test]
+    #[should_panic(expected = "ProcessedHeightNotFound")]
+    fn fail_test_get_processed_block_number_at_height() {
+        let mut deps = mock_dependencies();
+        let mut contract = CwContext::new(deps.as_mut(), mock_env());
+
+        let height = 2;
+        let client_id = "test_client";
+
+        contract
+            .insert_blocknumber_at_height(client_id, height)
+            .unwrap();
+
+        contract
+            .get_processed_block_at_height(client_id, 3)
+            .unwrap();
     }
 }

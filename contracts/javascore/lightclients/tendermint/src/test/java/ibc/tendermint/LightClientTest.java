@@ -118,6 +118,25 @@ public class LightClientTest extends LightClientTestBase {
     }
 
     @Test
+    void updateValidatorWithLargePower() throws Exception {
+        // Arrange
+        blockSetPath = BLOCK_SET_LONG_POWER;
+        SignedHeader lastHeader = parseSignedHeader(3);
+
+        // Act
+        initializeClient(1);
+        updateClient(2, 1);
+        updateClient(3, 2);
+
+        // Assert
+        ClientState clientState = getClientState();
+        assertEquals(clientState.getLatestHeight(), lastHeader.getHeader().getHeight());
+        assertConsensusState(parseSignedHeader(1));
+        assertConsensusState(parseSignedHeader(2));
+        assertConsensusState(lastHeader);
+    }
+
+    @Test
     void updateAdjacentBlocks() throws Exception {
         // Arrange
         blockSetPath = BLOCK_SET_ADJACENT;

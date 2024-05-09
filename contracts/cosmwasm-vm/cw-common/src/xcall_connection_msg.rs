@@ -26,6 +26,13 @@ pub enum ExecuteMsg {
         client_id: String,
         timeout_height: u64,
     },
+    OverrideConnection {
+        connection_id: String,
+        counterparty_port_id: String,
+        counterparty_nid: NetId,
+        client_id: String,
+        timeout_height: u64,
+    },
     ClaimFees {
         nid: NetId,
         address: String,

@@ -145,3 +145,104 @@ impl<'a> CwIbcConnection<'a> {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::state::CwIbcConnection;
+    use cosmwasm_std::{
+        testing::{mock_dependencies, mock_info},
+        Addr,
+    };
+
+    #[test]
+    fn test_ensure_length() {
+        let contract = CwIbcConnection::new();
+
+        let res = contract.ensure_data_length(20 as usize);
+        assert!(res.is_ok())
+    }
+
+    #[test]
+    #[should_panic(expected = "MaxDataSizeExceeded")]
+    fn test_ensure_length_fail() {
+        let contract = CwIbcConnection::new();
+
+        contract.ensure_data_length(u64::MAX as usize).unwrap();
+    }
+
+    #[test]
+    fn test_ensure_rollback_length() {
+        let contract = CwIbcConnection::new();
+
+        let rollback_size: Vec<u8> = Vec::new();
+        let res = contract.ensure_rollback_length(&rollback_size);
+        assert!(res.is_ok())
+    }
+
+    #[test]
+    #[should_panic(expected = "MaxRollbackSizeExceeded")]
+    fn test_ensure_rollback_length_fail() {
+        let contract = CwIbcConnection::new();
+
+        let rollback_size: Vec<u8> = vec![0; 2048];
+        contract.ensure_rollback_length(&rollback_size).unwrap()
+    }
+
+    #[test]
+    fn test_ensure_owner() {
+        let mut deps = mock_dependencies();
+        let contract = CwIbcConnection::new();
+        let info = mock_info("owner", &[]);
+
+        contract
+            .add_owner(deps.as_mut().storage, Addr::unchecked("owner"))
+            .unwrap();
+
+        let res = contract.ensure_owner(deps.as_ref().storage, &info).unwrap();
+        assert_eq!(res, ())
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized")]
+    fn test_ensure_owner_fail() {
+        let mut deps = mock_dependencies();
+        let contract = CwIbcConnection::new();
+        let info = mock_info("owner", &[]);
+
+        contract
+            .add_owner(deps.as_mut().storage, Addr::unchecked("test_owner"))
+            .unwrap();
+
+        contract.ensure_owner(deps.as_ref().storage, &info).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "OnlyIbcHandler")]
+    fn test_ensure_xcall_handler_fail() {
+        let mut deps = mock_dependencies();
+        let contract = CwIbcConnection::new();
+
+        contract
+            .set_xcall_host(deps.as_mut().storage, Addr::unchecked("xcall_host"))
+            .unwrap();
+
+        contract
+            .ensure_xcall_handler(deps.as_ref().storage, Addr::unchecked("ibc_host"))
+            .unwrap()
+    }
+
+    #[test]
+    #[should_panic(expected = "OnlyIbcHandler")]
+    fn test_ensure_ibc_handler_fail() {
+        let mut deps = mock_dependencies();
+        let contract = CwIbcConnection::new();
+
+        contract
+            .set_ibc_host(deps.as_mut().storage, Addr::unchecked("ibc_host"))
+            .unwrap();
+
+        contract
+            .ensure_ibc_handler(deps.as_ref().storage, Addr::unchecked("xcall_host"))
+            .unwrap()
+    }
+}

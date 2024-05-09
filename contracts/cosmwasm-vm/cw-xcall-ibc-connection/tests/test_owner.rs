@@ -2,14 +2,13 @@ mod account;
 mod setup;
 use account::*;
 
+use cosmwasm_std::Addr;
 use cw_xcall_ibc_connection::state::CwIbcConnection;
 use setup::*;
 #[test]
 fn add_owner() {
     let mut mock_deps = deps();
-
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
-
     let contract = CwIbcConnection::default();
 
     contract
@@ -17,17 +16,31 @@ fn add_owner() {
         .unwrap();
 
     let result = contract.query_owner(mock_deps.as_ref().storage).unwrap();
-
     assert_eq!(result, mock_info.sender.to_string())
+}
+
+#[test]
+fn test_add_owner() {
+    let mut deps = deps();
+    let contract = CwIbcConnection::default();
+
+    contract
+        .add_owner(deps.as_mut().storage, Addr::unchecked("owner"))
+        .unwrap();
+
+    let owner = Addr::unchecked("new_owner");
+    let res = contract.add_owner(deps.as_mut().storage, owner.clone());
+    assert!(res.is_ok());
+
+    let expected_owner = contract.query_owner(deps.as_ref().storage).unwrap();
+    assert_eq!(owner, expected_owner)
 }
 
 #[test]
 #[should_panic(expected = "OwnerAlreadyExist")]
 fn add_existing_owner() {
     let mut mock_deps = deps();
-
     let mock_info = create_mock_info(&alice().to_string(), "umlg", 2000);
-
     let contract = CwIbcConnection::default();
 
     contract
@@ -35,7 +48,6 @@ fn add_existing_owner() {
         .unwrap();
 
     let result = contract.query_owner(mock_deps.as_ref().storage).unwrap();
-
     assert_eq!(result, mock_info.sender.to_string());
 
     contract
