@@ -351,6 +351,7 @@ public class ICS20Transfer implements IIBCModule {
      */
     @External
     public void onTimeoutPacket(byte[] packet, Address relayer) {
+        onlyIBC();
         Packet packetDb = Packet.decode(packet);
         refundTokens(packetDb);
     }

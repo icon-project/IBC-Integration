@@ -5,7 +5,6 @@ import ibc.icon.score.util.NullChecker;
 import ibc.icon.score.util.StringUtil;
 import ibc.ics23.commitment.types.Merkle;
 import ibc.ics24.host.IBCCommitment;
-import cosmos.ics23.v1.*;
 import google.protobuf.*;
 import tendermint.types.*;
 import ibc.core.commitment.v1.*;
