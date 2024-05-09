@@ -24,7 +24,7 @@ pub fn instantiate_success() {
 }
 
 #[test]
-#[should_panic(expected = "ClientStateNotFound(\"08-wasm-0\")")]
+#[should_panic(expected = " ClientStateNotFound(\"08-iconwasm-0\")")]
 pub fn instantiate_fails_on_uninitialized_storage() {
     let mut deps = mock_dependencies();
     let env = mock_env();

@@ -189,6 +189,7 @@ mod tests {
     use cw_common::raw_types::Any;
     use hex_literal::hex;
     use prost::Message;
+    use test_utils::get_test_headers;
 
     use test_utils::get_test_signed_headers;
 
@@ -633,4 +634,6 @@ mod tests {
             .get_processed_block_at_height(client_id, 3)
             .unwrap();
     }
+
+    
 }

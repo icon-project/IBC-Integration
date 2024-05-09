@@ -952,7 +952,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Std(NotFound { kind: \"alloc::vec::Vec<u8>")]
+    #[should_panic(expected = "ClientStateNotFound(\"another_client\")")]
     fn test_query_latest_consensus_state_fail() {
         let start_header = &get_test_headers()[0];
         let client_id = "test_client".to_string();
