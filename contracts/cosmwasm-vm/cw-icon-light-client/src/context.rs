@@ -634,6 +634,4 @@ mod tests {
             .get_processed_block_at_height(client_id, 3)
             .unwrap();
     }
-
-    
 }

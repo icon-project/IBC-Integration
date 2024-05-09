@@ -236,4 +236,3 @@ impl<C: IContext> ILightClient for IconClient<C> {
         Ok(())
     }
 }
-
