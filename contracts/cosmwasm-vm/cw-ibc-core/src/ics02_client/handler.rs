@@ -149,7 +149,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         let sub_msg: SubMsg = client.update_client(&client_id, &header)?;
         cw_println!(
-            deps,
+            deps.api,
             "Called Update Client On Lightclient for client id:{}",
             &message.client_id
         );
@@ -325,7 +325,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
                 Some(data) => {
                     let update_client_response: UpdateClientResponse = from_binary_response(&data)?;
-                    cw_println!(deps, "Received Client Update Callback with data");
+                    cw_println!(deps.api, "Received Client Update Callback with data");
                     let client_id: ClientId =
                         self.get_callback_data(deps.as_ref().storage, EXECUTE_UPDATE_CLIENT)?;
                     self.clear_callback_data(deps.storage, EXECUTE_UPDATE_CLIENT);
@@ -468,7 +468,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
         let clinet_message = LightClientMessage::Misbehaviour {
             client_id: client_id.to_string(),
-            misbehaviour: to_vec(&message.misbehaviour)?,
+            misbehaviour: message.misbehaviour.unwrap().encode_to_vec(),
         };
 
         let wasm_exec_message: CosmosMsg = CosmosMsg::Wasm(cosmwasm_std::WasmMsg::Execute {

@@ -3,10 +3,11 @@ use std::{collections::HashMap, str::FromStr};
 use cosmwasm_std::{
     coins,
     testing::{mock_dependencies, mock_info, MockApi, MockQuerier, MockStorage},
-    Addr, Empty, IbcEndpoint, MessageInfo, OwnedDeps,
+    Addr, Attribute, Empty, Event, IbcEndpoint, MessageInfo, OwnedDeps,
 };
+use cw_common::ibc_types::IbcEventType;
 use cw_integration::TestSteps;
-use cw_multi_test::{App, Contract, ContractWrapper, Executor};
+use cw_multi_test::{App, AppResponse, Contract, ContractWrapper, Executor};
 use cw_xcall_ibc_connection::state::IbcConfig;
 
 use test_utils::{IntegrationData, RawPayload};
@@ -354,4 +355,29 @@ pub fn setup_context(data: Option<IntegrationData>) -> TestContext {
         admin: None,
         caller: None,
     }
+}
+
+pub fn get_event(res: &AppResponse, event: &str) -> Option<HashMap<String, String>> {
+    let event = res
+        .events
+        .iter()
+        .filter(|e| e.ty == event)
+        .collect::<Vec<&Event>>();
+    if !event.is_empty() {
+        let map = to_attribute_map(&event[0].attributes);
+        return Some(map);
+    }
+    None
+}
+
+pub fn get_event_name(event_type: IbcEventType) -> String {
+    format!("wasm-{}", event_type.as_str())
+}
+
+pub fn to_attribute_map(attrs: &Vec<Attribute>) -> HashMap<String, String> {
+    let mut map = HashMap::new();
+    for attr in attrs {
+        map.insert(attr.key.clone(), attr.value.clone());
+    }
+    map
 }

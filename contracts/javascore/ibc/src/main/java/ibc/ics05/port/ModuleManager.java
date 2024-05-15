@@ -1,7 +1,7 @@
 package ibc.ics05.port;
 
-import ibc.icon.interfaces.IIBCModuleScoreInterface;
 import ibc.icon.score.util.StringUtil;
+import icon.ibc.interfaces.IIBCModuleScoreInterface;
 import score.Address;
 
 /**

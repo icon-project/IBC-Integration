@@ -3,10 +3,12 @@ package ibc.ics25.handler;
 import score.Address;
 import score.Context;
 import score.annotation.External;
+import score.annotation.Optional;
 
 import java.math.BigInteger;
 
-import ibc.icon.structs.messages.MsgCreateClient;
+import ibc.ics24.host.IBCHost;
+import icon.ibc.structs.messages.MsgCreateClient;
 
 public class IBCHandler extends IBCHandlerPacket {
 
@@ -24,9 +26,10 @@ public class IBCHandler extends IBCHandlerPacket {
      * registerClient registers a new client type into the client registry
      */
     @External
-    public void registerClient(String clientType, Address client) {
+    public void registerClient(String clientType, Address client, @Optional int hashType) {
         onlyOwner();
-        super.registerClient(clientType, client);
+        IBCHost.HashType.of(hashType);
+        super.registerClient(clientType, client, hashType);
     }
 
     @External

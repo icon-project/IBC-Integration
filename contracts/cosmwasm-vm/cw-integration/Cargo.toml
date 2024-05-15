@@ -9,10 +9,9 @@ edition = "2021"
 [dependencies]
 cosmwasm-schema = {workspace=true}
 cosmwasm-std = {workspace=true}
-cosmwasm-storage = {workspace=true}
 cw-storage-plus = {workspace=true}
-cw-common={path="../cw-common"}
-common = { path="../../../libraries/rust/common", default-features = false }
+cw-common={workspace=true}
+common = { workspace=true, default-features = false }
 ibc = { version = "0.32.0", default-features = false, features = ["parity-scale-codec", "mocks-no-std", "serde"]}
 prost = { workspace=true}
 strum="*"
@@ -20,7 +19,7 @@ strum_macros = "0.24"
 
 [dev-dependencies]
 hex = "0.4.3"
-cw-multi-test = "0.16.4"
+cw-multi-test = "0.15.1"
 cw-xcall-ibc-connection = { path="../cw-xcall-ibc-connection" }
 cw-mock-ibc-core = { path="../cw-mock-ibc-core" }
 cw-mock-dapp = { workspace=true}
@@ -29,7 +28,6 @@ cw-icon-light-client = { path="../cw-icon-light-client" }
 cw-ibc-core={path="../cw-ibc-core"}
 cw-xcall-lib={workspace=true}
 cw-xcall = {workspace=true}
-#cw-xcall={path="../cw-xcall"}
 anyhow="*"
 test-utils={path="../../../libraries/rust/test-utils"}
 

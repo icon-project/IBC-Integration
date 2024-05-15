@@ -4,6 +4,7 @@ dependencies {
     compileOnly("foundation.icon:javaee-api:$javaeeVersion")
     implementation("foundation.icon:javaee-scorex:$scorexVersion")
     implementation project(':lib')
+    implementation project(':proto-lib')
     implementation project(':score-util')
     implementation project(':ibc')
 

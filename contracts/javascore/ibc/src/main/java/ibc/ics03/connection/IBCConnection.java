@@ -1,28 +1,35 @@
 package ibc.ics03.connection;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.List;
 
-import ibc.icon.interfaces.ILightClient;
-import ibc.icon.score.util.ByteUtil;
-import ibc.icon.score.util.Logger;
-import ibc.icon.structs.messages.MsgConnectionOpenAck;
-import ibc.icon.structs.messages.MsgConnectionOpenConfirm;
-import ibc.icon.structs.messages.MsgConnectionOpenInit;
-import ibc.icon.structs.messages.MsgConnectionOpenTry;
-import ibc.ics02.client.IBCClient;
-import ibc.ics24.host.IBCCommitment;
 import icon.proto.core.client.Height;
 import icon.proto.core.connection.ConnectionEnd;
 import icon.proto.core.connection.Counterparty;
 import icon.proto.core.connection.Version;
+import ibc.core.commitment.v1.MerklePrefix;
+import ibc.icon.score.util.ByteUtil;
+import ibc.icon.score.util.Logger;
+import ibc.ics02.client.IBCClient;
+import ibc.ics24.host.IBCCommitment;
+import ibc.ics24.host.IBCHost;
+import icon.ibc.interfaces.ILightClient;
+import icon.ibc.structs.messages.MsgConnectionOpenAck;
+import icon.ibc.structs.messages.MsgConnectionOpenConfirm;
+import icon.ibc.structs.messages.MsgConnectionOpenInit;
+import icon.ibc.structs.messages.MsgConnectionOpenTry;
 import score.Context;
 import scorex.util.ArrayList;
 
 public class IBCConnection extends IBCClient {
     public static final String v1Identifier = "1";
     public static final List<String> supportedV1Features = List.of("ORDER_ORDERED", "ORDER_UNORDERED");
+
+    public static final MerklePrefix ICS08PREFIX = new MerklePrefix();
+    static {
+        ICS08PREFIX.setKeyPrefix("ibc".getBytes());
+
+    }
 
     Logger logger = new Logger("ibc-core");
 
@@ -67,6 +74,9 @@ public class IBCConnection extends IBCClient {
         Counterparty expectedCounterparty = new Counterparty();
         expectedCounterparty.setClientId(msg.getClientId());
         expectedCounterparty.setConnectionId("");
+        if (IBCCommitment.getHashType(msg.getClientId()) == IBCHost.HashType.ICS08.type) {
+            expectedCounterparty.setPrefix(ICS08PREFIX);
+        }
 
         ConnectionEnd expectedConnection = new ConnectionEnd();
         expectedConnection.setClientId(counterparty.getClientId());
@@ -108,6 +118,9 @@ public class IBCConnection extends IBCClient {
         Counterparty expectedCounterparty = new Counterparty();
         expectedCounterparty.setClientId(connection.getClientId());
         expectedCounterparty.setConnectionId(msg.getConnectionId());
+        if (IBCCommitment.getHashType(connection.getClientId()) == IBCHost.HashType.ICS08.type) {
+            expectedCounterparty.setPrefix(ICS08PREFIX);
+        }
 
         ConnectionEnd expectedConnection = new ConnectionEnd();
         expectedConnection.setClientId(connection.getCounterparty().getClientId());
@@ -150,6 +163,9 @@ public class IBCConnection extends IBCClient {
         Counterparty expectedCounterparty = new Counterparty();
         expectedCounterparty.setClientId(connection.getClientId());
         expectedCounterparty.setConnectionId(msg.getConnectionId());
+        if (IBCCommitment.getHashType(connection.getClientId()) == IBCHost.HashType.ICS08.type) {
+            expectedCounterparty.setPrefix(ICS08PREFIX);
+        }
 
         ConnectionEnd expectedConnection = new ConnectionEnd();
         expectedConnection.setClientId(connection.getCounterparty().getClientId());

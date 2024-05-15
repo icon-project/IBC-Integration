@@ -1,0 +1,17 @@
+version = '0.1.0'
+
+apply plugin: 'java-library'
+
+optimizedJar.enabled = false
+
+dependencies {
+    compileOnly("foundation.icon:javaee-api:$javaeeVersion")
+    implementation("foundation.icon:javaee-scorex:$scorexVersion")
+    implementation project(':score-util')
+
+    compileOnly("foundation.icon:javaee-score-client:$scoreClientVersion")
+    annotationProcessor("foundation.icon:javaee-score-client:$scoreClientVersion")
+    compileOnly("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+    compileOnly("foundation.icon:icon-sdk:$iconsdkVersion")
+
+}

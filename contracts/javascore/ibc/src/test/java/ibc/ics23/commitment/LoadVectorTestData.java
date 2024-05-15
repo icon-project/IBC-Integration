@@ -2,8 +2,7 @@ package ibc.ics23.commitment;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import icon.proto.core.commitment.CommitmentProof;
-import icon.proto.core.commitment.ProofSpec;
+import cosmos.ics23.v1.*;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -18,7 +18,9 @@ use setup::{
     init_xcall_app_contract, init_xcall_ibc_connection_contract, setup_context, TestContext,
     COUNTERPARTY_NID, PORT,
 };
-use test_utils::{get_event, get_event_name, load_raw_payloads};
+use test_utils::load_raw_payloads;
+
+use crate::setup::{get_event, get_event_name};
 
 fn setup_test(payload_file: &str) -> TestContext {
     let integration_data = load_raw_payloads(payload_file);
@@ -440,7 +442,7 @@ fn test_icon_to_arcway_handshake() -> TestContext {
     assert!(response.is_ok());
     println!("Create Client OK");
     let client_id = get_client_id(&response.unwrap());
-    println!("Clientid is {}", client_id);
+    println!("Clientid is {client_id}");
 
     let result = call_connection_open_try(&mut ctx);
     println!("Conn Open Try Ok {:?}", &result);
@@ -494,7 +496,7 @@ fn test_archway_to_icon_handshake() -> TestContext {
     assert!(response.is_ok());
     println!("Create Client OK");
     let client_id = get_client_id(&response.unwrap());
-    println!("Clientid is {}", client_id);
+    println!("Clientid is {client_id}");
 
     let result = call_connection_open_init(&mut ctx);
 

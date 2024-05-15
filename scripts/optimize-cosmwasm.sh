@@ -9,7 +9,7 @@ RUSTC_VERS="1.69.0"
 
 MAX_WASM_SIZE=800 # 800 KB
 
-PROJECTS=("cw-common" "cw-ibc-core" "cw-icon-light-client" "cw-integration" "cw-mock-ibc-core" "cw-xcall-ibc-connection")
+PROJECTS=("cw-common" "cw-ibc-core" "cw-icon-light-client" "cw-integration" "cw-mock-ibc-core" "cw-xcall-ibc-connection" "cw-wasm-light-client")
 
 
 # Install wasm-opt binary
@@ -36,7 +36,7 @@ cargo clean
 rustup target add wasm32-unknown-unknown
 cargo install cosmwasm-check@1.4.1 --locked
 
-RUSTFLAGS='-C link-arg=-s' cargo build --workspace --exclude test-utils --release --lib --target wasm32-unknown-unknown
+RUSTFLAGS='-C link-arg=-s' cargo build --workspace --exclude cw-integration --release --lib --target wasm32-unknown-unknown
 for WASM in ./target/wasm32-unknown-unknown/release/*.wasm; do
   NAME=$(basename "$WASM" .wasm)${SUFFIX}.wasm
   echo "Creating intermediate hash for $NAME ..."
@@ -49,6 +49,7 @@ done
 cosmwasm-check artifacts/archway/cw_ibc_core.wasm
 cosmwasm-check artifacts/archway/cw_icon_light_client.wasm
 cosmwasm-check artifacts/archway/cw_xcall_ibc_connection.wasm
+cosmwasm-check artifacts/archway/cw_wasm_light_client.wasm
 
 
 # Update version

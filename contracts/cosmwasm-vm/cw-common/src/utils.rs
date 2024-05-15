@@ -4,7 +4,7 @@ macro_rules! cw_println {
         use cosmwasm_std::Api;
         let res = std::fmt::format(format_args!($($arg)*));
         debug_print::debug_println!("{}",res);
-        $f.api.debug(&res);
+        $f.debug(&res);
     }};
 }
 
@@ -16,6 +16,6 @@ mod tests {
     fn test_print_macro() {
         let q = 10;
         let mut deps = mock_dependencies();
-        cw_println!(deps.as_mut(), "hello {}", q);
+        cw_println!(deps.as_mut().api, "hello {}", q);
     }
 }

@@ -11,6 +11,25 @@ public class IBCHost extends IBCStore {
     private static final String TAG = "IBCHOST: ";
     private static final Address chainScore = Address.fromString("cx0000000000000000000000000000000000000000");
 
+    public enum HashType {
+        WASM(0),
+        ICS08(1);
+
+        public final int type;
+        HashType(int type){ this.type = type; }
+
+        public int type() { return type; }
+
+        static public HashType of(int type) {
+            for(HashType t : values()) {
+                if (t.type == type) {
+                    return t;
+                }
+            }
+            throw new IllegalArgumentException();
+        }
+    }
+
     /***
      * claimCapability allows the IBC app module to claim a capability that core IBC
      * passes to it

@@ -12,26 +12,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import ibc.icon.structs.messages.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 
+import icon.proto.core.channel.Channel;
+import icon.proto.core.channel.Packet;
+import icon.proto.core.client.Height;
+import ibc.core.commitment.v1.MerklePrefix;
+import icon.proto.core.connection.Version;
 import foundation.icon.jsonrpc.model.TransactionResult;
 import foundation.icon.score.client.DefaultScoreClient;
 import foundation.icon.score.client.Wallet;
 import ibc.icon.integration.ScoreIntegrationTest;
-import ibc.icon.interfaces.IIBCChannelHandshakeScoreClient;
-import ibc.icon.interfaces.IIBCClientScoreClient;
-import ibc.icon.interfaces.IIBCConnectionScoreClient;
-import ibc.icon.interfaces.IIBCHandlerScoreClient;
-import ibc.icon.interfaces.IIBCHostScoreClient;
-import ibc.icon.interfaces.IIBCPacketScoreClient;
-import icon.proto.core.channel.Channel;
-import icon.proto.core.channel.Packet;
-import icon.proto.core.client.Height;
-import icon.proto.core.connection.MerklePrefix;
-import icon.proto.core.connection.Version;
+import icon.ibc.interfaces.IIBCChannelHandshakeScoreClient;
+import icon.ibc.interfaces.IIBCClientScoreClient;
+import icon.ibc.interfaces.IIBCConnectionScoreClient;
+import icon.ibc.interfaces.IIBCHandlerScoreClient;
+import icon.ibc.interfaces.IIBCHostScoreClient;
+import icon.ibc.interfaces.IIBCPacketScoreClient;
+import icon.ibc.structs.messages.*;
 import score.Address;
 
 public class IBCIntegrationTest implements ScoreIntegrationTest {
@@ -64,7 +64,7 @@ public class IBCIntegrationTest implements ScoreIntegrationTest {
     @Test
     @Order(0)
     void registerClient() {
-        getClientInterface(owner).registerClient(clientType, mockLightClient._address());
+        getClientInterface(owner).registerClient(clientType, mockLightClient._address(), 0);
     }
 
     @Test

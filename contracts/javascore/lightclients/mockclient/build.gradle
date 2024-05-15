@@ -6,6 +6,7 @@ dependencies {
     implementation project(':lib')
     implementation project(':score-util')
     implementation project(':ibc')
+    implementation project(':proto-lib')
 
 
     testImplementation 'com.google.protobuf:protobuf-javalite:3.13.0'

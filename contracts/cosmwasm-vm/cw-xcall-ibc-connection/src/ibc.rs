@@ -129,7 +129,7 @@ pub fn ibc_packet_receive(
 ) -> Result<CwReceiveResponse, Never> {
     let call_service = CwIbcConnection::default();
     let _channel = msg.packet.dest.channel_id.clone();
-    cw_println!(deps, "[IBCConnection]: Packet Received");
+    cw_println!(deps.api, "[IBCConnection]: Packet Received");
     let result = call_service.do_packet_receive(deps, msg.packet, msg.relayer);
 
     match result {

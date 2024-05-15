@@ -21,13 +21,13 @@ import com.iconloop.score.test.Score;
 import com.iconloop.score.test.ServiceManager;
 import com.iconloop.score.test.TestBase;
 
-import ibc.icon.interfaces.ILightClient;
-import ibc.icon.interfaces.IIBCModule;
-import ibc.icon.interfaces.IIBCModuleScoreInterface;
-import ibc.icon.interfaces.ILightClientScoreInterface;
-import ibc.icon.structs.messages.*;
 import ibc.icon.test.MockContract;
 import ibc.ics03.connection.IBCConnection;
+import icon.ibc.interfaces.IIBCModule;
+import icon.ibc.interfaces.IIBCModuleScoreInterface;
+import icon.ibc.interfaces.ILightClient;
+import icon.ibc.interfaces.ILightClientScoreInterface;
+import icon.ibc.structs.messages.*;
 import test.proto.core.channel.ChannelOuterClass.Channel;
 import test.proto.core.channel.ChannelOuterClass.Packet;
 import test.proto.core.client.Client.Height;
@@ -95,7 +95,7 @@ public class IBCHandlerTestBase extends TestBase {
 
     void createClient() {
         // Arrange
-        handler.invoke(owner, "registerClient", clientType, lightClient.getAddress());
+        handler.invoke(owner, "registerClient", clientType, lightClient.getAddress(), 0);
         MsgCreateClient msg = new MsgCreateClient();
         msg.setClientState(new byte[0]);
         msg.setConsensusState(new byte[0]);

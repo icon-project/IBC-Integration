@@ -2,7 +2,7 @@ package ibc.ics23.commitment;
 
 import ibc.icon.score.util.ByteUtil;
 import ibc.icon.score.util.Proto;
-import icon.proto.core.commitment.*;
+import cosmos.ics23.v1.*;
 import score.Context;
 import score.UserRevertedException;
 
@@ -42,7 +42,7 @@ public class Ops {
     public static byte[] doHash(int hashOp, byte[] preImage) {
         if (hashOp == HashOp.SHA256) {
             return Context.hash("sha-256", preImage);
-        } else if (hashOp == HashOp.KECCAK) {
+        } else if (hashOp == HashOp.KECCAK256) {
             return Context.hash("keccak-256", preImage);
         } else if (hashOp == HashOp.RIPEMD160) {
             throw new UserRevertedException("RIPEMD160 hash not supported");
