@@ -39,6 +39,11 @@ e2e_test() {
   go test -v ./test/e2e -timeout 0 -count=1
 }
 
+e2e_hopchain() {
+  echo "Running e2e hopchain test..."
+  go test -v ./test/e2e-hopchain -timeout 0 -count=1
+}
+
 e2e_demo() {
   echo "Configuring e2e demo..."
   export PRESERVE_DOCKER=true && go test -v ./test/e2e-demo -testify.m TestSetup
@@ -116,6 +121,9 @@ echo "running $test......"
 case "$test" in
 "e2e")
   e2e_test
+  ;;
+"e2e-hopchain")
+  e2e_hopchain
   ;;
 "e2e-demo")
   e2e_demo

@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+	"testing"
+
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/testsuite"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"github.com/stretchr/testify/assert"
-	"strconv"
-	"strings"
-	"testing"
 )
 
 type XCallTestSuite struct {
@@ -25,7 +26,8 @@ func (x *XCallTestSuite) TextXCall() {
 	ctx := context.WithValue(context.TODO(), "testcase", testcase)
 	x.Require().NoError(x.SetupXCall(ctx, portId, 100), "fail to setup xcall")
 	x.Require().NoError(x.DeployXCallMockApp(ctx, portId), "fail to deploy xcall dapp")
-	chainA, chainB := x.GetChains()
+	createdChains := x.GetChains()
+	chainA, chainB := createdChains[0], createdChains[1]
 	x.T.Run("xcall one way message chainA-chainB", func(t *testing.T) {
 
 		x.testOneWayMessage(ctx, t, chainA, chainB)
@@ -62,7 +64,8 @@ func (x *XCallTestSuite) TestXCallPacketDrop() {
 	ctx := context.WithValue(context.TODO(), "testcase", testcase)
 	x.Require().NoError(x.SetupXCall(ctx, portId, 1), "fail to setup xcall")
 	x.Require().NoError(x.DeployXCallMockApp(ctx, portId), "fail to deploy xcall dapp")
-	chainA, chainB := x.GetChains()
+	createdChains := x.GetChains()
+	chainA, chainB := createdChains[0], createdChains[1]
 	x.T.Run("xcall packet drop chainA-chainB", func(t *testing.T) {
 		x.testPacketDrop(ctx, t, chainA, chainB)
 	})

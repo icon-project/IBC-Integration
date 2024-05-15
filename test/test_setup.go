@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/client"
+	"github.com/icon-project/ibc-integration/test/chains"
 	"github.com/icon-project/ibc-integration/test/internal/dockerutil"
 	"github.com/icon-project/ibc-integration/test/internal/version"
 	it "github.com/strangelove-ventures/interchaintest/v7"
@@ -76,8 +77,7 @@ func StartChainPair(
 		AddChain(dstChain).
 		AddRelayer(relayerImpl, "r").
 		AddLink(InterchainLink{
-			Chain1:  srcChain,
-			Chain2:  dstChain,
+			Chains:  []chains.Chain{srcChain.(chains.Chain), dstChain.(chains.Chain)},
 			Relayer: relayerImpl,
 			Path:    testPathName,
 		})

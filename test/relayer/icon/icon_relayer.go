@@ -35,7 +35,7 @@ func NewICONRelayer(log *zap.Logger, testName string, cli *client.Client, networ
 			c.extraStartFlags = o.Flags
 		}
 	}
-	dr, err := relayer.NewDockerRelayer(context.TODO(), log, testName, cli, networkID, c, options...)
+	dr, err := relayer.NewDockerRelayer(context.TODO(), log, testName, cli, networkID, c, nil, false, options...)
 	if err != nil {
 		panic(err) // TODO: return
 	}
@@ -68,6 +68,15 @@ type ArchRelayerChainConfigValue struct {
 	BlockInterval     int    `json:"block-interval"`
 }
 
+type CosmosRelayerChainConfigValue struct {
+	rly.CosmosRelayerChainConfigValue
+	KeyDir        string `json:"key-directory"`
+	Key           string `json:"key"`
+	MinGasAmount  int    `json:"min-gas-amount"`
+	CoinType      int    `json:"coin-type"`
+	BlockInterval int    `json:"block-interval"`
+}
+
 type ICONRelayerChainConfig struct {
 	Type  string                      `json:"type"`
 	Value ICONRelayerChainConfigValue `json:"value"`
@@ -76,6 +85,11 @@ type ICONRelayerChainConfig struct {
 type ArchRelayerChainConfig struct {
 	Type  string                      `json:"type"`
 	Value ArchRelayerChainConfigValue `json:"value"`
+}
+
+type CosmosRelayerChainConfig struct {
+	Type  string                        `json:"type"`
+	Value CosmosRelayerChainConfigValue `json:"value"`
 }
 
 const (
@@ -94,7 +108,6 @@ func Capabilities() map[relayer.Capability]bool {
 
 func ChainConfigToICONRelayerChainConfig(chainConfig ibc.ChainConfig, keyName, rpcAddr, gprcAddr string) ICONRelayerChainConfig {
 	chainType := chainConfig.Type
-	fmt.Println(chainConfig)
 	return ICONRelayerChainConfig{
 		Type: chainType,
 		Value: ICONRelayerChainConfigValue{
@@ -251,10 +264,10 @@ func (commander) UpdateClients(pathName, homeDir string) []string {
 	}
 }
 
-func (commander) ConfigContent(ctx context.Context, cfg ibc.ChainConfig, keyName, rpcAddr, grpcAddr string) ([]byte, error) {
+func (commander) ConfigContent(ctx context.Context, cfg ibc.ChainConfig, keyName, rpcAddr, grpcAddr string, relayerAccounts map[string]string) ([]byte, error) {
 
 	switch chainType := cfg.Type; chainType {
-	case "cosmos", "wasm":
+	case "wasm":
 		cosmosRelayerChainConfig := rly.ChainConfigToCosmosRelayerChainConfig(cfg, keyName, rpcAddr, grpcAddr)
 		coinType, err := strconv.Atoi(cfg.CoinType)
 		archRelayerChainConfig := &ArchRelayerChainConfig{
@@ -269,7 +282,23 @@ func (commander) ConfigContent(ctx context.Context, cfg ibc.ChainConfig, keyName
 				BlockInterval:                 cfg.ConfigFileOverrides["block-interval"].(int),
 			},
 		}
-
+		jsonBytes, err := json.Marshal(archRelayerChainConfig)
+		if err != nil {
+			return nil, err
+		}
+		return jsonBytes, nil
+	case "cosmos":
+		cosmosRelayerChainConfig := rly.ChainConfigToCosmosRelayerChainConfig(cfg, keyName, rpcAddr, grpcAddr)
+		coinType, err := strconv.Atoi(cfg.CoinType)
+		archRelayerChainConfig := &CosmosRelayerChainConfig{
+			Type: "cosmos",
+			Value: CosmosRelayerChainConfigValue{
+				CosmosRelayerChainConfigValue: cosmosRelayerChainConfig.Value,
+				KeyDir:                        "/home/relayer/.relayer/keys/" + cfg.ChainID,
+				MinGasAmount:                  1000000,
+				CoinType:                      coinType,
+			},
+		}
 		jsonBytes, err := json.Marshal(archRelayerChainConfig)
 		if err != nil {
 			return nil, err

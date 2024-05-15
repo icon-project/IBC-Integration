@@ -1,0 +1,94 @@
+global:
+    api-listen-addr: :5183
+    timeout: 10s
+    memo: ""
+    light-cache-size: 20
+chains:
+    ibc-icon:
+        type: icon
+        value:
+            key-directory: /home/relayer/.relayer/keys
+            chain-id: ibc-icon
+            rpc-addr: https://tt.net.solidwallet.io/jvm-rpc/api/v3/
+            timeout: 10s
+            keystore: godwallet
+            password: gochain
+            icon-network-id: 3
+            btp-network-id: 47
+            btp-network-type-id: 1
+            start-height: 0
+            ibc-handler-address: cxc24599dcbbad2f95c5a6da83b163d94b7704544c
+            first-retry-block-after: 0
+            block-interval: 2000
+            revision-number: 0
+    localnet-1:
+        type: cosmos
+        value:
+            key-directory: /home/relayer/.relayer/keys/localnet-1
+            key: fd
+            chain-id: localnet-1
+            rpc-addr: https://tt.net.solidwallet.io:443/archway-rpc
+            account-prefix: archway
+            keyring-backend: test
+            gas-adjustment: 1.3
+            gas-prices: 0.00stake
+            min-gas-amount: 1000000
+            max-gas-amount: 0
+            debug: true
+            timeout: 10s
+            block-timeout: ""
+            output-format: json
+            sign-mode: direct
+            extra-codecs: []
+            coin-type: 118
+            signing-algorithm: ""
+            broadcast-mode: batch
+            min-loop-duration: 0s
+    test-1:
+        type: cosmos
+        value:
+            key-directory: /home/relayer/.relayer/keys/test-1
+            key: default
+            chain-id: test-1
+            rpc-addr: https://tt.net.solidwallet.io:443/centauri2-rpc/
+            account-prefix: centauri
+            keyring-backend: test
+            gas-adjustment: 1.3
+            gas-prices: 0.00stake
+            min-gas-amount: 1000000
+            max-gas-amount: 0
+            debug: true
+            timeout: 10s
+            block-timeout: ""
+            output-format: json
+            sign-mode: direct
+            extra-codecs: []
+            coin-type: 118
+            signing-algorithm: ""
+            broadcast-mode: batch
+            min-loop-duration: 0s
+paths:
+    centauri-archway:
+        src:
+            chain-id: test-1
+            client-id: 07-tendermint-46
+            connection-id: connection-36
+        dst:
+            chain-id: localnet-1
+            client-id: 07-tendermint-7
+            connection-id: connection-4
+        src-channel-filter:
+            rule: ""
+            channel-list: []
+    centauri-icon:
+        src:
+            chain-id: test-1
+            client-id: 08-wasm-45
+            connection-id: connection-35
+        dst:
+            chain-id: ibc-icon
+            client-id: ics08-tendermint-0
+            connection-id: connection-0
+        src-channel-filter:
+            rule: ""
+            channel-list: []

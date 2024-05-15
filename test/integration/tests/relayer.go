@@ -32,7 +32,8 @@ func (r *RelayerTestSuite) TestClientCreation(ctx context.Context, relayer ibc.R
 	})
 
 	r.T.Run("should able to client for an existing pat", func(t *testing.T) {
-		chainA, chainB := r.GetChains()
+		createdChains := r.GetChains()
+		chainA, chainB := createdChains[0], createdChains[1]
 		pathName := r.GeneratePathName()
 
 		var err error
@@ -64,7 +65,8 @@ func (r *RelayerTestSuite) TestClientCreation(ctx context.Context, relayer ibc.R
 }
 
 func (r *RelayerTestSuite) TestConnection(ctx context.Context, relayer ibc.Relayer) {
-	chainA, chainB := r.GetChains()
+	createdChains := r.GetChains()
+	chainA, chainB := createdChains[0], createdChains[1]
 	eRep := r.GetRelayerExecReporter()
 	pathName := r.GeneratePathName()
 	T := r.T
@@ -107,7 +109,8 @@ func (r *RelayerTestSuite) TestConnection(ctx context.Context, relayer ibc.Relay
 }
 
 func (r *RelayerTestSuite) TestRelayer(ctx context.Context, relayer ibc.Relayer) {
-	chainA, chainB := r.GetChains()
+	createdChains := r.GetChains()
+	chainA, chainB := createdChains[0], createdChains[1]
 	eRep := r.GetRelayerExecReporter()
 	pathName := r.GeneratePathName()
 

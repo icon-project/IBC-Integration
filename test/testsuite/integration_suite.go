@@ -22,7 +22,8 @@ import (
 )
 
 func (s *E2ETestSuite) SetupMockDApp(ctx context.Context, portId string) error {
-	chainA, chainB := s.GetChains()
+	createdChains := s.GetChains()
+	chainA, chainB := createdChains[0], createdChains[1]
 	ctx = context.WithValue(ctx, chains.ContractName{}, chains.ContractName{ContractName: "mockdapp"})
 	ibcHostChainA := chainA.GetIBCAddress("ibc")
 	ctx = context.WithValue(ctx, chains.InitMessageKey("init-msg"), chains.InitMessage{
