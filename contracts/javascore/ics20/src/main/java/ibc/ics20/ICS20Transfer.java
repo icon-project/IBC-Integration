@@ -3,7 +3,6 @@ package ibc.ics20;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
-
 import icon.proto.core.channel.Channel;
 import icon.proto.core.channel.Packet;
 import icon.proto.core.client.Height;
@@ -351,6 +350,7 @@ public class ICS20Transfer implements IIBCModule {
      */
     @External
     public void onTimeoutPacket(byte[] packet, Address relayer) {
+        onlyIBC();
         Packet packetDb = Packet.decode(packet);
         refundTokens(packetDb);
     }
