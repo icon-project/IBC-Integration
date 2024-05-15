@@ -126,7 +126,7 @@ fn test_validate_close_confirm_channel() {
 
     mock_lightclient_query(test_context.mock_queries, &mut deps);
     let res = contract.validate_channel_close_confirm(deps.as_mut(), info, &msg);
-    println!("{:?}", res);
+    println!("{res:?}");
     assert!(res.is_ok());
     assert_eq!(
         res.unwrap().messages[0].id,

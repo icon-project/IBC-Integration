@@ -13,7 +13,7 @@ fn test_store_module_by_port() {
     let module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
     let port_id = PortId::default();
-    ctx.store_module_by_port(&mut deps.storage, &port_id.clone(), module_id.clone())
+    ctx.store_module_by_port(&mut deps.storage, &port_id, module_id.clone())
         .unwrap();
 
     let result = ctx.lookup_module_by_port(&mut deps.storage, &port_id);

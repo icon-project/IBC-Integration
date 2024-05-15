@@ -3,13 +3,12 @@ package ibc.mockclient;
 import java.math.BigInteger;
 import java.util.Map;
 
+import icon.proto.core.client.Height;
 import score.Address;
 import score.Context;
 import score.annotation.External;
 import score.annotation.Optional;
-import ibc.icon.interfaces.ILightClient;
-import icon.proto.core.client.Height;
-
+import icon.ibc.interfaces.ILightClient;
 import ibc.ics24.host.IBCCommitment;
 
 public class MockClient implements ILightClient {

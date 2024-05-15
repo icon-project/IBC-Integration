@@ -3,10 +3,10 @@ package ibc.mockapp;
 import java.math.BigInteger;
 import java.util.Map;
 
-import ibc.icon.interfaces.IIBCModule;
-import icon.proto.core.client.Height;
 import icon.proto.core.channel.Packet;
 import icon.proto.core.channel.Channel.Counterparty;
+import icon.proto.core.client.Height;
+import icon.ibc.interfaces.IIBCModule;
 import score.Address;
 import score.Context;
 import score.VarDB;

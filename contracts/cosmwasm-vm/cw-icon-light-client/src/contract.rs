@@ -4,6 +4,7 @@ use common::traits::AnyTypes;
 use cosmwasm_schema::cw_serde;
 use cw_common::ibc_types::IbcHeight;
 use cw_common::to_checked_address;
+use cw_light_client_common::traits::IQueryHandler;
 
 #[cfg(feature = "mock")]
 use crate::mock_client::MockClient;
@@ -21,10 +22,10 @@ use cw_common::raw_types::Any;
 use cw_common::types::VerifyChannelState;
 
 use crate::constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH, HEIGHT};
-use crate::error::ContractError;
+use crate::context::CwContext;
 use crate::light_client::IconClient;
-use crate::state::CwContext;
 use crate::traits::{Config, IContext, ILightClient};
+use crate::ContractError;
 use cw_common::client_msg::{
     ExecuteMsg, InstantiateMsg, LightClientPacketMessage, QueryMsg, VerifyClientConsensusState,
     VerifyClientFullState, VerifyConnectionState,
@@ -553,6 +554,7 @@ mod tests {
     };
     use common::traits::AnyTypes;
     use cw_common::client_msg::ExecuteMsg;
+    use cw_light_client_common::traits::IQueryHandler;
     use prost::Message;
 
     use super::{execute, instantiate, Config, InstantiateMsg, CONTRACT_NAME, CONTRACT_VERSION};
@@ -950,7 +952,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Std(NotFound { kind: \"alloc::vec::Vec<u8>")]
+    #[should_panic(expected = "ClientStateNotFound(\"another_client\")")]
     fn test_query_latest_consensus_state_fail() {
         let start_header = &get_test_headers()[0];
         let client_id = "test_client".to_string();

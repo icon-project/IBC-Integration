@@ -64,7 +64,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
     ) -> Result<cosmwasm_std::Response, ContractError> {
         // connection hops should be 1
         cw_println!(
-            deps,
+            deps.api,
             "inside validate channel open init: input parameter: {:?}",
             message
         );
@@ -96,7 +96,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let contract_address =
             self.lookup_modules(deps.storage, message.port_id.clone().as_bytes().to_vec())?;
 
-        cw_println!(deps, "contract address is : {:?} ", contract_address);
+        cw_println!(deps.api, "contract address is : {:?} ", contract_address);
 
         channel_end.state = State::Init;
         self.store_channel_end(deps.storage, &src_port, &src_channel, &channel_end)?;
@@ -165,12 +165,12 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
                 },
             });
         }
-        cw_println!(deps, "Reached in channel open try");
+        cw_println!(deps.api, "Reached in channel open try");
         let connection_id = channel_end.connection_hops[0].clone();
         let connection_end = self.connection_end(deps.storage, &connection_id)?;
 
         channel_open_try_msg_validate(&channel_end, &connection_end)?;
-        cw_println!(deps, "channel open try msg validate ");
+        cw_println!(deps.api, "channel open try msg validate ");
 
         let counter = self.channel_counter(deps.storage)?;
         let dest_channel = ChannelId::new(counter); // creating new channel_id
@@ -180,7 +180,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let source_channel = channel_end.remote.channel_id.clone().unwrap();
 
         cw_println!(
-            deps,
+            deps.api,
             "stoed: channel id: {:?}  portid :{:?} channel_end :{:?}",
             &dest_channel,
             &dest_port,
@@ -209,7 +209,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             });
         }
 
-        cw_println!(deps, "after frozen check");
+        cw_println!(deps.api, "after frozen check");
         let expected_channel_end = ChannelEnd::new(
             State::Init,
             *channel_end.ordering(),
@@ -225,7 +225,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             proof_height: proof_height.to_string(),
             counterparty_prefix: prefix_on_a.clone().into_vec(),
             proof: message.proof_init.clone(),
-            root: consensus_state.clone().root().into_vec(),
+            root: consensus_state.root().into_vec(),
             counterparty_chan_end_path: chan_end_path_on_a,
             expected_counterparty_channel_end: vector,
             client_id: connection_end.client_id().to_string(),
@@ -236,7 +236,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         client.verify_channel(deps.as_ref(), verify_channel_state)?;
 
         let contract_address = self.lookup_modules(deps.storage, dest_port.as_bytes().to_vec())?;
-        cw_println!(deps, "contract addres is  {:?}", contract_address);
+        cw_println!(deps.api, "contract addres is  {:?}", contract_address);
 
         channel_end.state = State::TryOpen;
         self.store_channel_end(deps.storage, &dest_port, &dest_channel, &channel_end)?;
@@ -266,7 +266,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let data = cw_common::xcall_connection_msg::ExecuteMsg::IbcChannelOpen { msg: sub_message };
 
         let data = to_binary(&data).map_err(ContractError::Std)?;
-        cw_println!(deps, "after converting data to binary ");
+        cw_println!(deps.api, "after converting data to binary ");
 
         let on_chan_open_try = create_channel_submesssage(
             contract_address,
@@ -356,7 +356,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             proof_height: proof_height.to_string(),
             counterparty_prefix: counterparty_prefix.clone().into_vec(),
             proof: message.proof_try.clone(),
-            root: consensus_state.clone().root().into_vec(),
+            root: consensus_state.root().into_vec(),
             counterparty_chan_end_path: chan_end_path_on_b,
             expected_counterparty_channel_end: vector,
             client_id: client_id.to_string(),

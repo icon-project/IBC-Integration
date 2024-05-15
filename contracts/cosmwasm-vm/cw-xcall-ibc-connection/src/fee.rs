@@ -54,3 +54,62 @@ impl<'a> CwIbcConnection<'a> {
         self.get_unclaimed_packet_fee(store, &nid, &address)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use cosmwasm_std::testing::{mock_dependencies, mock_info};
+    use cosmwasm_std::Response;
+    use cw_xcall_lib::network_address::NetId;
+
+    use super::CwIbcConnection;
+
+    #[test]
+    #[should_panic(expected = "NoFeesAccrued")]
+    fn test_claim_fees_on_zero_unclaimed_fee() {
+        let mut deps = mock_dependencies();
+        let contract = CwIbcConnection::new();
+        let info = mock_info("relayer", &[]);
+
+        let nid = NetId::from("default".to_string());
+
+        contract
+            .claim_fees(deps.as_mut(), info, nid, "relayer".to_string())
+            .unwrap();
+    }
+
+    #[test]
+    fn test_set_fee() {
+        let mut deps = mock_dependencies();
+        let contract = CwIbcConnection::new();
+
+        let nid = NetId::from("default".to_string());
+
+        let res = contract
+            .set_fee(deps.as_mut().storage, nid, 1_000, 1_000)
+            .unwrap();
+
+        assert_eq!(res, Response::new())
+    }
+
+    #[test]
+    fn test_reset_unclaimed_ack_fees() {
+        let mut deps = mock_dependencies();
+        let contract = CwIbcConnection::new();
+
+        let nid = NetId::from("default".to_string());
+
+        contract
+            .add_unclaimed_ack_fees(deps.as_mut().storage, &nid, 1, 10)
+            .unwrap();
+
+        let ack_fee = contract.get_unclaimed_ack_fee(deps.as_ref().storage, nid.as_str(), 1);
+        assert_eq!(ack_fee, 10);
+
+        contract
+            .reset_unclaimed_ack_fees(deps.as_mut().storage, nid.as_str(), 1)
+            .unwrap();
+
+        let ack_fee = contract.get_unclaimed_ack_fee(deps.as_ref().storage, nid.as_str(), 1);
+        assert_eq!(ack_fee, 0)
+    }
+}

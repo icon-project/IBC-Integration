@@ -27,12 +27,8 @@ impl<'a> CwIbcCoreContext<'a> {
         conn_id: &ConnectionId,
         conn_end: &ConnectionEnd,
     ) -> Result<(), ContractError> {
-        let data = conn_end
-            .encode_vec()
-            .map_err(|error| ConnectionError::Other {
-                description: error.to_string(),
-            })
-            .map_err(Into::<ContractError>::into)?;
+        let data = conn_end.encode_vec().unwrap();
+
         match self.ibc_store().connections().save(store, conn_id, &data) {
             Ok(_) => Ok(()),
             Err(error) => Err(ContractError::Std(error)),
@@ -287,14 +283,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         let connection_commit_key = commitment::connection_commitment_key(connection_id);
 
-        let connection_end_bytes =
-            connection_end
-                .encode_vec()
-                .map_err(|error| ContractError::IbcConnectionError {
-                    error: ConnectionError::Other {
-                        description: error.to_string(),
-                    },
-                })?;
+        let connection_end_bytes = connection_end.encode_vec().unwrap();
 
         let commitment_bytes = keccak256(&connection_end_bytes).to_vec();
 

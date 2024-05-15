@@ -62,7 +62,10 @@ impl<'a> CwIbcConnection<'a> {
             gas_limit: None,
             reply_on: cosmwasm_std::ReplyOn::Always,
         };
-        cw_println!(deps, "{LOG_PREFIX} Packet Forwarded To IBCHost {ibc_host} ");
+        cw_println!(
+            deps.api,
+            "{LOG_PREFIX} Packet Forwarded To IBCHost {ibc_host} "
+        );
         Ok(submessage)
     }
 
@@ -150,7 +153,7 @@ mod tests {
         let packet = RawPacket::default();
 
         let res = connection.call_host_send_message(deps.as_mut(), packet.clone());
-        println!("{:?}", res);
+        println!("{res:?}");
         assert!(res.is_ok());
 
         let expected_ibc_host = connection
