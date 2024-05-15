@@ -155,21 +155,9 @@ type InterchainLink struct {
 // AddLink adds the given link to the Interchain.
 // If any validation fails, AddLink panics.
 func (ic *Interchain) AddLink(link InterchainLink) *Interchain {
-	// if _, exists := ic.chains[link.Chains[0].(ibc.Chain)]; !exists {
-	// 	cfg := link.Chains[0].(ibc.Chain).Config()
-	// 	panic(fmt.Errorf("chain with name=%s and id=%s was never added to Interchain", cfg.Name, cfg.ChainID))
-	// }
-	// if _, exists := ic.chains[link.Chains[1].(ibc.Chain)]; !exists {
-	// 	cfg := link.Chains[1].(ibc.Chain).Config()
-	// 	panic(fmt.Errorf("chain with name=%s and id=%s was never added to Interchain", cfg.Name, cfg.ChainID))
-	// }
 	if _, exists := ic.relayers[link.Relayer]; !exists {
 		panic(fmt.Errorf("relayer %v was never added to Interchain", link.Relayer))
 	}
-
-	// if link.Chains[0] == link.Chains[1] {
-	// 	panic(fmt.Errorf("chains must be different (both were %v)", link.Chains[0]))
-	// }
 
 	key := relayerPath{
 		Relayer: link.Relayer,
@@ -608,8 +596,6 @@ func (ic *Interchain) relayerChains() map[ibc.Relayer][]ibc.Chain {
 		for _, chain := range link.chains {
 			uniq[r][chain.(ibc.Chain)] = struct{}{}
 		}
-		// uniq[r][link.chains[0].(ibc.Chain)] = struct{}{}
-		// uniq[r][link.chains[1].(ibc.Chain)] = struct{}{}
 	}
 
 	// Then convert the sets to slices.
