@@ -548,13 +548,14 @@ mod tests {
 
     use crate::{
         constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH},
+        context::CwContext,
         contract::{ensure_owner, query, to_height_u64},
         query_handler::QueryHandler,
         ContractError,
     };
     use common::traits::AnyTypes;
     use cw_common::client_msg::ExecuteMsg;
-    use cw_light_client_common::traits::IQueryHandler;
+    use cw_light_client_common::{light_client::IconClient, traits::IQueryHandler};
     use prost::Message;
 
     use super::{execute, instantiate, Config, InstantiateMsg, CONTRACT_NAME, CONTRACT_VERSION};
