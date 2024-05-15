@@ -13,7 +13,7 @@ fn test_store_module_by_port() {
     let module_id =
         common::ibc::core::ics26_routing::context::ModuleId::from_str("contractaddress").unwrap();
     let port_id = PortId::default();
-    ctx.store_module_by_port(&mut deps.storage, &port_id.clone(), module_id.clone())
+    ctx.store_module_by_port(&mut deps.storage, &port_id, module_id.clone())
         .unwrap();
 
     let result = ctx.lookup_module_by_port(&mut deps.storage, &port_id);
@@ -93,4 +93,18 @@ fn channel_capability_path() {
     let result = from_utf8(&res);
     assert!(result.is_ok());
     assert_eq!("ports/defaultPort/channels/channel-0", result.unwrap())
+}
+
+#[test]
+fn test_get_all_ports() {
+    let mut deps = deps();
+    let ctx = CwIbcCoreContext::default();
+    let address = "contractaddress".to_string();
+    let port_id = PortId::default();
+
+    ctx.bind_port(&mut deps.storage, &port_id.clone(), address.clone())
+        .unwrap();
+
+    let res: Result<Vec<String>, cosmwasm_std::StdError> = ctx.get_all_ports(&deps.storage);
+    assert_eq!(res.unwrap(), vec![port_id.as_str().to_string()]);
 }

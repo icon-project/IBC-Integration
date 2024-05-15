@@ -541,7 +541,7 @@ public class PacketTest extends TestBase {
         packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
         Height timeoutHeight = new Height();
         timeoutHeight.setRevisionHeight(BigInteger.valueOf(sm.getBlock().getHeight()));
-        MsgRequestTimeoutPacket timeoutPacket=new MsgRequestTimeoutPacket();
+        MsgRequestTimeoutPacket timeoutPacket = new MsgRequestTimeoutPacket();
         basePacket.setTimeoutHeight(timeoutHeight);
         basePacket.setTimeoutTimestamp(BigInteger.valueOf(sm.getBlock().getTimestamp()));
         byte[] commitmentPath = IBCCommitment.packetReceiptCommitmentKey(basePacket.getSourcePort(),
@@ -563,7 +563,7 @@ public class PacketTest extends TestBase {
         packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
         Height timeoutHeight = new Height();
         timeoutHeight.setRevisionHeight(BigInteger.valueOf(sm.getBlock().getHeight()));
-        MsgRequestTimeoutPacket timeoutPacket=new MsgRequestTimeoutPacket();
+        MsgRequestTimeoutPacket timeoutPacket = new MsgRequestTimeoutPacket();
         basePacket.setTimeoutHeight(timeoutHeight);
         basePacket.setTimeoutTimestamp(BigInteger.valueOf(sm.getBlock().getTimestamp()));
         byte[] commitmentPath = IBCCommitment.nextSequenceRecvCommitmentKey(basePacket.getSourcePort(),
@@ -577,6 +577,67 @@ public class PacketTest extends TestBase {
         // Assert
         verify(packetSpy).sendBTPMessage(clientId,
                 ByteUtil.join(commitmentPath, Proto.encodeFixed64(basePacket.getSequence(), false)));
+    }
+
+    @Test
+    void requestTimeout_timestamp() {
+        // Arrange
+        baseChannel.setOrdering(Channel.Order.ORDER_UNORDERED);
+        packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
+        MsgRequestTimeoutPacket timeoutPacket = new MsgRequestTimeoutPacket();
+        basePacket.setTimeoutTimestamp(BigInteger.valueOf(sm.getBlock().getTimestamp()));
+        byte[] commitmentPath = IBCCommitment.packetReceiptCommitmentKey(basePacket.getSourcePort(),
+                basePacket.getSourceChannel(), basePacket.getSequence());
+        timeoutPacket.setPacket(basePacket.encode());
+        timeoutPacket.setProofHeight(new byte[0]);
+        timeoutPacket.setProof(new byte[0]);
+        // Act
+        packet.invoke(owner, "_requestTimeout", timeoutPacket);
+
+        // Assert
+        verify(packetSpy).sendBTPMessage(clientId, commitmentPath);
+    }
+
+    @Test
+    void requestTimeout_NotYetTimedOut_Timestamp() {
+        // Arrange
+        baseChannel.setOrdering(Channel.Order.ORDER_UNORDERED);
+        packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
+        MsgRequestTimeoutPacket timeoutPacket = new MsgRequestTimeoutPacket();
+        basePacket.setTimeoutTimestamp(BigInteger.valueOf(sm.getBlock().getTimestamp()).multiply(BigInteger.TWO));
+        byte[] commitmentPath = IBCCommitment.packetReceiptCommitmentKey(basePacket.getSourcePort(),
+                basePacket.getSourceChannel(), basePacket.getSequence());
+        timeoutPacket.setPacket(basePacket.encode());
+        timeoutPacket.setProofHeight(new byte[0]);
+        timeoutPacket.setProof(new byte[0]);
+        String expectedErrorMessage = "Packet has not yet timed out";
+
+        // Act
+        Executable beforeTimeout = () -> packet.invoke(owner, "_requestTimeout", timeoutPacket);
+        AssertionError e = assertThrows(AssertionError.class, beforeTimeout);
+        assertTrue(e.getMessage().contains(expectedErrorMessage));
+    }
+
+    @Test
+    void requestTimeout_NotYetTimedOut_Height() {
+        // Arrange
+        baseChannel.setOrdering(Channel.Order.ORDER_UNORDERED);
+        packet.invoke(owner, "setChannel", portId, channelId, baseChannel);
+        Height timeoutHeight = new Height();
+        timeoutHeight.setRevisionHeight(BigInteger.valueOf(sm.getBlock().getHeight()).multiply(BigInteger.TWO));
+        MsgRequestTimeoutPacket timeoutPacket = new MsgRequestTimeoutPacket();
+        basePacket.setTimeoutHeight(timeoutHeight);
+        byte[] commitmentPath = IBCCommitment.packetReceiptCommitmentKey(basePacket.getSourcePort(),
+                basePacket.getSourceChannel(), basePacket.getSequence());
+        timeoutPacket.setPacket(basePacket.encode());
+        timeoutPacket.setProofHeight(new byte[0]);
+        timeoutPacket.setProof(new byte[0]);
+        String expectedErrorMessage = "Packet has not yet timed out";
+
+        // Act
+        Executable beforeTimeout = () -> packet.invoke(owner, "_requestTimeout", timeoutPacket);
+        AssertionError e = assertThrows(AssertionError.class, beforeTimeout);
+        assertTrue(e.getMessage().contains(expectedErrorMessage));
     }
 
     @Test

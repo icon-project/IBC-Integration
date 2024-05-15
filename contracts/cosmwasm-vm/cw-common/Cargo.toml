@@ -11,14 +11,14 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 cosmwasm-schema = {workspace=true}
-cosmwasm-std = {workspace=true, features=["ibc3"]}
+cosmwasm-std = { workspace=true}
 serde = { workspace=true}
 cw-storage-plus = {workspace=true}
 serde_json = {workspace=true}
 hex-buffer-serde = "0.4.0"
 schemars = {workspace=true}
 hex = { workspace=true}
-common = { path="../../../libraries/rust/common" }
+common = { workspace=true }
 ibc-proto = { workspace=true}
 prost = { workspace=true}
 serde-json-wasm = {workspace=true}

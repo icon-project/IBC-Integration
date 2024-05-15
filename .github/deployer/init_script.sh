@@ -11,7 +11,9 @@ KMS_ID="KMS_ID_HERE"
 DEPLOYR_HOME="/home/deployr"
 GO_VERS="1.20.6"
 JAVA_VERS="11.0.18_10"
-ARCHWAY_VERS="0.4.0"
+ARCHWAY_VERS="6.0.0"
+INJECTIVE_VERS="1.12.1-1705909076"
+NEUTRON_VERS="3.0.2"
 
 set -x
 export GOROOT=/usr/local/go
@@ -54,7 +56,7 @@ export TMOUT
 PROMPT_COMMAND='history -a >(logger -t "[$USER] $SSH_CONNECTION")'
 EOF
 
-apt-get install auditd audispd-plugins -y
+apt-get install auditd audispd-plugins unzip -y
 systemctl enable auditd
 systemctl start auditd
 
@@ -103,8 +105,22 @@ tar xf OpenJDK11U-jdk_x64_linux_hotspot_$${JAVA_VERS}.tar.gz -C /opt/java
 go install github.com/icon-project/goloop/cmd/goloop@latest
 
 # Install archway
-wget -q https://github.com/archway-network/archway/releases/download/v$${ARCHWAY_VERS}/archway_$${ARCHWAY_VERS}_linux_amd64.tar.gz
-tar xf archway_$${ARCHWAY_VERS}_linux_amd64.tar.gz -C /usr/local/bin
+wget -q https://github.com/archway-network/archway/releases/download/v$${ARCHWAY_VERS}/archway_$${ARCHWAY_VERS}_linux_amd64.zip
+unzip archway_$${ARCHWAY_VERS}_linux_amd64.zip
+sudo archwayd /usr/local/bin
+
+# Install injectived
+wget -q https://github.com/InjectiveLabs/injective-chain-releases/releases/download/v$${INJECTIVE_VERS}/linux-amd64.zip
+unzip linux-amd64.zip
+sudo cp injectived peggo /usr/bin
+sudo cp libwasmvm.x86_64.so /usr/lib
+sudo chmod +x /usr/bin/injectived
+sudo chmod +x /usr/bin/peggo
+
+# Install neutron
+wget -q https://github.com/neutron-org/neutron/releases/download/v$${NEUTRON_VERS}/neutrond-linux-amd64
+sudo cp neutrond-linux-amd64 /usr/local/bin/neutrond
+sudo chmod +x /usr/local/bin/neutrond
 
 # Install boto3, yq, and jq
 apt-get install python3-pip -y

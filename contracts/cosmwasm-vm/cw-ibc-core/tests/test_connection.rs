@@ -1,5 +1,5 @@
-use std::collections::HashMap;
-
+use cosmwasm_std::Timestamp;
+use std::str::FromStr;
 use std::time::Duration;
 
 pub mod setup;
@@ -11,14 +11,10 @@ use common::icon::icon::lightclient::v1::ClientState;
 use common::traits::AnyTypes;
 use cosmwasm_std::testing::mock_dependencies;
 use cosmwasm_std::testing::mock_env;
-use cosmwasm_std::to_binary;
-use cosmwasm_std::Binary;
 
 use cosmwasm_std::Addr;
 
 use cw_common::get_address_storage_prefix;
-
-use cw_common::raw_types::connection::RawMsgConnectionOpenInit;
 
 use cw_ibc_core::context::CwIbcCoreContext;
 use cw_ibc_core::conversions::to_ibc_client_id;
@@ -29,8 +25,6 @@ use cw_ibc_core::ics03_connection::event::CONN_ID_ATTRIBUTE_KEY;
 use cw_ibc_core::ics03_connection::event::COUNTERPARTY_CLIENT_ID_ATTRIBUTE_KEY;
 use cw_ibc_core::ics03_connection::event::COUNTERPARTY_CONN_ID_ATTRIBUTE_KEY;
 
-//use cw_ibc_core::ics03_connection::event::create_open_init_event;
-
 use common::ibc::core::ics03_connection::connection::Counterparty;
 use common::ibc::core::ics03_connection::connection::State;
 use common::ibc::core::ics03_connection::version::get_compatible_versions;
@@ -39,7 +33,7 @@ use common::ibc::core::ics23_commitment::commitment::CommitmentPrefix;
 use common::ibc::core::ics24_host::identifier::ConnectionId;
 use common::ibc::events::IbcEventType;
 use cw_common::ibc_types::IbcClientId;
-use cw_ibc_core::light_client::light_client::LightClient;
+use cw_ibc_core::validations::ensure_consensus_height_valid;
 use cw_ibc_core::ConnectionEnd;
 use prost::Message;
 use setup::*;
@@ -184,39 +178,136 @@ fn test_commitment_prefix() {
 #[test]
 fn connection_open_init() {
     let mut deps = deps();
-
-    let res_msg = RawMsgConnectionOpenInit {
-        client_id: "iconclient-0".to_string(),
-        counterparty: Some(get_dummy_raw_counterparty(None)),
-        version: None,
-        delay_period: 0,
-        signer: get_dummy_bech32_account(),
-    };
-    let client_id = to_ibc_client_id(&res_msg.client_id).unwrap();
-
     let contract = CwIbcCoreContext::new();
-    let client_state: ClientState = get_dummy_client_state();
-    contract
-        .store_client_implementations(
-            deps.as_mut().storage,
-            &client_id,
-            LightClient::new("lightclient".to_string()),
-        )
-        .unwrap();
 
-    let cl = client_state.to_any().encode_to_vec();
-    let mut query_map = HashMap::<Binary, Binary>::new();
-    let client_state_query = LightClient::build_client_state_query(&client_id).unwrap();
-    query_map.insert(client_state_query, to_binary(&cl).unwrap());
+    let msg = get_dummy_raw_msg_conn_open_init();
+    let mut ctx = TestContext::for_connection_open_init(get_mock_env(), &msg);
+    ctx.init_connection_open_init(deps.as_mut().storage, &contract);
 
-    mock_lightclient_query(query_map, &mut deps);
-    contract
-        .connection_next_sequence_init(&mut deps.storage, u64::default())
-        .unwrap();
+    mock_lightclient_query(ctx.mock_queries, &mut deps);
 
-    let res = contract.connection_open_init(deps.as_mut(), res_msg);
-    println!("{:?}", res);
+    let res = contract.connection_open_init(deps.as_mut(), msg);
     assert!(res.is_ok());
+}
+
+#[test]
+#[should_panic(expected = "ClientFrozen")]
+fn fail_connection_open_init_for_frozen_client() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::new();
+
+    let msg = get_dummy_raw_msg_conn_open_init();
+    let mut ctx = TestContext::for_connection_open_init(get_mock_env(), &msg);
+    if let Some(client_state) = &mut ctx.client_state {
+        client_state.frozen_height = 1;
+    }
+
+    ctx.init_connection_open_init(deps.as_mut().storage, &contract);
+    mock_lightclient_query(ctx.mock_queries, &mut deps);
+
+    contract.connection_open_init(deps.as_mut(), msg).unwrap();
+}
+
+#[test]
+#[should_panic(expected = "IbcConnectionError { error: EmptyVersions }")]
+fn fail_connection_open_init_for_incompatible_version() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::new();
+
+    let mut msg = get_dummy_raw_msg_conn_open_init();
+    if let Some(version) = &mut msg.version {
+        version.identifier = "2".to_string()
+    }
+
+    let mut ctx = TestContext::for_connection_open_init(get_mock_env(), &msg);
+    ctx.init_connection_open_init(deps.as_mut().storage, &contract);
+    mock_lightclient_query(ctx.mock_queries, &mut deps);
+
+    contract.connection_open_init(deps.as_mut(), msg).unwrap();
+}
+
+#[test]
+#[should_panic(expected = "ClientFrozen")]
+fn fail_connection_open_ack_for_frozen_client() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::new();
+    let info = create_mock_info("alice", "umlg", 2000);
+
+    let msg = get_dummy_raw_msg_conn_open_ack(10, 10);
+    let mut ctx = TestContext::for_connection_open_ack(get_mock_env(), &msg);
+    if let Some(client_state) = &mut ctx.client_state {
+        client_state.frozen_height = 10;
+    }
+
+    ctx.init_connection_open_ack(deps.as_mut().storage, &contract);
+    mock_lightclient_query(ctx.mock_queries, &mut deps);
+
+    contract
+        .connection_open_ack(deps.as_mut(), info, ctx.env, msg)
+        .unwrap();
+}
+
+#[test]
+#[should_panic(expected = "ConnectionMismatch")]
+fn fail_connection_open_ack_for_mismatch_connection_version() {
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::new();
+    let info = create_mock_info("alice", "umlg", 2000);
+
+    let mut msg = get_dummy_raw_msg_conn_open_ack(10, 10);
+    if let Some(version) = &mut msg.version {
+        version.identifier = "2".to_string();
+    }
+
+    let mut ctx = TestContext::for_connection_open_ack(get_mock_env(), &msg);
+    ctx.init_connection_open_ack(deps.as_mut().storage, &contract);
+    mock_lightclient_query(ctx.mock_queries, &mut deps);
+
+    contract
+        .connection_open_ack(deps.as_mut(), info, ctx.env, msg)
+        .unwrap();
+}
+
+#[test]
+#[should_panic(expected = "ClientFrozen")]
+fn fail_connection_open_try_for_frozen_client() {
+    let mut deps = mock_dependencies();
+    let contract = CwIbcCoreContext::new();
+    let info = create_mock_info("alice", "umlg", 2000);
+
+    let msg = get_dummy_raw_msg_conn_open_try(10, 10);
+    let mut ctx = TestContext::for_connection_open_try(get_mock_env(), &msg);
+    if let Some(client_state) = &mut ctx.client_state {
+        client_state.frozen_height = 10;
+    }
+
+    ctx.init_connection_open_init(deps.as_mut().storage, &contract);
+    mock_lightclient_query(ctx.mock_queries, &mut deps);
+
+    contract
+        .connection_open_try(deps.as_mut(), info, ctx.env, msg.clone())
+        .unwrap();
+}
+
+#[test]
+#[should_panic(expected = "ClientFrozen")]
+fn fail_connection_open_confirm_for_frozen_client() {
+    let mut deps = mock_dependencies();
+    let contract = CwIbcCoreContext::new();
+    let info = create_mock_info("alice", "umlg", 2000);
+
+    let msg = get_dummy_raw_msg_conn_open_confirm();
+    let mut ctx = TestContext::for_connection_open_confirm(get_mock_env(), &msg);
+    if let Some(client_state) = &mut ctx.client_state {
+        client_state.frozen_height = 1;
+    }
+
+    ctx.init_connection_open_confirm(deps.as_mut().storage, &contract);
+    mock_lightclient_query(ctx.mock_queries, &mut deps);
+
+    contract
+        .connection_open_confirm(deps.as_mut(), ctx.env, info, msg)
+        .unwrap();
 }
 
 #[test]
@@ -224,13 +315,7 @@ fn connection_open_init() {
 fn test_validate_open_init_connection_fail() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::default();
-    let message = RawMsgConnectionOpenInit {
-        client_id: "client_id_on_a".to_string(),
-        counterparty: Some(get_dummy_raw_counterparty(None)),
-        version: None,
-        delay_period: 0,
-        signer: get_dummy_bech32_account(),
-    };
+    let message = get_dummy_raw_msg_conn_open_init();
 
     contract
         .connection_open_init(deps.as_mut(), message)
@@ -239,57 +324,53 @@ fn test_validate_open_init_connection_fail() {
 
 #[test]
 fn create_connection_open_init_event() {
-    let connection_id = ConnectionId::new(10);
-    let client_id = ClientId::default();
-    let counterparty_client_id = ClientId::default();
+    let ctx_a = TestContext::default(get_mock_env());
+    let ctx_b = TestContext::default(get_mock_env());
+
     let event = create_connection_event(
         IbcEventType::OpenInitConnection,
-        &connection_id,
-        &client_id,
-        &counterparty_client_id,
+        &ctx_a.connection_id,
+        &ctx_b.client_id,
+        &ctx_b.client_id,
         None,
     )
     .unwrap();
     assert_eq!(IbcEventType::OpenInitConnection.as_str(), event.ty);
-    assert_eq!("connection-10", event.attributes[0].value);
+    assert_eq!("connection-0", event.attributes[0].value);
     assert_eq!("default-0", event.attributes[1].value);
     assert_eq!("default-0", event.attributes[2].value);
 }
 
 #[test]
 fn create_connection_open_ack_event() {
-    let connection_id = ConnectionId::new(10);
-    let client_id = ClientId::default();
-    let counterparty_client_id = ClientId::default();
-    let counterparty_connection_id = ConnectionId::new(20);
+    let ctx_a = TestContext::default(get_mock_env());
+    let ctx_b = TestContext::default(get_mock_env());
 
     let event = create_connection_event(
         IbcEventType::OpenAckConnection,
-        &connection_id,
-        &client_id,
-        &counterparty_client_id,
-        Some(counterparty_connection_id),
+        &ctx_a.connection_id,
+        &ctx_a.client_id,
+        &ctx_b.client_id,
+        Some(ctx_b.connection_id),
     )
     .unwrap();
     assert_eq!(IbcEventType::OpenAckConnection.as_str(), event.ty);
-    assert_eq!("connection-10", event.attributes[0].value);
+    assert_eq!("connection-0", event.attributes[0].value);
     assert_eq!("default-0", event.attributes[1].value);
-    assert_eq!("connection-20", event.attributes[3].value);
+    assert_eq!("connection-0", event.attributes[3].value);
 }
 
 #[test]
 fn create_connection_open_try_event() {
-    let connection_id = ConnectionId::new(10);
-    let client_id = ClientId::default();
-    let counterparty_client_id = ClientId::default();
-    let counterparty_connection_id = ConnectionId::new(20);
+    let ctx_a = TestContext::default(get_mock_env());
+    let ctx_b = TestContext::default(get_mock_env());
 
     let event = create_connection_event(
         IbcEventType::OpenTryConnection,
-        &connection_id,
-        &client_id,
-        &counterparty_client_id,
-        Some(counterparty_connection_id),
+        &ctx_a.connection_id,
+        &ctx_b.client_id,
+        &ctx_b.client_id,
+        Some(ctx_b.connection_id),
     )
     .unwrap();
     assert_eq!(IbcEventType::OpenTryConnection.as_str(), event.ty);
@@ -297,21 +378,36 @@ fn create_connection_open_try_event() {
 
 #[test]
 fn create_conection_open_confirm_event() {
-    let connection_id_on_b = ConnectionId::new(10);
-    let client_id_on_b = ClientId::default();
-    let counterparty_connection_id_on_a = ConnectionId::new(2);
-    let counterparty_client_id_on_a = ClientId::default();
+    let ctx_a = TestContext::default(get_mock_env());
+    let ctx_b = TestContext::default(get_mock_env());
+
     let event = create_connection_event(
         IbcEventType::OpenConfirmConnection,
-        &connection_id_on_b,
-        &client_id_on_b,
-        &counterparty_client_id_on_a,
-        Some(counterparty_connection_id_on_a),
+        &ctx_a.connection_id,
+        &ctx_a.client_id,
+        &ctx_b.client_id,
+        Some(ctx_b.connection_id),
     )
     .unwrap();
 
     assert_eq!(IbcEventType::OpenConfirmConnection.as_str(), event.ty);
-    assert_eq!("connection-10", event.attributes[0].value);
+    assert_eq!("connection-0", event.attributes[0].value);
+}
+
+#[test]
+#[should_panic(expected = "InvalidEventType")]
+fn fail_create_connection_event() {
+    let ctx_a = TestContext::default(get_mock_env());
+    let ctx_b = TestContext::default(get_mock_env());
+
+    create_connection_event(
+        IbcEventType::Timeout,
+        &ctx_a.connection_id,
+        &ctx_a.client_id,
+        &ctx_b.client_id,
+        None,
+    )
+    .unwrap();
 }
 
 #[test]
@@ -450,7 +546,7 @@ fn connection_open_ack_validate() {
     mock_lightclient_query(test_context.mock_queries, &mut deps);
 
     let res = contract.connection_open_ack(deps.as_mut(), info, env, message);
-    println!("{:?}", res);
+    println!("{res:?}");
     assert!(res.is_ok())
 }
 
@@ -463,12 +559,6 @@ fn connection_validate_delay() {
     let contract = CwIbcCoreContext::new();
     contract
         .store_last_processed_on(deps.as_mut().storage, &env, conn_end.client_id())
-        .unwrap();
-
-    contract
-        .ibc_store()
-        .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds()))
         .unwrap();
 
     let result =
@@ -491,16 +581,79 @@ fn connection_validate_delay_fails() {
 }
 
 #[test]
+#[should_panic(expected = "overflow")]
+fn fail_verify_connection_delay_passed_on_timestamp_overflow() {
+    let mut ctx = TestContext::default(get_mock_env());
+    let mut deps = mock_dependencies();
+    let contract = CwIbcCoreContext::new();
+
+    ctx.env.block.time = Timestamp::from_seconds(u64::MAX);
+
+    contract
+        .store_last_processed_on(deps.as_mut().storage, &ctx.env, &ctx.client_id)
+        .unwrap();
+
+    contract
+        .verify_connection_delay_passed(
+            deps.as_ref().storage,
+            ctx.env,
+            mock_height(1, 1).unwrap(),
+            ctx.connection_end.unwrap(),
+        )
+        .unwrap();
+}
+
+#[test]
+#[should_panic(expected = "NotEnoughTimeElapsed")]
+fn fail_verify_connection_delay_passed_on_not_enough_time_elapsed() {
+    let mut ctx = TestContext::default(get_mock_env());
+    let mut deps = mock_dependencies();
+    let contract = CwIbcCoreContext::new();
+
+    contract
+        .store_last_processed_on(deps.as_mut().storage, &ctx.env, &ctx.client_id)
+        .unwrap();
+
+    ctx.env.block.time = Timestamp::from_nanos(10);
+
+    contract
+        .verify_connection_delay_passed(
+            deps.as_ref().storage,
+            ctx.env,
+            mock_height(1, 1).unwrap(),
+            ctx.connection_end.unwrap(),
+        )
+        .unwrap();
+}
+
+#[test]
+#[should_panic(expected = "NotEnoughBlocksElapsed")]
+fn fail_verify_connection_delay_passed_on_not_enough_block_elapsed() {
+    let mut ctx = TestContext::default(get_mock_env());
+    let mut deps = mock_dependencies();
+    let contract = CwIbcCoreContext::new();
+
+    contract
+        .store_last_processed_on(deps.as_mut().storage, &ctx.env, &ctx.client_id)
+        .unwrap();
+
+    ctx.env.block.height = 12344;
+
+    contract
+        .verify_connection_delay_passed(
+            deps.as_ref().storage,
+            ctx.env,
+            mock_height(1, 1).unwrap(),
+            ctx.connection_end.unwrap(),
+        )
+        .unwrap();
+}
+
+#[test]
 fn test_block_delay() {
-    let mut deps = deps();
-    let env = get_mock_env();
     let delay_time = Duration::new(1, 1);
     let contract = CwIbcCoreContext::new();
-    contract
-        .ibc_store()
-        .expected_time_per_block()
-        .save(deps.as_mut().storage, &(env.block.time.seconds()))
-        .unwrap();
+
     let result = contract.calc_block_delay(&delay_time);
     assert_eq!(1, result)
 }
@@ -589,13 +742,7 @@ fn connection_open_confirm_validate_fails_of_connection_state_mismatch() {
 fn connection_check_open_init_validate_fails() {
     let mut deps = deps();
 
-    let mut message = RawMsgConnectionOpenInit {
-        client_id: "client_id_on_a".to_string(),
-        counterparty: Some(get_dummy_raw_counterparty(None)),
-        version: None,
-        delay_period: 0,
-        signer: get_dummy_bech32_account(),
-    };
+    let mut message = get_dummy_raw_msg_conn_open_init();
 
     let contract = CwIbcCoreContext::new();
     let mut test_context = TestContext::for_connection_open_init(mock_env(), &message);
@@ -614,13 +761,7 @@ fn connection_check_open_init_validate_fails() {
 fn connection_open_init_fails_of_clientstate() {
     let mut deps = deps();
 
-    let message = RawMsgConnectionOpenInit {
-        client_id: "client_id_on_a".to_string(),
-        counterparty: Some(get_dummy_raw_counterparty(None)),
-        version: None,
-        delay_period: 0,
-        signer: get_dummy_bech32_account(),
-    };
+    let message = get_dummy_raw_msg_conn_open_init();
 
     let client_id = ClientId::default();
     let contract = CwIbcCoreContext::new();
@@ -651,13 +792,7 @@ fn connection_open_init_fails_of_clientstate() {
 fn connection_open_init_validate_invalid_client_id() {
     let mut deps = deps();
     let contract = CwIbcCoreContext::new();
-    let mut message = RawMsgConnectionOpenInit {
-        client_id: "client_id_on_a".to_string(),
-        counterparty: Some(get_dummy_raw_counterparty(None)),
-        version: None,
-        delay_period: 0,
-        signer: get_dummy_bech32_account(),
-    };
+    let mut message = get_dummy_raw_msg_conn_open_init();
     let mut test_context = TestContext::for_connection_open_init(mock_env(), &message);
     test_context.init_context(deps.as_mut().storage, &contract);
     mock_lightclient_query(test_context.mock_queries, &mut deps);
@@ -695,30 +830,26 @@ fn test_update_connection_commitment() {
 
 #[test]
 fn test_check_connection() {
+    let ctx = TestContext::default(get_mock_env());
     let mut deps = deps();
-    let commitment_prefix =
-        common::ibc::core::ics23_commitment::commitment::CommitmentPrefix::try_from(
-            "hello".to_string().as_bytes().to_vec(),
-        );
-    let counter_party = Counterparty::new(IbcClientId::default(), None, commitment_prefix.unwrap());
-    let conn_end = ConnectionEnd::new(
-        State::Open,
-        IbcClientId::default(),
-        counter_party,
-        vec![Version::default()],
-        Duration::default(),
-    );
-    let client_id = ClientId::default();
-    let conn_id = ConnectionId::new(5);
     let contract = CwIbcCoreContext::new();
-    contract
-        .store_connection(deps.as_mut().storage, &conn_id, &conn_end)
-        .unwrap();
-    contract
-        .connection_end(deps.as_ref().storage, &conn_id)
-        .unwrap();
-    let res = contract.check_for_connection(&mut deps.storage, &client_id);
+
+    let res = contract.check_for_connection(&mut deps.storage, &ctx.client_id);
     assert!(res.is_ok());
+}
+
+#[test]
+#[should_panic(expected = "IbcConnectionError { error: ConnectionExists(\"connection-0\") }")]
+fn fail_check_for_connection_on_connection_exist() {
+    let ctx = TestContext::default(get_mock_env());
+    let mut deps = mock_dependencies();
+    let contract = CwIbcCoreContext::new();
+
+    ctx.save_connection_to_client(deps.as_mut().storage, &contract);
+
+    contract
+        .check_for_connection(deps.as_ref().storage, &ctx.client_id)
+        .unwrap();
 }
 
 #[test]
@@ -737,13 +868,7 @@ fn test_connection_seq_on_a_fails_without_initialising() {
 fn connection_open_init_fails() {
     let mut deps = deps();
 
-    let message = RawMsgConnectionOpenInit {
-        client_id: "client_id_on_a".to_string(),
-        counterparty: Some(get_dummy_raw_counterparty(None)),
-        version: None,
-        delay_period: 0,
-        signer: get_dummy_bech32_account(),
-    };
+    let message = get_dummy_raw_msg_conn_open_init();
 
     let contract = CwIbcCoreContext::new();
     let client_state: ClientState = get_dummy_client_state();
@@ -769,9 +894,6 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
     let info = create_mock_info("alice", "umlg", 2000);
     let env = get_mock_env();
     let contract = CwIbcCoreContext::default();
-    contract
-        .connection_next_sequence_init(&mut deps.storage, u128::default().try_into().unwrap())
-        .unwrap();
 
     let message = get_dummy_raw_msg_conn_open_ack(10, 10);
     let mut test_context = TestContext::for_connection_open_ack(env.clone(), &message);
@@ -784,4 +906,14 @@ fn connection_open_ack_validate_fails_of_connection_mismatch() {
     contract
         .connection_open_ack(deps.as_mut(), info, env, message)
         .unwrap();
+}
+
+#[test]
+#[should_panic(expected = "InvalidConsensusHeight")]
+fn test_ensure_consensus_height_valid() {
+    ensure_consensus_height_valid(
+        &common::ibc::core::ics02_client::height::Height::from_str("10-10").unwrap(),
+        &common::ibc::core::ics02_client::height::Height::from_str("11-11").unwrap(),
+    )
+    .unwrap()
 }

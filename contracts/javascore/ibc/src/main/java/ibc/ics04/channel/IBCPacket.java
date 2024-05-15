@@ -231,9 +231,10 @@ public class IBCPacket extends IBCChannelHandshake {
         boolean heightTimeout = revisionHeight.compareTo(BigInteger.ZERO) > 0
                 && BigInteger.valueOf(Context.getBlockHeight())
                 .compareTo(revisionHeight) >= 0;
-        boolean timeTimeout = packet.getTimeoutTimestamp().compareTo(BigInteger.ZERO) > 0
+        BigInteger timeoutTimestamp = packet.getTimeoutTimestamp();
+        boolean timeTimeout = timeoutTimestamp.compareTo(BigInteger.ZERO) > 0
                 && BigInteger.valueOf(Context.getBlockTimestamp())
-                .compareTo(packet.getTimeoutTimestamp()) < 0;
+                .compareTo(timeoutTimestamp) >= 0;
         Context.require(heightTimeout || timeTimeout, "Packet has not yet timed out");
 
         byte[] commitmentPath = IBCCommitment.packetCommitmentPath(packet.getSourcePort(),

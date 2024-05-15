@@ -1,0 +1,27 @@
+[package]
+name = "cw-light-client-common"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cosmwasm-schema = {workspace=true}
+cosmwasm-std = {workspace=true}
+#cosmwasm-storage = {workspace=true}
+cw-storage-plus ={workspace=true}
+thiserror = { workspace=true}
+prost = { workspace=true}
+hex ={workspace=true }
+schemars = {workspace=true}
+serde = { workspace=true}
+serde-json-wasm = {workspace=true}
+debug_print = {workspace=true}
+cw-common = { workspace=true,default-features = false }
+common = { workspace=true, default-features = false }
+
+[dev-dependencies]
+cosmwasm = "0.7.2"
+hex-literal="*"
+test-utils={path="../../../libraries/rust/test-utils"}
+getrandom = {version = "0.2", default-features = false, features = ["custom"]}

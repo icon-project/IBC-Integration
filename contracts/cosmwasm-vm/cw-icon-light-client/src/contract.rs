@@ -4,6 +4,7 @@ use common::traits::AnyTypes;
 use cosmwasm_schema::cw_serde;
 use cw_common::ibc_types::IbcHeight;
 use cw_common::to_checked_address;
+use cw_light_client_common::traits::IQueryHandler;
 
 #[cfg(feature = "mock")]
 use crate::mock_client::MockClient;
@@ -21,10 +22,10 @@ use cw_common::raw_types::Any;
 use cw_common::types::VerifyChannelState;
 
 use crate::constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH, HEIGHT};
-use crate::error::ContractError;
+use crate::context::CwContext;
 use crate::light_client::IconClient;
-use crate::state::CwContext;
 use crate::traits::{Config, IContext, ILightClient};
+use crate::ContractError;
 use cw_common::client_msg::{
     ExecuteMsg, InstantiateMsg, LightClientPacketMessage, QueryMsg, VerifyClientConsensusState,
     VerifyClientFullState, VerifyConnectionState,
@@ -539,20 +540,21 @@ mod tests {
     use common::icon::icon::types::v1::{BtpHeader, SignedHeader};
     use cosmwasm_std::{
         testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
-        Addr, OwnedDeps, Response,
+        to_binary, Addr, OwnedDeps, Response,
     };
     use cw2::get_contract_version;
-    use cw_common::raw_types::Any;
+    use cw_common::{client_msg::QueryMsg, raw_types::Any};
     use test_utils::{get_test_headers, get_test_signed_headers, to_attribute_map};
 
     use crate::{
         constants::{CLIENT_STATE_HASH, CONSENSUS_STATE_HASH},
-        contract::to_height_u64,
+        contract::{ensure_owner, query, to_height_u64},
         query_handler::QueryHandler,
         ContractError,
     };
     use common::traits::AnyTypes;
     use cw_common::client_msg::ExecuteMsg;
+    use cw_light_client_common::traits::IQueryHandler;
     use prost::Message;
 
     use super::{execute, instantiate, Config, InstantiateMsg, CONTRACT_NAME, CONTRACT_VERSION};
@@ -877,5 +879,131 @@ mod tests {
             second,
             Err(ContractError::HeightAlreadyUpdated { height: 82873 })
         );
+    }
+
+    #[test]
+    fn test_query_client_state() {
+        let start_header = &get_test_headers()[0];
+        let client_id = "test_client".to_string();
+        let deps = init_client(&client_id, start_header, None);
+
+        let msg = QueryMsg::GetClientState {
+            client_id: client_id.clone(),
+        };
+        let res = query(deps.as_ref(), mock_env(), msg).unwrap();
+
+        let state =
+            QueryHandler::get_client_state_any(deps.as_ref().storage, client_id.as_str()).unwrap();
+        assert_eq!(res, to_binary(&state).unwrap());
+    }
+
+    #[test]
+    fn test_query_consensus_state() {
+        let start_header = &get_test_headers()[0];
+        let client_id = "test_client".to_string();
+        let deps = init_client(&client_id, start_header, None);
+
+        let msg = QueryMsg::GetConsensusState {
+            client_id: client_id.clone(),
+            height: start_header.main_height,
+        };
+        let res = query(deps.as_ref(), mock_env(), msg).unwrap();
+
+        let state = QueryHandler::get_consensus_state_any(
+            deps.as_ref().storage,
+            client_id.as_str(),
+            start_header.main_height,
+        )
+        .unwrap();
+        assert_eq!(res, to_binary(&state).unwrap());
+    }
+
+    #[test]
+    fn test_query_latest_height() {
+        let start_header = &get_test_headers()[0];
+        let client_id = "test_client".to_string();
+        let deps = init_client(&client_id, start_header, None);
+
+        let msg = QueryMsg::GetLatestHeight {
+            client_id: client_id.clone(),
+        };
+        let res = query(deps.as_ref(), mock_env(), msg).unwrap();
+
+        let height =
+            QueryHandler::get_latest_height(deps.as_ref().storage, client_id.as_str()).unwrap();
+        assert_eq!(res, to_binary(&height).unwrap());
+    }
+
+    #[test]
+    fn test_query_latest_consensus_state() {
+        let start_header = &get_test_headers()[0];
+        let client_id = "test_client".to_string();
+        let deps = init_client(&client_id, start_header, None);
+
+        let msg = QueryMsg::GetLatestConsensusState {
+            client_id: client_id.clone(),
+        };
+        let res = query(deps.as_ref(), mock_env(), msg).unwrap();
+
+        let state =
+            QueryHandler::get_latest_consensus_state(deps.as_ref().storage, client_id.as_str())
+                .unwrap();
+        assert_eq!(res, to_binary(&state).unwrap());
+    }
+
+    #[test]
+    #[should_panic(expected = "ClientStateNotFound(\"another_client\")")]
+    fn test_query_latest_consensus_state_fail() {
+        let start_header = &get_test_headers()[0];
+        let client_id = "test_client".to_string();
+        let deps = init_client(&client_id, start_header, None);
+
+        let msg = QueryMsg::GetLatestConsensusState {
+            client_id: "another_client".to_string(),
+        };
+        query(deps.as_ref(), mock_env(), msg).unwrap();
+    }
+
+    #[test]
+    fn test_query_previous_consensus_state() {
+        let start_header = &get_test_headers()[0];
+        let client_id = "test_client".to_string();
+        let deps = init_client(&client_id, start_header, None);
+
+        let msg = QueryMsg::GetPreviousConsensusState {
+            client_id: client_id.clone(),
+            height: start_header.main_height,
+        };
+        let res = query(deps.as_ref(), mock_env(), msg).unwrap();
+
+        let state = QueryHandler::get_previous_consensus(
+            deps.as_ref().storage,
+            start_header.main_height,
+            client_id,
+        )
+        .unwrap();
+        assert_eq!(res, to_binary(&state).unwrap());
+    }
+
+    #[test]
+    fn test_ensure_owner() {
+        let start_header = &get_test_headers()[0];
+        let client_id = "test_client".to_string();
+        let deps = init_client(&client_id, start_header, None);
+        let info = mock_info(SENDER, &[]);
+
+        let res = ensure_owner(deps.as_ref(), &info);
+        assert!(res.is_ok())
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized")]
+    fn test_ensure_owner_unauthorized() {
+        let start_header = &get_test_headers()[0];
+        let client_id = "test_client".to_string();
+        let deps = init_client(&client_id, start_header, None);
+        let info = mock_info("not_owner", &[]);
+
+        ensure_owner(deps.as_ref(), &info).unwrap()
     }
 }

@@ -126,7 +126,7 @@ fn test_validate_close_confirm_channel() {
 
     mock_lightclient_query(test_context.mock_queries, &mut deps);
     let res = contract.validate_channel_close_confirm(deps.as_mut(), info, &msg);
-    println!("{:?}", res);
+    println!("{res:?}");
     assert!(res.is_ok());
     assert_eq!(
         res.unwrap().messages[0].id,
@@ -233,4 +233,25 @@ pub fn test_channel_close_confirm_validate_fail_connection_hops() {
         version: Version::new("xcall".to_string()),
     };
     channel_close_confirm_validate(&channel_id, &channel_end).unwrap();
+}
+
+#[test]
+#[should_panic(expected = "FrozenClient")]
+fn fail_test_validate_channel_close_confirm_for_frozen_client() {
+    let msg = get_dummy_raw_msg_chan_close_confirm(10);
+    let mut ctx = TestContext::for_channel_close_confirm(get_mock_env(), &msg);
+    let mut deps = deps();
+    let contract = CwIbcCoreContext::default();
+    let info = create_mock_info("channel-creater", "umlg", 2000);
+
+    if let Some(client_state) = &mut ctx.client_state {
+        client_state.frozen_height = 1
+    }
+
+    ctx.init_channel_close_confirm(deps.as_mut().storage, &contract);
+    mock_lightclient_query(ctx.mock_queries, &mut deps);
+
+    contract
+        .validate_channel_close_confirm(deps.as_mut(), info, &msg)
+        .unwrap();
 }

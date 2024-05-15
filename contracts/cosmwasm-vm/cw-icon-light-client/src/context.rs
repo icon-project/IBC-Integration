@@ -8,22 +8,20 @@ use cosmwasm_std::DepsMut;
 use cosmwasm_std::Env;
 use cosmwasm_std::Storage;
 
-use cw_storage_plus::{Item, Map};
+use cw_light_client_common::traits::IQueryHandler;
 use debug_print::debug_eprintln;
 
+use crate::constants::CLIENT_STATES;
+use crate::constants::CONFIG;
+use crate::constants::CONSENSUS_STATES;
+use crate::constants::PROCESSED_HEIGHTS;
+use crate::constants::PROCESSED_TIMES;
+use crate::query_handler::QueryHandler;
 use prost::Message;
 
-use crate::query_handler::QueryHandler;
 use crate::traits::Config;
 use crate::traits::IContext;
 use crate::ContractError;
-type ClientId = String;
-pub const CLIENT_STATES: Map<String, Vec<u8>> = Map::new("CLIENT_STATES");
-pub const CONSENSUS_STATES: Map<(ClientId, u64), Vec<u8>> = Map::new("CONSENSUS_STATES");
-pub const PROCESSED_TIMES: Map<(ClientId, u64), u64> = Map::new("PROCESSED_TIMES");
-pub const PROCESSED_HEIGHTS: Map<(ClientId, u64), u64> = Map::new("PROCESSED_HEIGHTS");
-
-pub const CONFIG: Item<Config> = Item::new("CONFIG");
 
 pub struct CwContext<'a> {
     pub storage: &'a mut dyn Storage,
@@ -42,8 +40,7 @@ impl<'a> CwContext<'a> {
 }
 
 impl<'a> IContext for CwContext<'a> {
-    type Error = ContractError;
-    fn get_client_state(&self, client_id: &str) -> Result<ClientState, Self::Error> {
+    fn get_client_state(&self, client_id: &str) -> Result<ClientState, ContractError> {
         QueryHandler::get_client_state(self.storage, client_id)
     }
 
@@ -51,7 +48,7 @@ impl<'a> IContext for CwContext<'a> {
         &mut self,
         client_id: &str,
         state: ClientState,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), ContractError> {
         let data = state.encode_to_vec();
         CLIENT_STATES
             .save(self.storage, client_id.to_string(), &data)
@@ -62,7 +59,7 @@ impl<'a> IContext for CwContext<'a> {
         &self,
         client_id: &str,
         height: u64,
-    ) -> Result<ConsensusState, Self::Error> {
+    ) -> Result<ConsensusState, ContractError> {
         QueryHandler::get_consensus_state(self.storage, client_id, height)
     }
 
@@ -71,14 +68,14 @@ impl<'a> IContext for CwContext<'a> {
         client_id: &str,
         height: u64,
         state: ConsensusState,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), ContractError> {
         let data = state.encode_to_vec();
         CONSENSUS_STATES
             .save(self.storage, (client_id.to_string(), height), &data)
             .map_err(|_e| ContractError::FailedToSaveClientState)
     }
 
-    fn get_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<u64, Self::Error> {
+    fn get_timestamp_at_height(&self, client_id: &str, height: u64) -> Result<u64, ContractError> {
         QueryHandler::get_timestamp_at_height(self.storage, client_id, height)
     }
 
@@ -100,11 +97,11 @@ impl<'a> IContext for CwContext<'a> {
             .map(|addr| addr.to_vec())
     }
 
-    fn get_config(&self) -> Result<Config, Self::Error> {
+    fn get_config(&self) -> Result<Config, ContractError> {
         QueryHandler::get_config(self.storage)
     }
 
-    fn insert_config(&mut self, config: &Config) -> Result<(), Self::Error> {
+    fn insert_config(&mut self, config: &Config) -> Result<(), ContractError> {
         CONFIG
             .save(self.storage, config)
             .map_err(|_e| ContractError::FailedToSaveConfig)
@@ -114,7 +111,7 @@ impl<'a> IContext for CwContext<'a> {
         &mut self,
         client_id: &str,
         height: u64,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), ContractError> {
         let time = self.env.block.time.nanos();
         PROCESSED_TIMES
             .save(self.storage, (client_id.to_string(), height), &time)
@@ -125,7 +122,7 @@ impl<'a> IContext for CwContext<'a> {
         &mut self,
         client_id: &str,
         height: u64,
-    ) -> Result<(), Self::Error> {
+    ) -> Result<(), ContractError> {
         let block_height = self.env.block.height;
         PROCESSED_HEIGHTS
             .save(self.storage, (client_id.to_string(), height), &block_height)
@@ -144,7 +141,7 @@ impl<'a> IContext for CwContext<'a> {
         &self,
         client_id: &str,
         height: u64,
-    ) -> Result<u64, Self::Error> {
+    ) -> Result<u64, ContractError> {
         QueryHandler::get_processed_time_at_height(self.storage, client_id, height)
     }
 
@@ -152,24 +149,27 @@ impl<'a> IContext for CwContext<'a> {
         &self,
         client_id: &str,
         height: u64,
-    ) -> Result<u64, Self::Error> {
+    ) -> Result<u64, ContractError> {
         QueryHandler::get_processed_blocknumber_at_height(self.storage, client_id, height)
     }
 
-    fn ensure_ibc_host(&self, caller: cosmwasm_std::Addr) -> Result<(), Self::Error> {
+    fn ensure_ibc_host(&self, caller: &cosmwasm_std::Addr) -> Result<(), ContractError> {
         let config = self.get_config()?;
-        if caller != config.ibc_host {
+        if *caller != config.ibc_host {
             return Err(ContractError::Unauthorized {});
         }
         Ok(())
     }
-    fn ensure_owner(&self, caller: cosmwasm_std::Addr) -> Result<(), Self::Error> {
+    fn ensure_owner(&self, caller: cosmwasm_std::Addr) -> Result<(), ContractError> {
         let config = self.get_config()?;
         debug_eprintln!("owner {:?} caller {}", config.owner, caller.to_string());
         if caller != config.owner {
             return Err(ContractError::Unauthorized {});
         }
         Ok(())
+    }
+    fn api(&self) -> &dyn Api {
+        self.api
     }
 }
 
@@ -189,6 +189,7 @@ mod tests {
     use cw_common::raw_types::Any;
     use hex_literal::hex;
     use prost::Message;
+    use test_utils::get_test_headers;
 
     use test_utils::get_test_signed_headers;
 
@@ -370,6 +371,18 @@ mod tests {
     }
 
     #[test]
+    fn test_recover_signer_for_none_value() {
+        let mut deps = mock_dependencies();
+        let context = CwContext::new(deps.as_mut(), mock_env());
+
+        let msg = keccak256(b"test message");
+        let signature = hex!("c8b2b5eeb7b5462ce6d3bdf1648cd8eae2");
+
+        let result = context.recover_signer(msg.as_slice(), &signature);
+        assert!(result.is_none());
+    }
+
+    #[test]
     fn test_cwcontext_recover_signer_relay_data() {
         let mut deps = mock_dependencies();
 
@@ -490,5 +503,135 @@ mod tests {
             PROCESSED_HEIGHTS.load(deps.as_ref().storage, (client_id.to_string(), height))?;
         assert_eq!(mock_env().block.height, loaded);
         Ok(())
+    }
+
+    #[test]
+    fn test_ensure_owner() {
+        let mut deps = mock_dependencies();
+        let config = Config::default();
+        let mut contract = CwContext::new(deps.as_mut(), mock_env());
+
+        contract.insert_config(&config).unwrap();
+
+        let res = contract.ensure_owner(Addr::unchecked("test"));
+        assert!(res.is_ok())
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized")]
+    fn test_ensure_owner_unauthorized() {
+        let mut deps = mock_dependencies();
+        let config = Config::default();
+        let mut contract = CwContext::new(deps.as_mut(), mock_env());
+
+        contract.insert_config(&config).unwrap();
+
+        contract
+            .ensure_owner(Addr::unchecked("regular_user"))
+            .unwrap()
+    }
+
+    #[test]
+    #[should_panic(expected = "Unauthorized")]
+    fn test_ensure_host_unauthorized() {
+        let mut deps = mock_dependencies();
+        let config = Config::default();
+        let mut contract = CwContext::new(deps.as_mut(), mock_env());
+
+        contract.insert_config(&config).unwrap();
+
+        contract
+            .ensure_ibc_host(&Addr::unchecked("regular_host"))
+            .unwrap()
+    }
+
+    #[test]
+    fn test_get_current_block_time() {
+        let mut deps = mock_dependencies();
+        let contract = CwContext::new(deps.as_mut(), mock_env());
+
+        let res = contract.get_current_block_time();
+        assert_eq!(res, contract.env.block.time.nanos());
+    }
+
+    #[test]
+    fn test_get_current_block_height() {
+        let mut deps = mock_dependencies();
+        let contract = CwContext::new(deps.as_mut(), mock_env());
+
+        let res = contract.get_current_block_height();
+        assert_eq!(res, contract.env.block.height);
+    }
+
+    #[test]
+    fn test_get_processed_time_at_height() {
+        let mut deps = mock_dependencies();
+        let mut contract = CwContext::new(deps.as_mut(), mock_env());
+
+        let height = 2;
+        let client_id = "test_client";
+
+        contract
+            .insert_timestamp_at_height(client_id, height)
+            .unwrap();
+
+        let res = contract
+            .get_processed_time_at_height(client_id, height)
+            .unwrap();
+
+        assert_eq!(res, contract.env.block.time.nanos())
+    }
+
+    #[test]
+    #[should_panic(expected = "ProcessedTimeNotFound")]
+    fn fail_test_get_processed_time_at_height() {
+        let mut deps = mock_dependencies();
+        let mut contract = CwContext::new(deps.as_mut(), mock_env());
+
+        let height = 2;
+        let client_id = "test_client";
+
+        contract
+            .insert_timestamp_at_height(client_id, height)
+            .unwrap();
+
+        contract.get_processed_time_at_height(client_id, 3).unwrap();
+    }
+
+    #[test]
+    fn test_get_processed_block_number_at_height() {
+        let mut deps = mock_dependencies();
+        let mut contract = CwContext::new(deps.as_mut(), mock_env());
+
+        let height = 2;
+        let client_id = "test_client";
+
+        contract
+            .insert_blocknumber_at_height(client_id, height)
+            .unwrap();
+
+        let res = contract
+            .get_processed_block_at_height(client_id, height)
+            .unwrap();
+
+        assert_eq!(res, contract.env.block.height)
+    }
+
+    #[test]
+    #[should_panic(expected = "ProcessedHeightNotFound")]
+    fn fail_test_get_processed_block_number_at_height() {
+        let mut deps = mock_dependencies();
+        let mut contract = CwContext::new(deps.as_mut(), mock_env());
+
+        let height = 2;
+        let client_id = "test_client";
+
+        contract
+            .insert_blocknumber_at_height(client_id, height)
+            .unwrap();
+
+        contract
+            .get_processed_block_at_height(client_id, 3)
+            .unwrap();
     }
 }
