@@ -38,10 +38,7 @@ prost = { version = "0.11.8", default-features = false,features=["prost-derive"]
 
 serde-json-wasm = {version="0.5.0", default-features = false}
 serde_json = "1.0.96"
-#serde = { version = "1.0.154", default-features = false, features = ["derive"] }
-
 bytes = { version = "1.4.0", default-features = false }
-#thiserror = { version = "1.0.39" }
 hex ={ version = "0.4.3", default-features = false }
 hex-literal={version ="*"}
 debug_print = "1.0.0"
