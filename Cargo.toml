@@ -7,10 +7,12 @@ members = [
 exclude = ["contracts/cosmwasm-vm/archway"]
 
 
+
 [workspace.package]
 authors = ["Icon Foundation<foo@icon.foundation>"]
 repository = "https://github.com/icon-project/ibc-integration.git"
 version="0.1.1"
+rust-version = "1.75.0"
 
 [workspace.dependencies]
 cosmwasm-std = {version="1.2.2",default-features = false,features = ["iterator", "ibc3","staking"]}
@@ -34,8 +36,15 @@ serde = { version = "1.0.154", default-features = false, features = ["derive"] }
 bytes = { version = "1.4.0", default-features = false }
 thiserror = { version = "1.0.39" }
 hex ={ version = "0.4.3", default-features = false }
-debug_print = "1.0.0"
-
+debug_print = {git="https://github.com/RustyNixieTube/debug_print.git",branch="master"}
+axelar-wasm-std = { git="https://github.com/axelarnetwork/axelar-amplifier.git", branch = "main" }
+axelar-wasm-std-derive = { version = "^0.1.0", git="https://github.com/axelarnetwork/axelar-amplifier.git"}
+gateway-api = { version = "^0.1.0",  git="https://github.com/axelarnetwork/axelar-amplifier.git" }
+error-stack = { version = "0.4.0", features = ["eyre"] }
+itertools = "0.11.0"
+report = { version = "^0.1.0", git="https://github.com/axelarnetwork/axelar-amplifier.git" }
+router-api = { version = "^0.1.0", git="https://github.com/axelarnetwork/axelar-amplifier.git" }
+integration-tests = { version = "^0.1.0", git="https://github.com/axelarnetwork/axelar-amplifier.git" }
 [profile.release]
 opt-level = 'z'
 debug = false
