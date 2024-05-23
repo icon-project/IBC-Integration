@@ -42,9 +42,9 @@ jobs:
       - name: configureawscredentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_STS_ROLE }}
+          role-to-assume: "arn:aws:iam::714859998736:role/ContractDeploymentEnvironmentRole_IBC"
           role-session-name: cicd
-          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+          aws-region: "us-east-1"
       
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
