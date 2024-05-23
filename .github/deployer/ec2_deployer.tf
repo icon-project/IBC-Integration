@@ -75,6 +75,7 @@ resource "aws_instance" "ibc-deployer" {
 
   tags = {
     Name = "ibc-contract-deployer"
+    Environment = "lisbon"
     Project = "IBC"
   }
 

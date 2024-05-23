@@ -25,11 +25,13 @@ on:
       deploy_script_branch:
         description: deployment-script-branch 
         type: string
-        default: "testnet"
+        default: "lisbon"
       
 jobs:
   create-destroy-deployment-machine:
     runs-on: ubuntu-latest
+    environment:
+      name: lisbon-deployment
     permissions:
       packages: write
       contents: read
