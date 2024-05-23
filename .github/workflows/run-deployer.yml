@@ -30,8 +30,8 @@ on:
 jobs:
   create-destroy-deployment-machine:
     runs-on: ubuntu-latest
-    environment:
-      name: lisbon-deployment
+    # environment:
+      # name: lisbon-deployment
     permissions:
       packages: write
       contents: read
@@ -42,9 +42,9 @@ jobs:
       - name: configureawscredentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: "arn:aws:iam::714859998736:role/ContractDeploymentEnvironmentRole_IBC"
-          role-session-name: cicd
-          aws-region: "us-east-1"
+          role-to-assume: ${{ secrets.AWS_STS_ROLE }}
+          role-session-name: cicdtestnet
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
       
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
