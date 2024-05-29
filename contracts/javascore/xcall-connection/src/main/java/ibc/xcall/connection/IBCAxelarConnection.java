@@ -31,10 +31,13 @@ import score.Context;
 import score.DictDB;
 import score.VarDB;
 import score.annotation.External;
+import score.annotation.EventLog;
 import score.annotation.Payable;
 import scorex.util.HashMap;
-
-public class IBCConnection {
+import ibc.icon.score.util.StringUtil;
+public class IBCAxelarConnection {
+    private static final String KECCAK256 = "keccak-256";
+    private static final String NID = "icon-axelar";
     public static String PORT;
     protected final VarDB<Address> ibc = Context.newVarDB("ibcHandler", Address.class);
     protected final VarDB<Address> xCall = Context.newVarDB("callService", Address.class);
@@ -60,8 +63,28 @@ public class IBCConnection {
     protected final BranchDB<String, DictDB<BigInteger, BigInteger>> unclaimedAckFees = Context.newBranchDB("unclaimedAckFees", BigInteger.class);
     protected final BranchDB<String, DictDB<Address, BigInteger>> unclaimedPacketFees = Context.newBranchDB("unclaimedPacketFees", BigInteger.class);
 
-   
-    public IBCConnection(Address _xCall, Address _ibc, String _port) {
+    protected final DictDB<String, String> nidToAxelarTargets = Context.newDictDB("nidToAxelarTargets", String.class);
+    public static final VarDB<BigInteger> routeMsgSequence = Context.newVarDB("routeMsgSequence",
+    BigInteger.class);
+    public static final DictDB<byte[], byte[]> incomingRouteMsgs = Context.newDictDB("incomingRouteMsgs", byte[].class);
+    public static final DictDB<byte[], String> routeMsgNid = Context.newDictDB("routeMsgNid", String.class);
+    private static final String UNDERSCORE = "_";
+
+    /**
+     *   event ContractCall(
+        address indexed sender,
+        string destinationChain,
+        string destinationContractAddress,
+        bytes32 indexed payloadHash,
+        bytes payload
+    );
+     */
+
+    @EventLog(indexed = 4)
+    public void ContractCall(Address sender, String destinationChain,String destinationContractAddress,byte[] payloadHash,byte[] payload) {
+    }
+
+    public IBCAxelarConnection(Address _xCall, Address _ibc, String _port) {
         ibc.set(_ibc);
         xCall.set(_xCall);
         admin.set(Context.getCaller());
@@ -88,6 +111,16 @@ public class IBCConnection {
         checkCallerOrThrow(Context.getOwner(), "Only Owner allowed");
     }
 
+    private String getRouteMsgId() {
+        BigInteger currSequence = routeMsgSequence.getOrDefault(BigInteger.ZERO);
+        String identifier = NID + currSequence.toString();
+        routeMsgSequence.set(currSequence.add(BigInteger.ONE));
+
+        return identifier;
+    }
+
+   
+
     public BigInteger getValue() {
         return Context.getValue();
     }
@@ -104,6 +137,13 @@ public class IBCConnection {
         sendPacketFee.set(nid, packetFee);
         this.ackFee.set(nid, ackFee);
     }
+
+    @External
+    public void setAxelarTarget(String nid,String address) {
+        onlyAdmin();
+        this.nidToAxelarTargets.set(nid, address);
+    }
+
 
     @External
     public void configureConnection(String connectionId, String counterpartyPortId, String counterpartyNid, String clientId, BigInteger timeoutHeight) {
@@ -157,6 +197,10 @@ public class IBCConnection {
            return;
         }
 
+       
+       
+
+
         BigInteger seqNum = (BigInteger) Context.call(ibc.get(), "getNextSequenceSend", PORT, channel);
         BigInteger packetFee = sendPacketFee.getOrDefault(_to, BigInteger.ZERO);
         BigInteger _ackFee = BigInteger.ZERO;
@@ -168,9 +212,25 @@ public class IBCConnection {
         Context.require(packetFee.add(_ackFee).compareTo(getValue()) >= 0, "Fee is not sufficient");
 
         Message msg = new Message(_sn, packetFee, _msg);
+
+        String destination=nidToAxelarTargets.get(_to);
+        int netIdx = destination.indexOf(UNDERSCORE);
+        Context.require(netIdx >0, "Invalid Axelar target");
+        String destination_chain = destination.substring(0, netIdx);
+        String destination_address = destination.substring(netIdx + UNDERSCORE.length());
+        String source_address= Context.getCaller().toString();
+        byte[] payload_hash= Context.hash(KECCAK256,msg.toBytes());
+        String cc_id=this.getRouteMsgId();
+        // emit axelar event
+        ContractCall(source_address,destination_chain,destination_address,payload_hash,msg.toBytes());
+
+
+        RouteMessage rMsg=new RouteMessage(cc_id,source_address,destination_chain,destination_address,payload_hash);
+
+
         Packet pct = new Packet();
         pct.setSequence(seqNum);
-        pct.setData(msg.toBytes());
+        pct.setData(rMsg.toBytes());
         pct.setSourcePort(PORT);
         pct.setSourceChannel(channel);
         pct.setDestinationPort(destinationPort.get(channel));
@@ -181,14 +241,35 @@ public class IBCConnection {
         Context.call(ibc.get(), "sendPacket", (Object)pct.encode());
     }
 
+
+    @External
+    public void execute(byte[] commandId,String sourceChain,String sourceAddress,byte[] payload){
+
+        Context.println("executeCalled");
+
+    }
+
     @External
     public byte[] onRecvPacket(byte[] calldata, Address relayer) {
         onlyIBCHandler();
 
         Packet packet = Packet.decode(calldata);
-        Message msg = Message.fromBytes(packet.getData());
+        RouteMessage msg = RouteMessage.fromBytes(packet.getData());
         String nid = networkIds.get(packet.getDestinationChannel());
         Context.require(nid != null, "Channel is not configured");
+        byte[] commandId= msg.getCommandId();
+        incomingRouteMsgs.set(commandId,msg.toBytes());
+        routeMsgNid.set(commandId,nid);
+
+
+      
+        return new byte[0];
+    }
+
+    private byte[] onReceivePayload(byte[] csMsgBytes,String nid){
+        Message msg = Message.fromBytes(csMsgBytes);
+        // String nid = networkIds.get(packet.getDestinationChannel());
+        // Context.require(nid != null, "Channel is not configured");
 
         if (msg.getSn() == null) {
             String to = new String(msg.getData());
