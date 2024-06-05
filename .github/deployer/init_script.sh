@@ -11,7 +11,7 @@ KMS_ID="KMS_ID_HERE"
 DEPLOYR_HOME="/home/deployr"
 GO_VERS="1.20.6"
 JAVA_VERS="11.0.18_10"
-ARCHWAY_VERS="6.0.0"
+ARCHWAY_VERS="7.0.1"
 INJECTIVE_VERS="1.12.1-1705909076"
 NEUTRON_VERS="3.0.2"
 SUI_VERS="mainnet-v1.25.1"
@@ -80,6 +80,7 @@ git checkout $${DEPLOY_SCRIPT_BRANCH}
 cd ..
 cp -r icon-ibc/deployer/* /opt/deployer
 
+
 # Create user & configure ssh access
 useradd -m -d $${DEPLOYR_HOME} -s /bin/bash deployr
 mkdir $${DEPLOYR_HOME}/.ssh
@@ -125,8 +126,8 @@ sudo chmod +x /usr/local/bin/neutrond
 
 # Install sui
 wget -q https://github.com/MystenLabs/sui/releases/download/$${SUI_VERS}/sui-$${SUI_VERS}-ubuntu-x86_64.tgz
-sudo tar xf sui-$${SUI_VERS}-ubuntu-x86_64.tgz -C /usr/loca/bin
-sudo chmod +x /usr/local/bin/neutrond/sui
+sudo tar xf sui-$${SUI_VERS}-ubuntu-x86_64.tgz -C /usr/local/bin
+sudo chmod +x /usr/local/bin/sui
 
 # Install boto3, yq, and jq
 apt-get install python3-pip -y
@@ -152,6 +153,7 @@ echo "## Aliases
 alias fetch-walletkeys='sudo /opt/deployer/bin/fetch_keys.sh'
 alias pull-deploy-script='sudo /opt/deployer/bin/update_git.sh'
 alias check-env='sudo /opt/deployer/bin/check-parameter.sh'
+alias backup-restore-contract-env='sudo /opt/deployer/bin/backup_restore_env.py'
 alias make='sudo /opt/deployer/bin/deploy.sh'" >> $${DEPLOYR_HOME}/.bashrc
 
 chmod 400 /tmp/user_data_log.out || true
