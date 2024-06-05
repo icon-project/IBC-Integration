@@ -72,9 +72,11 @@ resource "aws_instance" "ibc-deployer" {
   subnet_id             = var.subnet_id
   vpc_security_group_ids = local.parsed_security_groups
   iam_instance_profile = "SecretManagerReadAccess-ibc"
-
+  root_block_device {
+    volume_size = 15
+  }
   tags = {
-    Name = "ibc-contract-deployer"
+    Name = "testnet-deployer-machine"
     Environment = "lisbon"
     Project = "IBC"
   }
