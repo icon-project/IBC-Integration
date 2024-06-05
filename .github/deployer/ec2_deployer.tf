@@ -72,6 +72,7 @@ resource "aws_instance" "ibc-deployer" {
   subnet_id             = var.subnet_id
   vpc_security_group_ids = local.parsed_security_groups
   iam_instance_profile = "SecretManagerReadAccess-ibc"
+  associate_public_ip_address = false
   root_block_device {
     volume_size = 15
   }

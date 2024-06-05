@@ -143,7 +143,8 @@ echo 'deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/run.sh
 deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/fetch_keys.sh
 deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/update_git.sh
 deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/deploy.sh
-deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/check-parameter.sh' > /etc/sudoers.d/deployr_sudo_commands
+deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/check-parameter.sh
+deployr ALL=(ALL) NOPASSWD: python3 /opt/deployer/bin/backup_restore_env.py' > /etc/sudoers.d/deployr_sudo_commands
 
 # Add goloop binary path to secure path
 sed -i '/secure_path/ s/"$/:\/usr\/local\/go\/bin:\/opt\/ibc\/bin:\/opt\/java\/jdk-11.0.18+10\/bin"/' /etc/sudoers
@@ -153,7 +154,7 @@ echo "## Aliases
 alias fetch-walletkeys='sudo /opt/deployer/bin/fetch_keys.sh'
 alias pull-deploy-script='sudo /opt/deployer/bin/update_git.sh'
 alias check-env='sudo /opt/deployer/bin/check-parameter.sh'
-alias backup-restore-contract-env='sudo /opt/deployer/bin/backup_restore_env.py'
+alias backup-restore-contract-env='sudo python3 /opt/deployer/bin/backup_restore_env.py'
 alias make='sudo /opt/deployer/bin/deploy.sh'" >> $${DEPLOYR_HOME}/.bashrc
 
 chmod 400 /tmp/user_data_log.out || true
