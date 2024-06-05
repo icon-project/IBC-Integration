@@ -11,7 +11,7 @@ KMS_ID="KMS_ID_HERE"
 DEPLOYR_HOME="/home/deployr"
 GO_VERS="1.20.6"
 JAVA_VERS="11.0.18_10"
-ARCHWAY_VERS="7.0.1"
+ARCHWAY_VERS="7.0.0"
 INJECTIVE_VERS="1.12.1-1705909076"
 NEUTRON_VERS="3.0.2"
 SUI_VERS="mainnet-v1.25.1"
@@ -107,8 +107,8 @@ tar xf OpenJDK11U-jdk_x64_linux_hotspot_$${JAVA_VERS}.tar.gz -C /opt/java
 go install github.com/icon-project/goloop/cmd/goloop@latest
 
 # Install archway
-wget -q https://github.com/archway-network/archway/releases/download/v$${ARCHWAY_VERS}/archway_$${ARCHWAY_VERS}_linux_amd64.zip
-unzip archway_$${ARCHWAY_VERS}_linux_amd64.zip
+wget -q https://github.com/archway-network/archway/releases/download/v$${ARCHWAY_VERS}/archway_v$${ARCHWAY_VERS}_linux_amd64.zip
+unzip archway_v$${ARCHWAY_VERS}_linux_amd64.zip
 sudo cp archwayd /usr/local/bin
 
 # Install injectived
@@ -139,12 +139,14 @@ chmod +x /usr/local/bin/yq
 cd - 
 
 # Configure sudo
+## Use full path of command, else there will be syntax error
+
 echo 'deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/run.sh
 deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/fetch_keys.sh
 deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/update_git.sh
 deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/deploy.sh
 deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/check-parameter.sh
-deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/backup_restore_env.py' > /etc/sudoers.d/deployr_sudo_commands
+deployr ALL=(ALL) NOPASSWD: /usr/bin/python3 /opt/deployer/bin/backup_restore_env.py' > /etc/sudoers.d/deployr_sudo_commands
 
 # Add goloop binary path to secure path
 sed -i '/secure_path/ s/"$/:\/usr\/local\/go\/bin:\/opt\/ibc\/bin:\/opt\/java\/jdk-11.0.18+10\/bin"/' /etc/sudoers
