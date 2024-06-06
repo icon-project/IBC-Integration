@@ -30,8 +30,8 @@ on:
 jobs:
   create-destroy-deployment-machine:
     runs-on: ubuntu-latest
-    environment:
-      name: lisbon-deployment
+    # environment:
+    #   name: lisbon-deployment
     permissions:
       packages: write
       contents: read
@@ -57,7 +57,7 @@ jobs:
           TF_VAR_vpc_id: "${{ secrets.VPC_ID }}"
           TF_VAR_subnet_id: "${{ secrets.SUBNET_ID }}"
           TF_VAR_vpc_security_group_ids: "${{ secrets.SECURITY_GROUP_ID }}"
-          kms_id: "${{ secrets.KMS_ID }}"
+          kms_id: "${{ secrets.LISBON_KMS_ID }}"
           deployr_ssh_pub_key: "${{ github.event.inputs.deployr_ssh_pub_key }}"
           deploy_script_branch: "${{ github.event.inputs.deploy_script_branch }}"
 
