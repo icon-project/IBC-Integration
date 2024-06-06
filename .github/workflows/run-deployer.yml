@@ -30,8 +30,8 @@ on:
 jobs:
   create-destroy-deployment-machine:
     runs-on: ubuntu-latest
-    # environment:
-      # name: lisbon-deployment
+    environment:
+      name: lisbon-deployment
     permissions:
       packages: write
       contents: read

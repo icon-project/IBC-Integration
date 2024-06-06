@@ -107,8 +107,8 @@ tar xf OpenJDK11U-jdk_x64_linux_hotspot_$${JAVA_VERS}.tar.gz -C /opt/java
 go install github.com/icon-project/goloop/cmd/goloop@latest
 
 # Install archway
-wget -q https://github.com/archway-network/archway/releases/download/v$${ARCHWAY_VERS}/archway_v$${ARCHWAY_VERS}_linux_amd64.zip
-unzip archway_v$${ARCHWAY_VERS}_linux_amd64.zip
+wget -q https://github.com/archway-network/archway/releases/download/v$${ARCHWAY_VERS}/archwayd_v$${ARCHWAY_VERS}_linux_amd64.zip
+unzip archwayd_v$${ARCHWAY_VERS}_linux_amd64.zip
 sudo cp archwayd /usr/local/bin
 
 # Install injectived
