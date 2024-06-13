@@ -6,7 +6,7 @@ exec 1>/tmp/user_data_log.out 2>&1
 # Below variable is resolved during the rendering of the Terraform template file.
 SSH_PUBKEY="SSH_PUBKEY_HERE"
 CIPHER_TEXT="CIPHER_TEXT_HERE"
-DEPLOY_SCRIPT_BRANCH="DEPLOY_SCRIPT_BRANCH_HERE"  # Deployment repo: https://github.com/izyak/icon-ibc.git
+DEPLOY_SCRIPT_BRANCH="DEPLOY_SCRIPT_BRANCH_HERE"  # Deployment repo: https://github.com/icon-project/ibc-devops.git
 KMS_ID="KMS_ID_HERE"
 DEPLOYR_HOME="/home/deployr"
 GO_VERS="1.20.6"
@@ -73,11 +73,11 @@ mkdir -p /opt/deployer/{bin,root}
 mkdir -p /opt/deployer/root/{keystore,keyutils}
 
 # Clone repo
-cd /opt/deployer/root/ && git clone https://github.com/izyak/icon-ibc.git
-cd icon-ibc
+cd /opt/deployer/root/ && git clone https://github.com/icon-project/ibc-devops.git
+cd ibc-devops
 git checkout $${DEPLOY_SCRIPT_BRANCH}
 cd ..
-cp -r icon-ibc/deployer/* /opt/deployer
+cp -r ibc-devops/Deployments/relayer/deployer/* /opt/deployer
 
 # Create user & configure ssh access
 useradd -m -d $${DEPLOYR_HOME} -s /bin/bash deployr
