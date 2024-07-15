@@ -5,9 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/icon-project/ibc-integration/libraries/go/common/tendermint"
-	interchaintest "github.com/icon-project/ibc-integration/test"
-	"github.com/icon-project/icon-bridge/common/wallet"
 	"io"
 	"log"
 	"math/big"
@@ -16,6 +13,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/icon-project/ibc-integration/libraries/go/common/tendermint"
+	interchaintest "github.com/icon-project/ibc-integration/test"
+	"github.com/icon-project/icon-bridge/common/wallet"
 
 	dockertypes "github.com/docker/docker/api/types"
 	volumetypes "github.com/docker/docker/api/types/volume"
@@ -351,6 +352,10 @@ func (c *IconLocalnet) FindTxs(ctx context.Context, height uint64) ([]blockdb.Tx
 // GetBalance fetches the current balance for a specific account address and denom.
 func (c *IconLocalnet) GetBalance(ctx context.Context, address string, denom string) (int64, error) {
 	return c.getFullNode().GetBalance(ctx, address)
+}
+
+func (c *IconLocalnet) GetWalletBalance(ctx context.Context, address string, denom string) (*big.Int, error) {
+	panic("not implemented")
 }
 
 func (c *IconLocalnet) SetupIBC(ctx context.Context, keyName string) (context.Context, error) {
@@ -1033,4 +1038,20 @@ func (c *IconLocalnet) SendPacketMockDApp(ctx context.Context, targetChain chain
 	response.IsPacketReceiptEventFound = event != nil
 	return response, err
 
+}
+
+func (c *IconLocalnet) SetupIBCICS20(ctx context.Context, keyName string) (context.Context, error) {
+	panic("not implemented")
+}
+
+func (c *IconLocalnet) SendIBCTokenTransfer(ctx context.Context, sourceChannel, destinationChannel, port, sender, receiver, chainID, ibcamount string, hopRequired bool) (string, error) {
+	panic("not implemented")
+}
+
+func (c *IconLocalnet) RegisterToken(ctx context.Context, name, denom, decimal string) error {
+	return nil
+}
+
+func (c *IconLocalnet) GetSenderReceiverAddress() (string, string) {
+	return "", ""
 }

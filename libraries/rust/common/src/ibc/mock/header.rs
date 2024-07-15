@@ -112,8 +112,7 @@ impl From<MockHeader> for Any {
     fn from(header: MockHeader) -> Self {
         Any {
             type_url: MOCK_HEADER_TYPE_URL.to_string(),
-            value: Protobuf::<RawMockHeader>::encode_vec(&header)
-                .expect("encoding to `Any` from `TmHeader`"),
+            value: Protobuf::<RawMockHeader>::encode_vec(&header).unwrap(),
         }
     }
 }

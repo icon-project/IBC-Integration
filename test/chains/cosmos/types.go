@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/icon-project/ibc-integration/test/chains"
+	"github.com/icon-project/ibc-integration/test/testsuite/testconfig"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 
@@ -19,6 +20,27 @@ type CosmosLocalnet struct {
 	filepath     map[string]string
 	IBCAddresses map[string]string     `json:"addresses"`
 	Wallets      map[string]ibc.Wallet `json:"wallets"`
+}
+
+type CosmosRemotenet struct {
+	*CosmosRemoteChain
+	cfg          ibc.ChainConfig
+	testCfg      testconfig.Chain
+	keyName      string
+	filepath     map[string]string
+	IBCAddresses map[string]string     `json:"addresses"`
+	Wallets      map[string]ibc.Wallet `json:"wallets"`
+}
+
+func (c *CosmosRemotenet) Config() ibc.ChainConfig {
+	return c.cfg
+}
+
+func (c *CosmosRemotenet) OverrideConfig(key string, value any) {
+	if value == nil {
+		return
+	}
+	c.cfg.ConfigFileOverrides[key] = value
 }
 
 func (c *CosmosLocalnet) Config() ibc.ChainConfig {

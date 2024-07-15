@@ -65,7 +65,8 @@ To run the demo, the following software needs to be installed.
    ```bash
    git clone https://github.com/archway-network/archway/
    cd archway
-   docker build -f Dockerfile.deprecated -t archway . --build-arg arch=aarch64
+   git checkout v0.5.1
+   docker build -f Dockerfile.deprecated -t archwaynetwork/archwayd:v0.5.1 . --build-arg arch=aarch64
    cd ..
    ```
 
@@ -132,7 +133,18 @@ go test -v ./test/e2e -timeout 0
 go test -v ./test/integration -timeout 0
 ```
 
-#### 3. Set Up the Demo Test Environment (Optional)
+#### 5. Set Up the Hpchain Test Environment (Optional)
+- To execute the end-to-end hopchain tests:
+```bash
+export TEST_CONFIG_PATH=/home/User/IBC-integration/test/testsuite/sample-config-ics20.yaml;
+make e2e-hopchain
+```
+ℹ️ The hopchain tests expects remote chain deployments with respective keys for each chain in the expected folders and synced with remote chains. To use existing relay config, the config should be placed at /home/User/IBC-integration/test/relayer/data/config/config.yaml and the parameters **ics20_app** should be populated with ics20_app deployed address and the flag **use_existing_config** should be true. To create new connection and channels, the param should be set to false and ics20_app value should be empty. The test case assumes following receiver address to be specified in config which might reqiure some funds to be available.
+
+Necessary configured keys should exist at appropriate location for chain/relayer at /home/User/IBC-integration/test/chains/{chain_name}/data and test/relayer/data/keys/{chain_id}
+
+
+#### 5. Set Up the Demo Test Environment (Optional)
 
 If necessary, establish the e2e demo test environment by executing the following command:
 
@@ -142,7 +154,7 @@ make e2e-demo-setup
 
 During the setup process, distinct configuration files are generated in the `test/e2e-demo/ibc-config` directory. These files include contract addresses, along with wallets containing mnemonic/private keys. These keys are essential for conducting subsequent tests.
 
-#### 4. Clean Up the Demo Test Environment (Optional)
+#### 6. Clean Up the Demo Test Environment (Optional)
 
 Upon completion of the testing process, if you've set up the e2e demo environment, you can execute the following command to perform a cleanup:
 

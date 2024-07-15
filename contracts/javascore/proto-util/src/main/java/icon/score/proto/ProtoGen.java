@@ -35,11 +35,7 @@ import javax.lang.model.element.*;
 import org.apache.commons.io.FileUtils;
 
 public class ProtoGen {
-
-    private static final String basePackage = "icon.proto";
-
-    public static void main(String[] args) {
-        try {
+    public static void main(String[] args) throws Exception {
             String path = "../../../proto";
             final Injector injector = Guice.createInjector(new ParserModule());
 
@@ -52,41 +48,57 @@ public class ProtoGen {
 
             Iterator<File> it = FileUtils.iterateFiles(new File(path), new String[]{"proto"},
                     true);
+
             while (it.hasNext()) {
                 File file = it.next();
                 String filePath = file.getPath().replace(path + "/", "");
-                final ProtoContext protoContext = importer.importFile(fileReader, filePath);
-                final Proto proto = protoContext.getProto();
-
-                String targetPath = "build/generated/sources";
-                String relativePath = filePath.replace("/" + file.getName(), "");
-                String targetPackage = basePackage + "." + relativePath.replace("/", ".");
-                targetPackage = targetPackage.replaceAll("[0-9]+-", "");
-
-                final List<io.protostuff.compiler.model.Enum> enums = proto.getEnums();
-                for (io.protostuff.compiler.model.Enum _enum : enums) {
-                    JavaFile javaFile = JavaFile.builder(targetPackage, createEnum(_enum).build())
-                            .build();
-
-                    javaFile.writeTo(new File(targetPath));
+                if (!(
+                    filePath.startsWith("ibc/lightclients/tendermint") ||
+                    filePath.startsWith("tendermint/types") ||
+                    filePath.startsWith("core")
+                )) {
+                    continue;
+                }
+                try {
+                    final ProtoContext protoContext = importer.importFile(fileReader, filePath);
+                    generate(protoContext);
+                } catch (Exception e) {
+                    System.out.println("Failed to generate proto: " + e);
                 }
 
-                final List<Message> messages = proto.getMessages();
-                for (Message message : messages) {
+        }
+    }
 
-                    JavaFile javaFile = JavaFile.builder(targetPackage, createMessage(message).build())
-                            .build();
+    private static void generate(ProtoContext protoContext ) {
+        try {
 
-                    javaFile.writeTo(new File(targetPath));
+            final Proto proto = protoContext.getProto();
+            for (ProtoContext ctx : protoContext.getImports()) {
+                generate(ctx);
+            }
+            String targetPath = "build/generated/sources";
+            System.out.println(proto.getPackage().toString());
+            System.out.println(proto.getCanonicalName());
+            final List<io.protostuff.compiler.model.Enum> enums = proto.getEnums();
+            for (io.protostuff.compiler.model.Enum _enum : enums) {
+                JavaFile javaFile = JavaFile.builder(proto.getPackage().toString(), createEnum(_enum).build())
+                        .build();
 
-                }
+                javaFile.writeTo(new File(targetPath));
             }
 
+            final List<Message> messages = proto.getMessages();
+            for (Message message : messages) {
+
+                JavaFile javaFile = JavaFile.builder(proto.getPackage().toString(), createMessage(message).build())
+                        .build();
+
+                javaFile.writeTo(new File(targetPath));
+            }
         } catch (Exception e) {
             System.out.println("Failed to generate proto: " + e);
         }
     }
-
     private static TypeSpec.Builder createEnum(io.protostuff.compiler.model.Enum protoEnum) {
         TypeSpec.Builder enumSpec = TypeSpec.classBuilder(protoEnum.getName())
                 .addModifiers(Modifier.PUBLIC);
@@ -253,6 +265,7 @@ public class ProtoGen {
         }
 
         switch (field.getTypeName()) {
+            case "int":
             case "int32":
             case "int64":
             case "uint32":
@@ -285,6 +298,7 @@ public class ProtoGen {
         }
 
         switch (field.getTypeName()) {
+            case "int":
             case "int32":
             case "int64":
             case "uint32":
@@ -319,6 +333,7 @@ public class ProtoGen {
         }
 
         switch (field.getTypeName()) {
+            case "int":
             case "int32":
             case "int64":
             case "uint32":
@@ -349,12 +364,14 @@ public class ProtoGen {
         }
 
         switch (field.getTypeName()) {
+            case "int":
             case "int32":
             case "int64":
             case "uint32":
             case "uint64":
             case "sint32":
             case "sint64":
+            case "ScalarType":
                 return "encodeVarIntArray";
             case "fixed32":
             case "sfixed32":
@@ -375,14 +392,16 @@ public class ProtoGen {
 
     private static TypeName getTypeName(Field field) {
         if (field.getType().isMessage()) {
+
             return ClassName.bestGuess(field.getTypeName());
         }
 
-        if (field.getType().isEnum()) {
+        if (field.getType().isEnum() && !field.isRepeated()) {
             return TypeName.INT;
         }
 
         switch (field.getTypeName()) {
+            case "int":
             case "int32":
             case "int64":
             case "uint32":
@@ -393,6 +412,7 @@ public class ProtoGen {
             case "fixed64":
             case "sfixed32":
             case "sfixed64":
+            case "ScalarType":
                 return ClassName.get(BigInteger.class);
             case "bool":
                 return TypeName.BOOLEAN;
@@ -415,6 +435,7 @@ public class ProtoGen {
         }
 
         switch (field.getTypeName()) {
+            case "int":
             case "int32":
             case "int64":
             case "uint32":

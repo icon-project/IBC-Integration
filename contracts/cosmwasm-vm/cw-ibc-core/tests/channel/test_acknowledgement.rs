@@ -29,7 +29,7 @@ fn test_acknowledgement_packet_validate_ordered() {
 
     mock_lightclient_query(test_context.mock_queries, &mut deps);
     let res = contract.acknowledgement_packet_validate(deps.as_mut(), info, env, &msg);
-    println!("{:?}", res);
+    println!("{res:?}");
     assert!(res.is_ok());
 }
 

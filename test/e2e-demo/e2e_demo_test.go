@@ -3,11 +3,12 @@ package e2e_demo
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	interchaintest "github.com/icon-project/ibc-integration/test"
 	"github.com/icon-project/ibc-integration/test/testsuite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"testing"
 )
 
 func TestE2EDemo(t *testing.T) {
@@ -38,7 +39,8 @@ func (e *E2EDemoSuite) TestSetup() {
 	assert.NoErrorf(t, err, "fail to setup xcall -%w", err)
 	err = e.DeployXCallMockApp(ctx, portId)
 	assert.NoErrorf(t, err, "fail to deploy xcall dapp -%w", err)
-	chainA, chainB := e.GetChains()
+	createdChains := e.GetChains()
+	chainA, chainB := createdChains[0], createdChains[1]
 
 	err = interchaintest.BackupConfig(chainA)
 	assert.NoErrorf(t, err, "fail to backup xcall config for chainA -%w", err)

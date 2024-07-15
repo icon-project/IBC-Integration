@@ -665,7 +665,7 @@ fn success_receive_packet_for_call_message_request() {
         .unwrap();
 
     let result = contract.execute(mock_deps.as_mut(), mock_env, mock_info, execute_message);
-    println!("{:?}", result);
+    println!("{result:?}");
     assert!(result.is_ok());
 }
 
@@ -1125,7 +1125,7 @@ fn test_handle_response() {
         },
     );
 
-    println!("{:?}", res);
+    println!("{res:?}");
 
     assert!(res.is_ok())
 }
