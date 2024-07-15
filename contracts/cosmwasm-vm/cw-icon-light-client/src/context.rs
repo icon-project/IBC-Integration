@@ -539,7 +539,6 @@ mod tests {
         let mut contract = CwContext::new(deps.as_mut(), mock_env());
 
         contract.insert_config(&config).unwrap();
-
         contract
             .ensure_ibc_host(&Addr::unchecked("regular_host"))
             .unwrap()

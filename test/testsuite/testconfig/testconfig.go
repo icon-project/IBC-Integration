@@ -22,6 +22,11 @@ type Chain struct {
 	Name             string             `mapstructure:"name"`
 	version          string             `mapstructure:"version"`
 	Environment      string             `mapstructure:"environment"`
+	RPCUri           string             `mapstructure:"rpc_uri"`
+	Sender           string             `mapstructure:"sender"`
+	Receiver         string             `mapstructure:"receiver"`
+	ContractsPath    string             `mapstructure:"contracts_path"`
+	ConfigPath       string             `mapstructure:"config_path"`
 	ChainConfig      chains.ChainConfig `mapstructure:"chain_config"`
 	URL              string             `mapstructure:"url"`
 	NID              string             `mapstructure:"nid"`
@@ -45,8 +50,7 @@ type TestConfig struct {
 }
 
 type ChainOptions struct {
-	ChainAConfig *Chain
-	ChainBConfig *Chain
+	ChainConfig *[]Chain
 }
 
 // ChainOptionConfiguration enables arbitrary configuration of ChainOptions.
@@ -60,8 +64,7 @@ func DefaultChainOptions() (*ChainOptions, error) {
 		return nil, err
 	}
 	return &ChainOptions{
-		ChainAConfig: &tc.ChainConfigs[0],
-		ChainBConfig: &tc.ChainConfigs[1],
+		ChainConfig: &tc.ChainConfigs,
 	}, nil
 }
 
