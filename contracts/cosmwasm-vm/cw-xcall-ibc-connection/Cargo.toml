@@ -16,8 +16,6 @@ exclude = [
 crate-type = ["cdylib", "rlib"]
 
 [features]
-# for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
 # use native_ibc feature to enable entry points for ibc 
 native_ibc = []
 library = []
@@ -48,6 +46,5 @@ cw-xcall = {workspace=true}
 
 
 [dev-dependencies]
-cosmwasm = "0.7.2"
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}
 hex = "0.4.3"

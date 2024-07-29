@@ -17,8 +17,7 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = []
-# for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
+
 # use library feature to disable all instantiate/execute/query exports
 library = []
 mock=[]
@@ -51,7 +50,6 @@ debug_print = {workspace=true}
 
 
 [dev-dependencies]
-cosmwasm = "0.7.2"
 hex-literal="*"
 test-utils={path="../../../libraries/rust/test-utils"}
 getrandom = {version = "0.2", default-features = false, features = ["custom"]}
