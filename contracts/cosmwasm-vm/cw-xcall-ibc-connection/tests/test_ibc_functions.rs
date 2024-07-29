@@ -24,7 +24,7 @@ pub mod account;
 use account::admin_one;
 use account::alice;
 
-use cosmwasm_std::{from_binary, IbcChannelCloseMsg, IbcPacketTimeoutMsg, Reply, SubMsgResult};
+use cosmwasm_std::{from_binary, IbcChannelCloseMsg, Reply, SubMsgResult};
 use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
 use cw_xcall::types::message::CSMessage;
 use cw_xcall::types::request::CSMessageRequest;
@@ -594,7 +594,7 @@ fn success_receive_packet_for_call_message_request() {
         vec![],
     );
 
-    let message: CSMessage = data.try_into().unwrap();
+    let message: CSMessage = data.into();
     let message: Message = Message {
         sn: Nullable::new(Some(1)),
         fee: 0,
@@ -752,7 +752,7 @@ fn fails_receive_packet_for_call_message_request() {
         vec![],
     );
 
-    let message: CSMessage = data.try_into().unwrap();
+    let message: CSMessage = data.into();
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
@@ -914,7 +914,7 @@ fn test_ack_success_on_call_request() {
         vec![],
     );
 
-    let message: CSMessage = data.try_into().unwrap();
+    let message: CSMessage = data.into();
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
@@ -947,7 +947,7 @@ fn test_ack_success_on_call_response() {
         cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
     );
 
-    let message: CSMessage = data.try_into().unwrap();
+    let message: CSMessage = data.into();
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
@@ -986,7 +986,7 @@ fn test_ack_failure_on_call_request() {
         vec![],
     );
 
-    let message: CSMessage = data.try_into().unwrap();
+    let message: CSMessage = data.into();
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
@@ -1019,7 +1019,7 @@ fn test_ack_failure_on_call_response() {
         cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
     );
 
-    let message: CSMessage = data.try_into().unwrap();
+    let message: CSMessage = data.into();
 
     let timeout_block = IbcTimeoutBlock {
         revision: 0,
@@ -1071,7 +1071,7 @@ fn test_handle_response() {
         cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
     );
 
-    let message: CSMessage = data.try_into().unwrap();
+    let message: CSMessage = data.into();
     let message = Message {
         sn: Nullable::new(Some(0)),
         fee: 0,

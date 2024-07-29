@@ -108,7 +108,7 @@ impl<'a> CwIbcConnection<'a> {
                 if current_admin == new_admin {
                     Err(ContractError::AdminAlreadyExist)
                 } else {
-                    current_admin = new_admin.clone();
+                    current_admin.clone_from(&new_admin);
                     Ok(current_admin)
                 }
             })?;

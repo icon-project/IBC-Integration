@@ -139,10 +139,9 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         let client_state = self.client_state(deps.as_ref(), &client_id)?;
 
         if client_state.is_frozen() {
-            return Err(ClientError::ClientFrozen {
+            return Err(Into::<ContractError>::into(ClientError::ClientFrozen {
                 client_id: client_id.clone(),
-            })
-            .map_err(Into::<ContractError>::into);
+            }));
         }
 
         self.store_callback_data(deps.storage, EXECUTE_UPDATE_CLIENT, &client_id)?;
@@ -195,10 +194,9 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             })?;
 
         if old_client_state.is_frozen() {
-            return Err(ClientError::ClientFrozen {
+            return Err(Into::<ContractError>::into(ClientError::ClientFrozen {
                 client_id: client_id.clone(),
-            })
-            .map_err(Into::<ContractError>::into);
+            }));
         }
 
         let old_consensus_state =
@@ -214,11 +212,12 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             .map_err(Into::<ContractError>::into)?;
 
         if old_client_state.expired(duration) {
-            return Err(ClientError::HeaderNotWithinTrustPeriod {
-                latest_time: old_consensus_state.timestamp(),
-                update_time: now,
-            })
-            .map_err(Into::<ContractError>::into);
+            return Err(Into::<ContractError>::into(
+                ClientError::HeaderNotWithinTrustPeriod {
+                    latest_time: old_consensus_state.timestamp(),
+                    update_time: now,
+                },
+            ));
         };
 
         let wasm_exec_message = LightClientMessage::UpgradeClient {
@@ -354,13 +353,14 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         .add_attribute("methods", "execute_update_client_reply")
                         .add_attribute("height", height))
                 }
-                None => Err(ClientError::Other {
+                None => Err(Into::<ContractError>::into(ClientError::Other {
                     description: "UNKNOWN ERROR".to_string(),
-                })
-                .map_err(Into::<ContractError>::into),
+                })),
             },
             cosmwasm_std::SubMsgResult::Err(error) => {
-                Err(ClientError::Other { description: error }).map_err(Into::<ContractError>::into)
+                Err(Into::<ContractError>::into(ClientError::Other {
+                    description: error,
+                }))
             }
         }
     }
@@ -417,13 +417,14 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         .add_attribute("method", "execute_upgrade_client_reply")
                         .add_attribute("client_id", client_id.as_str()))
                 }
-                None => Err(ClientError::Other {
+                None => Err(Into::<ContractError>::into(ClientError::Other {
                     description: "Invalid Response Data".to_string(),
-                })
-                .map_err(Into::<ContractError>::into),
+                })),
             },
             cosmwasm_std::SubMsgResult::Err(error) => {
-                Err(ClientError::Other { description: error }).map_err(Into::<ContractError>::into)
+                Err(Into::<ContractError>::into(ClientError::Other {
+                    description: error,
+                }))
             }
         }
     }
@@ -459,10 +460,9 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
         let client_state = self.client_state(deps.as_ref(), &client_id)?;
 
         if client_state.is_frozen() {
-            return Err(ClientError::ClientFrozen {
+            return Err(Into::<ContractError>::into(ClientError::ClientFrozen {
                 client_id: client_id.clone(),
-            })
-            .map_err(Into::<ContractError>::into);
+            }));
         }
         let client = self.get_light_client(deps.as_ref().storage, &client_id)?;
 
@@ -535,13 +535,14 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
                         .add_attribute("method", "execute_misbheaviour_reply")
                         .add_attribute("client_id", client_id.as_str()))
                 }
-                None => Err(ClientError::Other {
+                None => Err(Into::<ContractError>::into(ClientError::Other {
                     description: "Invalid Response Data".to_string(),
-                })
-                .map_err(Into::<ContractError>::into),
+                })),
             },
             cosmwasm_std::SubMsgResult::Err(error) => {
-                Err(ClientError::Other { description: error }).map_err(Into::<ContractError>::into)
+                Err(Into::<ContractError>::into(ClientError::Other {
+                    description: error,
+                }))
             }
         }
     }

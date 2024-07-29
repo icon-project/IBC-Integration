@@ -228,11 +228,8 @@ fn test_channel_open_ack_msg_validate_on_ordered_type() {
         .unwrap(),
     );
 
-    let res_exist = match res {
-        Some(_) => true,
-        None => false,
-    };
-    assert_eq!(res_exist, true);
+    let res_exist = res.is_some();
+    assert!(res_exist);
 }
 
 #[test]

@@ -255,8 +255,9 @@ impl<'a> CwIbcCoreContext<'a> {
             .may_load(store, client_id)
         {
             Ok(result) => match result {
-                Some(id) => Err(ConnectionError::ConnectionExists(id.to_string()))
-                    .map_err(Into::<ContractError>::into),
+                Some(id) => Err(Into::<ContractError>::into(
+                    ConnectionError::ConnectionExists(id.to_string()),
+                )),
                 None => Ok(()),
             },
             Err(error) => Err(ContractError::Std(error)),

@@ -298,10 +298,9 @@ impl<'a> CwIbcCoreContext<'a> {
             .may_load(store, client_type)
         {
             Ok(result) => match result {
-                Some(_) => Err(ClientError::Other {
+                Some(_) => Err(Into::<ContractError>::into(ClientError::Other {
                     description: "Client Implementation Already Exist".to_string(),
-                })
-                .map_err(Into::<ContractError>::into),
+                })),
 
                 None => Ok(()),
             },
@@ -332,10 +331,9 @@ impl<'a> CwIbcCoreContext<'a> {
         let client = self.get_client_implementations(store, client_id).ok();
 
         if client.is_none() {
-            return Err(ClientError::ClientSpecific {
+            return Err(Into::<ContractError>::into(ClientError::ClientSpecific {
                 description: "LightclientNotFount".to_string(),
-            })
-            .map_err(Into::<ContractError>::into);
+            }));
         }
         Ok(client.unwrap())
     }
@@ -408,7 +406,7 @@ impl<'a> CwIbcCoreContext<'a> {
         client_id: &common::ibc::core::ics24_host::identifier::ClientId,
     ) -> Result<Box<dyn IClientState>, ContractError> {
         let light_client = self.get_light_client(deps.storage, client_id)?;
-        return light_client.get_client_state(deps, client_id);
+        light_client.get_client_state(deps, client_id)
     }
 
     pub fn client_state_any(
@@ -428,7 +426,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<Box<dyn IConsensusState>, ContractError> {
         let client_impl = self.get_light_client(deps.storage, client_id)?;
         let height = height.revision_height();
-        return client_impl.get_consensus_state(deps, client_id, height);
+        client_impl.get_consensus_state(deps, client_id, height)
     }
 
     pub fn consensus_state_any(

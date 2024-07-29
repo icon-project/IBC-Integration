@@ -54,11 +54,11 @@ fn fail_channel_open_init_msg_validate_on_invalid_version_length_of_connection()
     let ctx = TestContext::default(get_mock_env());
 
     let conn_end = ConnectionEnd::new(
-        ctx.connection_end().state.clone(),
+        ctx.connection_end().state,
         ctx.client_id.clone(),
         ctx.connection_end().counterparty().clone(),
         Vec::new(),
-        ctx.connection_end().delay_period().clone(),
+        ctx.connection_end().delay_period(),
     );
     open_init::channel_open_init_msg_validate(&ctx.channel_end(), conn_end).unwrap();
 }

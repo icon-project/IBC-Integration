@@ -297,7 +297,7 @@ fn test_is_packet_already_received_for_none_ordered_channel() {
         )
         .unwrap();
 
-    assert_eq!(res, false)
+    assert!(!res)
 }
 
 #[test]
@@ -372,7 +372,7 @@ fn test_is_packet_already_received() {
         )
         .unwrap();
 
-    assert_eq!(res, false)
+    assert!(!res)
 }
 
 #[test]

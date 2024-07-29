@@ -683,8 +683,8 @@ fn fail_create_channel_event() {
 
     create_channel_event(
         IbcEventType::AppModule,
-        &ctx.port_id.to_string(),
-        &ctx.channel_id.to_string(),
+        ctx.port_id.as_ref(),
+        ctx.channel_id.as_ref(),
         &ctx.channel_end(),
     )
     .unwrap();

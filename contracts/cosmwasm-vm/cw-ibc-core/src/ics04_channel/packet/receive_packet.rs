@@ -59,11 +59,12 @@ impl<'a> CwIbcCoreContext<'a> {
         let counterparty = Counterparty::new(src_port.clone(), Some(src_channel.clone()));
 
         if !channel_end.counterparty_matches(&counterparty) {
-            return Err(PacketError::InvalidPacketCounterparty {
-                port_id: src_port,
-                channel_id: src_channel,
-            })
-            .map_err(Into::<ContractError>::into)?;
+            return Err(Into::<ContractError>::into(
+                PacketError::InvalidPacketCounterparty {
+                    port_id: src_port,
+                    channel_id: src_channel,
+                },
+            ))?;
         }
 
         let packet_already_received = self.is_packet_already_received(
@@ -82,10 +83,11 @@ impl<'a> CwIbcCoreContext<'a> {
         let connection_id = &channel_end.connection_hops()[0];
         let connection_end = self.connection_end(deps.storage, connection_id)?;
         if !connection_end.state_matches(&ConnectionState::Open) {
-            return Err(PacketError::ConnectionNotOpen {
-                connection_id: channel_end.connection_hops()[0].clone(),
-            })
-            .map_err(Into::<ContractError>::into)?;
+            return Err(Into::<ContractError>::into(
+                PacketError::ConnectionNotOpen {
+                    connection_id: channel_end.connection_hops()[0].clone(),
+                },
+            ))?;
         }
         let current_host_height = self.host_height(&env)?;
         let current_host_timestamp = self.host_timestamp(&env)?;
@@ -98,10 +100,9 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_state = self.client_state(deps.as_ref(), client_id)?;
         // The client must not be frozen.
         if client_state.is_frozen() {
-            return Err(PacketError::FrozenClient {
+            return Err(Into::<ContractError>::into(PacketError::FrozenClient {
                 client_id: client_id.clone(),
-            })
-            .map_err(Into::<ContractError>::into)?;
+            }))?;
         }
         cw_println!(deps, "client state created ",);
 
@@ -303,11 +304,10 @@ impl<'a> CwIbcCoreContext<'a> {
             let packet_timeout_height = to_ibc_timeout_height(packet.timeout_height.clone())?;
 
             if packet_timeout_height.has_expired(host_height) {
-                return Err(PacketError::LowPacketHeight {
+                return Err(Into::<ContractError>::into(PacketError::LowPacketHeight {
                     chain_height: host_height,
                     timeout_height: packet_timeout_height,
-                })
-                .map_err(Into::<ContractError>::into)?;
+                }))?;
             }
         }
         if packet.timeout_timestamp > 0 {

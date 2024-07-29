@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-BINARYEN_VERS=110
+BINARYEN_VERS=116
 BINARYEN_DWN="https://github.com/WebAssembly/binaryen/releases/download/version_${BINARYEN_VERS}/binaryen-version_${BINARYEN_VERS}-x86_64-linux.tar.gz"
 
-WASMOPT_VERS="110"
-RUSTC_VERS="1.69.0"
+WASMOPT_VERS="116"
+RUSTC_VERS="1.78.0"
 
 MAX_WASM_SIZE=800 # 800 KB
 
@@ -34,7 +34,7 @@ cargo fmt --all
 cargo clean
 
 rustup target add wasm32-unknown-unknown
-cargo install cosmwasm-check@1.4.1 --locked
+cargo install cosmwasm-check@2.1.0 --locked
 
 RUSTFLAGS='-C link-arg=-s' cargo build --workspace --exclude test-utils --release --lib --target wasm32-unknown-unknown
 for WASM in ./target/wasm32-unknown-unknown/release/*.wasm; do

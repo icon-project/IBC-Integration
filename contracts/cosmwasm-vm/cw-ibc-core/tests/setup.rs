@@ -67,6 +67,12 @@ pub struct MockEnvBuilder {
     env: Env,
 }
 
+impl Default for MockEnvBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MockEnvBuilder {
     pub fn new() -> MockEnvBuilder {
         MockEnvBuilder {
@@ -1050,7 +1056,7 @@ impl TestContext {
     }
 
     pub fn init_client_state(&mut self, deps: DepsMut, contract: &CwIbcCoreContext) {
-        self.init_context(deps.storage, &contract);
+        self.init_context(deps.storage, contract);
         self.save_consensus_state(
             deps.storage,
             self.client_state.clone().unwrap().latest_height,
@@ -1058,10 +1064,10 @@ impl TestContext {
         contract.init_client_counter(deps.storage, 0).unwrap();
         self.save_client_commitment(
             deps.storage,
-            &contract,
+            contract,
             &self.client_state.clone().unwrap().encode_to_vec(),
         );
-        self.save_register_client(deps, &contract);
+        self.save_register_client(deps, contract);
     }
 
     pub fn save_next_sequence_send(&self, storage: &mut dyn Storage, contract: &CwIbcCoreContext) {

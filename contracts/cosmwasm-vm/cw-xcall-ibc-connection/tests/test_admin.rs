@@ -1,7 +1,7 @@
 mod account;
 mod setup;
 use account::*;
-use cosmwasm_std::{testing::mock_env, Addr};
+use cosmwasm_std::testing::mock_env;
 use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
 use cw_xcall_ibc_connection::{execute, state::CwIbcConnection};
 use setup::*;
