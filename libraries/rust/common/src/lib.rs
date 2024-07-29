@@ -192,16 +192,14 @@ impl<'a> PrimaryKey<'a> for &ChannelId {
 impl KeyDeserialize for &ChannelId {
     type Output = ChannelId;
 
+   
     fn from_vec(value: Vec<u8>) -> StdResult<Self::Output> {
-        todo!()
+        let result = String::from_utf8(value)
+            .map_err(StdError::invalid_utf8)
+            .unwrap();
+        let chan_id = ChannelId::from_str(&result).unwrap();
+        Ok(chan_id)
     }
-    // fn from_vec(value: Vec<u8>) -> Result<Self::Output,cosmwasm_std::errors::std_error::StdError> {
-    //     let result = String::from_utf8(value)
-    //         .map_err(StdError::invalid_utf8)
-    //         .unwrap();
-    //     let chan_id = ChannelId::from_str(&result).unwrap();
-    //     Ok(chan_id)
-    // }
 }
 
 impl<'a> Prefixer<'a> for &ChannelId {
