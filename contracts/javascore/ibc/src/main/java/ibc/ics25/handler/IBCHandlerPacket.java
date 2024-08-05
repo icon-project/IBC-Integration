@@ -55,8 +55,9 @@ public class IBCHandlerPacket extends IBCHandlerChannel implements IIBCPacket {
         IIBCModule module = lookupModuleByChannel(packet.getDestinationPort(),
                 packet.getDestinationChannel());
 
-        byte[] acknowledgement = module.onRecvPacket(msg.getPacket(), Context.getCaller());
+        
         _recvPacket(packet, msg.getProof(), msg.getProofHeight());
+        byte[] acknowledgement = module.onRecvPacket(msg.getPacket(), Context.getCaller());
 
         if (acknowledgement != null && acknowledgement.length > 0) {
             _writeAcknowledgement(
@@ -93,10 +94,9 @@ public class IBCHandlerPacket extends IBCHandlerChannel implements IIBCPacket {
     public void acknowledgePacket(MsgPacketAcknowledgement msg) {
         Packet packet = Packet.decode(msg.getPacket());
         IIBCModule module = lookupModuleByChannel(packet.getSourcePort(), packet.getSourceChannel());
-
-        module.onAcknowledgementPacket(msg.getPacket(), msg.getAcknowledgement(),
-                Context.getCaller());
         _acknowledgePacket(packet, msg.getAcknowledgement(), msg.getProof(), msg.getProofHeight());
+        module.onAcknowledgementPacket(msg.getPacket(), msg.getAcknowledgement(),
+        Context.getCaller());
 
         AcknowledgePacket(msg.getPacket(), msg.getAcknowledgement());
     }
@@ -112,9 +112,8 @@ public class IBCHandlerPacket extends IBCHandlerChannel implements IIBCPacket {
     public void timeoutPacket(MsgPacketTimeout msg) {
         Packet packet = Packet.decode(msg.getPacket());
         IIBCModule module = lookupModuleByChannel(packet.getSourcePort(), packet.getSourceChannel());
-        module.onTimeoutPacket(msg.getPacket(), Context.getCaller());
         _timeoutPacket(packet, msg.getProofHeight(), msg.getProof(), msg.getNextSequenceRecv());
-
+        module.onTimeoutPacket(msg.getPacket(), Context.getCaller());
         PacketTimeout(msg.getPacket());
     }
 }
