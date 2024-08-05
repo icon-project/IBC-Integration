@@ -550,14 +550,14 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
 
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::{from_binary, to_binary};
+    use cosmwasm_std::{from_json, to_json_binary};
     use cw_common::client_response::CreateClientResponse;
     #[test]
     fn test_binary_conversion() {
         let res: CreateClientResponse = CreateClientResponse::default();
-        let bytes = to_binary(&res).unwrap();
+        let bytes = to_json_binary(&res).unwrap();
         println!("{}", hex::encode(bytes.0.clone()));
-        let decoded: CreateClientResponse = from_binary(&bytes).unwrap();
+        let decoded: CreateClientResponse = from_json(&bytes).unwrap();
         assert_eq!(res, decoded)
     }
 }

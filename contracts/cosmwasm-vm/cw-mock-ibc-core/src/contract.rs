@@ -2,9 +2,9 @@ use common::ibc::core::ics04_channel::timeout::TimeoutHeight;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, Event, IbcEndpoint, IbcPacket,
-    IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock, MessageInfo, Reply, Response, StdResult,
-    SubMsg, Timestamp, WasmMsg,
+    to_json_binary as to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, Event,
+    IbcEndpoint, IbcPacket, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock, MessageInfo, Reply,
+    Response, StdResult, SubMsg, Timestamp, WasmMsg,
 };
 use cw2::set_contract_version;
 use cw_common::hex_string::HexString;

@@ -2,7 +2,8 @@ pub mod setup;
 use std::str::FromStr;
 
 use cosmwasm_std::{
-    testing::mock_env, to_binary, Addr, IbcEndpoint, IbcPacket, IbcTimeout, IbcTimeoutBlock,
+    testing::mock_env, to_json_binary as to_binary, Addr, IbcEndpoint, IbcPacket, IbcTimeout,
+    IbcTimeoutBlock,
 };
 
 use cw_xcall_ibc_connection::types::config::Config;

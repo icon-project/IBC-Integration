@@ -16,8 +16,8 @@ use crate::{
 };
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply, Response,
-    StdError, StdResult, Storage,
+    entry_point, to_json_binary as to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Reply,
+    Response, StdError, StdResult, Storage,
 };
 use cw2::set_contract_version;
 

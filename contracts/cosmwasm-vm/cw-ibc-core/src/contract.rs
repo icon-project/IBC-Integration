@@ -2,7 +2,7 @@ use std::env;
 
 use super::*;
 
-use cosmwasm_std::to_binary;
+use cosmwasm_std::to_json_binary as to_binary;
 
 use cw_common::hex_string::HexString;
 use cw_common::query_helpers::build_smart_query;
@@ -714,7 +714,7 @@ mod tests {
     use super::{instantiate, query, InstantiateMsg, QueryMsg};
 
     use cosmwasm_std::{
-        from_binary,
+        from_json as from_binary,
         testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
         Addr, OwnedDeps,
     };

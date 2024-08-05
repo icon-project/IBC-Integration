@@ -18,7 +18,8 @@ use cosmwasm_std::Event;
 use cosmwasm_std::Reply;
 use cosmwasm_std::Storage;
 use cosmwasm_std::{
-    to_binary, to_vec, Binary, CosmosMsg, Empty, MessageInfo, Response, SubMsg, WasmMsg,
+    to_json_binary as to_binary, to_json_vec as to_vec, Binary, CosmosMsg, Empty, MessageInfo,
+    Response, SubMsg, WasmMsg,
 };
 pub use cw_common::client_msg::ExecuteMsg as LightClientMessage;
 use cw_common::commitment;

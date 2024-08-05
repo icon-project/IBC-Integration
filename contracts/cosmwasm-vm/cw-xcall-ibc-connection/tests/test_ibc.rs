@@ -1,8 +1,8 @@
 pub mod setup;
 
 use cosmwasm_std::{
-    to_binary, Addr, Binary, Ibc3ChannelOpenResponse, IbcAcknowledgement, IbcChannelCloseMsg,
-    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcPacketAckMsg,
+    to_json_binary as to_binary, Addr, Binary, Ibc3ChannelOpenResponse, IbcAcknowledgement,
+    IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcPacketAckMsg,
 };
 
 use cw_common::types::Ack;

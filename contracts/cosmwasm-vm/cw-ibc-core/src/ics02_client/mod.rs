@@ -10,8 +10,8 @@ use crate::{
 use common::ibc::core::ics24_host::identifier::ClientId;
 
 use cosmwasm_std::{
-    from_binary, to_binary, to_vec, Addr, CosmosMsg, DepsMut, Event, MessageInfo, Reply, Response,
-    Storage, SubMsg,
+    from_json as from_binary, to_json_binary as to_binary, to_json_vec as to_vec, Addr, CosmosMsg,
+    DepsMut, Event, MessageInfo, Reply, Response, Storage, SubMsg,
 };
 use cw_common::client_response::{
     MisbehaviourResponse, UpdateClientResponse, UpgradeClientResponse,

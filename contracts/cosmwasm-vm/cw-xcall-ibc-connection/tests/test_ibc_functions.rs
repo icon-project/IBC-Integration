@@ -3,7 +3,7 @@ use std::str::FromStr;
 
 use common::rlp::{self, Nullable};
 use cosmwasm_std::{
-    testing::mock_env, to_binary, Addr, Binary, IbcAcknowledgement, IbcChannel,
+    testing::mock_env, to_json_binary as to_binary, Addr, Binary, IbcAcknowledgement, IbcChannel,
     IbcChannelConnectMsg::OpenAck, IbcChannelOpenMsg::OpenInit, IbcChannelOpenMsg::OpenTry,
     IbcEndpoint, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcTimeout, IbcTimeoutBlock,
 };
@@ -24,7 +24,7 @@ pub mod account;
 use account::admin_one;
 use account::alice;
 
-use cosmwasm_std::{from_binary, IbcChannelCloseMsg, Reply, SubMsgResult};
+use cosmwasm_std::{from_json as from_binary, IbcChannelCloseMsg, Reply, SubMsgResult};
 use cw_common::xcall_connection_msg::{ExecuteMsg, QueryMsg};
 use cw_xcall::types::message::CSMessage;
 use cw_xcall::types::request::CSMessageRequest;
@@ -219,7 +219,6 @@ fn test_query_get_unclaimed_fee() {
 #[test]
 #[cfg(not(feature = "native_ibc"))]
 fn success_on_open_channel_open_try_valid_version() {
-    use cosmwasm_std::from_binary;
     use cw_xcall_lib::network_address::NetId;
 
     let mut deps = deps();

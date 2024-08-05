@@ -62,7 +62,6 @@ pub fn on_chan_open_try_submessage(
     connection_id: &ConnectionId,
 ) -> cosmwasm_std::IbcChannelOpenMsg {
     let port_id = port_id.clone();
-    let channel_id = channel_id;
     let counter_party_port_id = msg.counterparty().port_id.clone();
     let counter_party_channel = msg.counterparty().channel_id().unwrap().clone();
     let endpoint = cosmwasm_std::IbcEndpoint {

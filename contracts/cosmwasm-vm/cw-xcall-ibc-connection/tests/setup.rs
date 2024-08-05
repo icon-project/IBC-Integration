@@ -7,9 +7,9 @@ use cosmwasm_std::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
         MOCK_CONTRACT_ADDR,
     },
-    to_binary, Addr, BlockInfo, ContractInfo, DepsMut, Empty, Env, Event, IbcChannel, IbcEndpoint,
-    IbcPacket, IbcTimeout, IbcTimeoutBlock, MessageInfo, OwnedDeps, Storage, SubMsgResponse,
-    Timestamp, TransactionInfo,
+    to_json_binary as to_binary, Addr, BlockInfo, ContractInfo, DepsMut, Empty, Env, Event,
+    IbcChannel, IbcEndpoint, IbcPacket, IbcTimeout, IbcTimeoutBlock, MessageInfo, OwnedDeps,
+    Storage, SubMsgResponse, Timestamp, TransactionInfo,
 };
 
 use cw_xcall_ibc_connection::{

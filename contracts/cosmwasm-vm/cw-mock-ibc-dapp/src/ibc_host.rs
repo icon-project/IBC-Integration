@@ -1,6 +1,8 @@
 use crate::state::IbcConfig;
 use crate::types::LOG_PREFIX;
-use cosmwasm_std::{to_binary, CosmosMsg, Deps, DepsMut, MessageInfo, Storage, SubMsg, WasmMsg};
+use cosmwasm_std::{
+    to_json_binary as to_binary, CosmosMsg, Deps, DepsMut, MessageInfo, Storage, SubMsg, WasmMsg,
+};
 use cw_common::cw_types::CwPacket;
 use cw_common::query_helpers::build_smart_query;
 use cw_common::{hex_string::HexString, raw_types::channel::RawPacket, ProstMessage};
@@ -92,7 +94,7 @@ mod tests {
     use cosmwasm_std::{
         coin,
         testing::{mock_dependencies_with_balance, mock_env},
-        to_binary, Addr, CosmosMsg, MessageInfo, SubMsg, WasmMsg,
+        to_json_binary as to_binary, Addr, CosmosMsg, MessageInfo, SubMsg, WasmMsg,
     };
     use cw_common::{hex_string::HexString, raw_types::channel::RawPacket, ProstMessage};
 

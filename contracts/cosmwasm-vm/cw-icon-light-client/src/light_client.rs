@@ -26,8 +26,8 @@ impl<'a> IconClient<'a> {
         &self,
         client_id: &str,
         header: &BtpHeader,
-        signatures: &Vec<Vec<u8>>,
-        validators: &Vec<Vec<u8>>,
+        signatures: &[Vec<u8>],
+        validators: &[Vec<u8>],
     ) -> Result<bool, ContractError> {
         let mut votes = u64::default();
         let state = self.context.get_client_state(client_id)?;
