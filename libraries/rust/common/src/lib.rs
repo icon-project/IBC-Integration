@@ -192,7 +192,6 @@ impl<'a> PrimaryKey<'a> for &ChannelId {
 impl KeyDeserialize for &ChannelId {
     type Output = ChannelId;
 
-   
     fn from_vec(value: Vec<u8>) -> StdResult<Self::Output> {
         let result = String::from_utf8(value)
             .map_err(StdError::invalid_utf8)
