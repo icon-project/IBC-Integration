@@ -10,7 +10,7 @@ exclude = ["contracts/cosmwasm-vm/archway"]
 [workspace.package]
 authors = ["Icon Foundation<foo@icon.foundation>"]
 repository = "https://github.com/icon-project/ibc-integration.git"
-version="0.1.1"
+version="0.1.2"
 
 [workspace.dependencies]
 cosmwasm-std = {version="1.5.5",default-features = false,features = ["iterator", "ibc3","staking"]}

@@ -486,7 +486,7 @@ dependencies = [
 
 [[package]]
 name = "cw-common"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bech32",
  "bytes",
@@ -510,7 +510,7 @@ dependencies = [
 
 [[package]]
 name = "cw-ibc-core"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "bytes",
@@ -525,7 +525,7 @@ dependencies = [
  "debug_print",
  "getrandom",
  "hex",
- "hex-literal 0.4.1",
+ "hex-literal 0.3.4",
  "prost 0.11.9",
  "schemars",
  "serde",
@@ -538,7 +538,7 @@ dependencies = [
 
 [[package]]
 name = "cw-icon-light-client"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bytes",
  "common 0.1.0",
@@ -551,7 +551,7 @@ dependencies = [
  "debug_print",
  "getrandom",
  "hex",
- "hex-literal 0.4.1",
+ "hex-literal 0.3.4",
  "prost 0.11.9",
  "schemars",
  "serde",
@@ -564,7 +564,7 @@ dependencies = [
 
 [[package]]
 name = "cw-integration"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "common 0.1.0",
@@ -628,7 +628,7 @@ dependencies = [
 
 [[package]]
 name = "cw-mock-ibc-connection"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "common 0.1.0",
  "cosmwasm-schema",
@@ -649,7 +649,7 @@ dependencies = [
 
 [[package]]
 name = "cw-mock-ibc-core"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "common 0.1.0",
  "cosmwasm-schema",
@@ -668,7 +668,7 @@ dependencies = [
 
 [[package]]
 name = "cw-mock-ibc-dapp"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "common 0.1.0",
  "cosmwasm-schema",
@@ -778,7 +778,7 @@ dependencies = [
 
 [[package]]
 name = "cw-xcall-ibc-connection"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "common 0.1.0",
  "cosmwasm-schema",

@@ -195,7 +195,7 @@ fn test_query_get_fee() {
         response: true,
     };
     let res = query(deps.as_ref(), ctx.env, msg).unwrap();
-    let fee: u128 = from_binary(&res).unwrap();
+    let fee: u128 = from_binary(res).unwrap();
     assert_eq!(fee, 0)
 }
 
@@ -212,7 +212,7 @@ fn test_query_get_unclaimed_fee() {
         relayer: "crly".to_owned(),
     };
     let res = query(deps.as_ref(), ctx.env, msg).unwrap();
-    let fee: u128 = from_binary(&res).unwrap();
+    let fee: u128 = from_binary(res).unwrap();
     assert_eq!(fee, 0)
 }
 
@@ -276,7 +276,7 @@ fn success_on_open_channel_open_try_valid_version() {
         .execute(deps.as_mut(), mock_env, mock_info, execute_message)
         .unwrap();
 
-    let result_data: IbcEndpoint = from_binary(&result.data.unwrap()).unwrap();
+    let result_data: IbcEndpoint = from_binary(result.data.unwrap()).unwrap();
     assert_eq!(src.channel_id, result_data.channel_id);
 
     assert_eq!("ics20-1", result.attributes[1].value)
@@ -849,7 +849,7 @@ fn success_on_setting_timeout_height() {
         .unwrap();
 
     let response: u64 = from_binary(
-        &contract
+        contract
             .query(
                 deps.as_ref(),
                 mock_env,

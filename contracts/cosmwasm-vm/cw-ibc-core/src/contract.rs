@@ -736,14 +736,14 @@ mod tests {
         let mut deps = setup();
         let msg = QueryMsg::GetNextClientSequence {};
         let result = query(deps.as_ref(), mock_env(), msg.clone()).unwrap();
-        let result_parsed: u64 = from_binary(&result).unwrap();
+        let result_parsed: u64 = from_binary(result).unwrap();
         assert_eq!(0, result_parsed);
 
         contract
             .increase_client_counter(deps.as_mut().storage)
             .unwrap();
         let result = query(deps.as_ref(), mock_env(), msg).unwrap();
-        let result_parsed: u64 = from_binary(&result).unwrap();
+        let result_parsed: u64 = from_binary(result).unwrap();
         assert_eq!(1, result_parsed);
     }
 
@@ -763,7 +763,7 @@ mod tests {
             _type: client_type_str,
         };
         let result = query(deps.as_ref(), mock_env(), msg).unwrap();
-        let result_parsed: Addr = from_binary(&result).unwrap();
+        let result_parsed: Addr = from_binary(result).unwrap();
         assert_eq!(client, result_parsed.as_str());
     }
 

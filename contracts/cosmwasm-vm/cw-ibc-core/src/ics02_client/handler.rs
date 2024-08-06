@@ -390,7 +390,7 @@ impl<'a> IbcClient for CwIbcCoreContext<'a> {
             cosmwasm_std::SubMsgResult::Ok(result) => match result.data {
                 Some(data) => {
                     let response: UpgradeClientResponse =
-                        from_binary(&data).map_err(ContractError::Std)?;
+                        from_binary(data).map_err(ContractError::Std)?;
                     let client_id = response.client_id().map_err(ContractError::from)?;
 
                     self.store_client_commitment(
