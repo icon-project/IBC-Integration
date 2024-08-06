@@ -51,6 +51,7 @@ impl<'a> CwIbcCoreContext<'a> {
         let next_sequence_recv = Sequence::from(msg.next_sequence_recv);
 
         let mut channel_end = self.get_channel_end(deps.storage, &src_port, &src_channel)?;
+
         let counterparty = Counterparty::new(dst_port.clone(), Some(dst_channel.clone()));
         if !channel_end.counterparty_matches(&counterparty) {
             return Err(ContractError::IbcPacketError {
@@ -186,6 +187,12 @@ impl<'a> CwIbcCoreContext<'a> {
         let timeoutblock = to_ibc_timeout_block(&packet_timeout_height);
         let timeout = CwTimeout::with_block(timeoutblock);
         let ibc_packet = CwPacket::new(data, src, dest, packet.sequence, timeout);
+        self.delete_packet_commitment(
+            deps.storage,
+            &src_port,
+            &src_channel,
+            packet.sequence.into(),
+        )?;
 
         let address = to_checked_address(deps.as_ref(), &msg.signer);
         let cosm_msg = cw_common::xcall_connection_msg::ExecuteMsg::IbcPacketTimeout {
