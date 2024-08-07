@@ -31,8 +31,8 @@ func (s *E2ETest) TestE2E_all() {
 		xcall.TextXCall()
 	})
 
-	// t.Run("test xcall packet drop", func(t *testing.T) {
-	// 	xcall.TestXCallPacketDrop()
-	// })
+	t.Run("test xcall packet drop", func(t *testing.T) {
+		xcall.TestXCallPacketDrop()
+	})
 
 }
