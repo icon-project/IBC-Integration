@@ -13,7 +13,8 @@ use common::icon::icon::types::v1::{MerkleProofs, SignedHeader};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
+    to_json_binary as to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError,
+    StdResult,
 };
 use cw2::set_contract_version;
 use cw_common::client_response::{CreateClientResponse, UpdateClientResponse};
@@ -539,7 +540,7 @@ mod tests {
     use common::icon::icon::types::v1::{BtpHeader, SignedHeader};
     use cosmwasm_std::{
         testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
-        to_binary, Addr, OwnedDeps, Response,
+        to_json_binary as to_binary, Addr, OwnedDeps, Response,
     };
     use cw2::get_contract_version;
     use cw_common::{client_msg::QueryMsg, raw_types::Any};

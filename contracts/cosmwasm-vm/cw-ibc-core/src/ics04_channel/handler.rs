@@ -72,11 +72,12 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let src_port = to_ibc_port_id(&message.port_id)?;
 
         if channel_end.connection_hops.len() != 1 {
-            return Err(ChannelError::InvalidConnectionHopsLength {
-                expected: 1,
-                actual: channel_end.connection_hops.len(),
-            })
-            .map_err(Into::<ContractError>::into)?;
+            return Err(Into::<ContractError>::into(
+                ChannelError::InvalidConnectionHopsLength {
+                    expected: 1,
+                    actual: channel_end.connection_hops.len(),
+                },
+            ))?;
         }
         let connection_id = channel_end.connection_hops[0].clone();
         // An IBC connection running on the local (host) chain should exist.
@@ -85,10 +86,9 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let client_state = self.client_state(deps.as_ref(), client_id)?;
 
         if client_state.is_frozen() {
-            return Err(ClientError::ClientFrozen {
+            return Err(Into::<ContractError>::into(ClientError::ClientFrozen {
                 client_id: client_id.clone(),
-            })
-            .map_err(Into::<ContractError>::into);
+            }));
         }
         channel_open_init_msg_validate(&channel_end, connection_end)?;
         let counter = self.channel_counter(deps.storage)?;
@@ -217,7 +217,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             vec![conn_id_on_a.clone()],
             channel_end.version().clone(),
         );
-        let raw_expected_chan = RawChannel::try_from(expected_channel_end).unwrap();
+        let raw_expected_chan = RawChannel::from(expected_channel_end);
         let chan_end_path_on_a = commitment::channel_path(&source_port, &source_channel);
         let vector = raw_expected_chan.encode_to_vec();
 
@@ -348,7 +348,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             version.clone(),
         );
 
-        let raw_expected_chan = RawChannel::try_from(expected_channel_end).unwrap();
+        let raw_expected_chan = RawChannel::from(expected_channel_end);
         let chan_end_path_on_b = commitment::channel_path(&dst_port, &dst_channel);
         let vector = raw_expected_chan.encode_to_vec();
 
@@ -471,7 +471,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             channel_end.version.clone(),
         );
 
-        let raw_expected_chan = RawChannel::try_from(expected_channel_end).unwrap();
+        let raw_expected_chan = RawChannel::from(expected_channel_end);
         let counterparty_channel_path = commitment::channel_path(src_port, src_channel);
 
         let expected_counterparty_channel_end = raw_expected_chan.encode_to_vec();
@@ -557,10 +557,9 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
         let client_state = self.client_state(deps.as_ref(), client_id)?;
 
         if client_state.is_frozen() {
-            return Err(ClientError::ClientFrozen {
+            return Err(Into::<ContractError>::into(ClientError::ClientFrozen {
                 client_id: client_id.clone(),
-            })
-            .map_err(Into::<ContractError>::into);
+            }));
         }
 
         ensure_connection_state(&connection_id, &connection_end, &ConnectionState::Open)?;
@@ -673,7 +672,7 @@ impl<'a> ValidateChannel for CwIbcCoreContext<'a> {
             vec![conn_id_on_a.clone()],
             channel_end.version().clone(),
         );
-        let raw_expected_chan = RawChannel::try_from(expected_channel_end).unwrap();
+        let raw_expected_chan = RawChannel::from(expected_channel_end);
 
         let counterparty_chan_end_path = commitment::channel_path(src_port, src_channel);
         let expected_counterparty_channel_end = raw_expected_chan.encode_to_vec();

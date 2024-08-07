@@ -19,24 +19,27 @@ pub fn channel_open_try_msg_validate(
     conn_end_on_b: &ConnectionEnd,
 ) -> Result<(), ContractError> {
     if !conn_end_on_b.state_matches(&ConnectionState::Open) {
-        return Err(ChannelError::ConnectionNotOpen {
-            connection_id: channel.connection_hops[0].clone(),
-        })
-        .map_err(Into::<ContractError>::into);
+        return Err(Into::<ContractError>::into(
+            ChannelError::ConnectionNotOpen {
+                connection_id: channel.connection_hops[0].clone(),
+            },
+        ));
     };
 
     let conn_version = match conn_end_on_b.versions() {
         [version] => version,
         _ => {
-            return Err(ChannelError::InvalidVersionLengthConnection)
-                .map_err(Into::<ContractError>::into)
+            return Err(Into::<ContractError>::into(
+                ChannelError::InvalidVersionLengthConnection,
+            ))
         }
     };
 
     let channel_feature = channel.ordering.to_string();
     if !conn_version.is_supported_feature(channel_feature) {
-        return Err(ChannelError::ChannelFeatureNotSupportedByConnection)
-            .map_err(Into::<ContractError>::into);
+        return Err(Into::<ContractError>::into(
+            ChannelError::ChannelFeatureNotSupportedByConnection,
+        ));
     }
 
     Ok(())
@@ -59,7 +62,6 @@ pub fn on_chan_open_try_submessage(
     connection_id: &ConnectionId,
 ) -> cosmwasm_std::IbcChannelOpenMsg {
     let port_id = port_id.clone();
-    let channel_id = channel_id;
     let counter_party_port_id = msg.counterparty().port_id.clone();
     let counter_party_channel = msg.counterparty().channel_id().unwrap().clone();
     let endpoint = cosmwasm_std::IbcEndpoint {

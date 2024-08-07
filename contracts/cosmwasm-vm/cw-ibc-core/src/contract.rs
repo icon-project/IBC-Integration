@@ -2,7 +2,7 @@ use std::env;
 
 use super::*;
 
-use cosmwasm_std::to_binary;
+use cosmwasm_std::to_json_binary as to_binary;
 
 use cw_common::hex_string::HexString;
 use cw_common::query_helpers::build_smart_query;
@@ -714,7 +714,7 @@ mod tests {
     use super::{instantiate, query, InstantiateMsg, QueryMsg};
 
     use cosmwasm_std::{
-        from_binary,
+        from_json as from_binary,
         testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage},
         Addr, OwnedDeps,
     };
@@ -736,14 +736,14 @@ mod tests {
         let mut deps = setup();
         let msg = QueryMsg::GetNextClientSequence {};
         let result = query(deps.as_ref(), mock_env(), msg.clone()).unwrap();
-        let result_parsed: u64 = from_binary(&result).unwrap();
+        let result_parsed: u64 = from_binary(result).unwrap();
         assert_eq!(0, result_parsed);
 
         contract
             .increase_client_counter(deps.as_mut().storage)
             .unwrap();
         let result = query(deps.as_ref(), mock_env(), msg).unwrap();
-        let result_parsed: u64 = from_binary(&result).unwrap();
+        let result_parsed: u64 = from_binary(result).unwrap();
         assert_eq!(1, result_parsed);
     }
 
@@ -763,7 +763,7 @@ mod tests {
             _type: client_type_str,
         };
         let result = query(deps.as_ref(), mock_env(), msg).unwrap();
-        let result_parsed: Addr = from_binary(&result).unwrap();
+        let result_parsed: Addr = from_binary(result).unwrap();
         assert_eq!(client, result_parsed.as_str());
     }
 

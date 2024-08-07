@@ -88,7 +88,7 @@ impl<'a> CwIbcConnection<'a> {
                     if current_owner == new_owner {
                         Err(ContractError::OwnerAlreadyExist)
                     } else {
-                        current_owner = new_owner.clone();
+                        current_owner.clone_from(&new_owner);
                         Ok(current_owner)
                     }
                 } else {

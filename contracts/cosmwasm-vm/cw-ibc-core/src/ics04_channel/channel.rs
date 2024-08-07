@@ -30,11 +30,10 @@ impl<'a> CwIbcCoreContext<'a> {
             .may_load(store, (port_id, channel_id))?
         {
             Some(request) => Ok(request),
-            None => Err(ChannelError::ChannelNotFound {
+            None => Err(Into::<ContractError>::into(ChannelError::ChannelNotFound {
                 port_id: port_id.clone(),
                 channel_id: channel_id.clone(),
-            })
-            .map_err(Into::<ContractError>::into)?,
+            }))?,
         }
     }
 
@@ -233,11 +232,12 @@ impl<'a> CwIbcCoreContext<'a> {
             |req_id| -> Result<_, ContractError> {
                 match req_id {
                     Some(seq) => Ok(seq.increment()),
-                    None => Err(PacketError::MissingNextSendSeq {
-                        port_id: port_id.clone(),
-                        channel_id: channel_id.clone(),
-                    })
-                    .map_err(Into::<ContractError>::into)?,
+                    None => Err(Into::<ContractError>::into(
+                        PacketError::MissingNextSendSeq {
+                            port_id: port_id.clone(),
+                            channel_id: channel_id.clone(),
+                        },
+                    ))?,
                 }
             },
         )?;
@@ -345,11 +345,12 @@ impl<'a> CwIbcCoreContext<'a> {
             |req_id| -> Result<_, ContractError> {
                 match req_id {
                     Some(seq) => Ok(seq.increment()),
-                    None => Err(PacketError::MissingNextRecvSeq {
-                        port_id: port_id.clone(),
-                        channel_id: channel_id.clone(),
-                    })
-                    .map_err(Into::<ContractError>::into)?,
+                    None => Err(Into::<ContractError>::into(
+                        PacketError::MissingNextRecvSeq {
+                            port_id: port_id.clone(),
+                            channel_id: channel_id.clone(),
+                        },
+                    ))?,
                 }
             },
         )?;
@@ -462,11 +463,12 @@ impl<'a> CwIbcCoreContext<'a> {
             |req_id| -> Result<_, ContractError> {
                 match req_id {
                     Some(seq) => Ok(seq.increment()),
-                    None => Err(PacketError::MissingNextAckSeq {
-                        port_id: port_id.clone(),
-                        channel_id: channel_id.clone(),
-                    })
-                    .map_err(Into::<ContractError>::into)?,
+                    None => Err(Into::<ContractError>::into(
+                        PacketError::MissingNextAckSeq {
+                            port_id: port_id.clone(),
+                            channel_id: channel_id.clone(),
+                        },
+                    ))?,
                 }
             },
         )?;
@@ -525,7 +527,7 @@ impl<'a> CwIbcCoreContext<'a> {
     ) -> Result<(), ContractError> {
         let channel_commitment_key = commitment::channel_commitment_key(port_id, channel_id);
 
-        let raw_channel: RawChannel = channel_end.clone().try_into().unwrap();
+        let raw_channel: RawChannel = channel_end.clone().into();
         let channel_end_commitment = raw_channel.encode_to_vec();
 
         self.ibc_store().save_commitment(

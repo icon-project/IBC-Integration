@@ -1,4 +1,4 @@
-use cosmwasm_std::{to_binary, CosmosMsg, Empty, Storage, SubMsg, WasmMsg};
+use cosmwasm_std::{to_json_binary as to_binary, CosmosMsg, Empty, Storage, SubMsg, WasmMsg};
 use cw_xcall_lib::network_address::NetId;
 
 use crate::{

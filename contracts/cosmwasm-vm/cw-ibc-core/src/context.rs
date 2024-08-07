@@ -1,4 +1,4 @@
-use cosmwasm_std::{from_slice, to_vec};
+use cosmwasm_std::{from_json as from_slice, to_json_vec as to_vec};
 use serde::{de::DeserializeOwned, Serialize};
 
 use super::*;

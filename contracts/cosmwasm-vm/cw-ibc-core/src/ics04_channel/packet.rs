@@ -1,15 +1,10 @@
 use super::*;
 
-pub mod timeout;
-pub use timeout::*;
-pub mod timeout_on_close;
-pub use timeout_on_close::*;
-pub mod send_packet;
-pub use send_packet::*;
-pub mod receive_packet;
-pub use receive_packet::*;
 pub mod acknowledgement;
-pub use acknowledgement::*;
+pub mod receive_packet;
+pub mod send_packet;
+pub mod timeout;
+pub mod timeout_on_close;
 pub mod write_acknowledgement;
 
 impl<'a> CwIbcCoreContext<'a> {

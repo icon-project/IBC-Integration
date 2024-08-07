@@ -427,7 +427,7 @@ fn test_icon_to_arcway_handshake() -> TestContext {
     let mut ctx = setup_test("icon_to_archway_raw.json");
     let port_name = PORT;
     let module_address = ctx.get_xcall_ibc_connection().to_string();
-    call_bind_port(&mut ctx, port_name.clone(), &module_address).unwrap();
+    call_bind_port(&mut ctx, port_name, &module_address).unwrap();
     call_register_client_type(&mut ctx).unwrap();
     call_set_xcall_host(&mut ctx).unwrap();
 
@@ -483,7 +483,7 @@ fn test_archway_to_icon_handshake() -> TestContext {
     let mut ctx = setup_test("archway_to_icon_raw.json");
     let port_name = PORT;
     let module_address = ctx.get_xcall_ibc_connection().to_string();
-    call_bind_port(&mut ctx, port_name.clone(), &module_address).unwrap();
+    call_bind_port(&mut ctx, port_name, &module_address).unwrap();
     call_register_client_type(&mut ctx).unwrap();
     let res = query_get_capability(&ctx.app, port_name.to_string(), ctx.get_ibc_core());
 

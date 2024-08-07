@@ -7,9 +7,9 @@ use cosmwasm_std::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
         MOCK_CONTRACT_ADDR,
     },
-    to_binary, Addr, BlockInfo, ContractInfo, DepsMut, Empty, Env, Event, IbcChannel, IbcEndpoint,
-    IbcPacket, IbcTimeout, IbcTimeoutBlock, MessageInfo, OwnedDeps, Storage, SubMsgResponse,
-    Timestamp, TransactionInfo,
+    to_json_binary as to_binary, Addr, BlockInfo, ContractInfo, DepsMut, Empty, Env, Event,
+    IbcChannel, IbcEndpoint, IbcPacket, IbcTimeout, IbcTimeoutBlock, MessageInfo, OwnedDeps,
+    Storage, SubMsgResponse, Timestamp, TransactionInfo,
 };
 
 use cw_xcall_ibc_connection::{
@@ -22,6 +22,12 @@ use cw_xcall_ibc_connection::{
 
 pub struct MockEnvBuilder {
     env: Env,
+}
+
+impl Default for MockEnvBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MockEnvBuilder {
@@ -216,17 +222,17 @@ impl TestContext {
     }
 
     pub fn init_channel_open(&self, deps: DepsMut, contract: &CwIbcConnection) {
-        self.init_context(deps.storage, &contract);
+        self.init_context(deps.storage, contract);
 
         self.store_counterparty_nid(deps.storage, contract);
-        self.configure_connection(deps, &contract);
+        self.configure_connection(deps, contract);
     }
 
     pub fn init_channel_connect(&self, deps: DepsMut, contract: &CwIbcConnection) {
-        self.init_context(deps.storage, &contract);
+        self.init_context(deps.storage, contract);
 
         self.store_counterparty_nid(deps.storage, contract);
-        self.configure_connection(deps, &contract);
+        self.configure_connection(deps, contract);
     }
 
     pub fn add_owner(&self, storage: &mut dyn Storage, contract: &CwIbcConnection) {

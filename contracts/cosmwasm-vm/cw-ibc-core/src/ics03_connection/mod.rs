@@ -10,7 +10,7 @@ use cosmwasm_std::DepsMut;
 use cosmwasm_std::Event;
 use cosmwasm_std::Response;
 use cosmwasm_std::Storage;
-use cosmwasm_std::{to_vec, MessageInfo};
+use cosmwasm_std::{to_json_vec as to_vec, MessageInfo};
 use cw_common::client_msg::{
     VerifyClientConsensusState, VerifyClientFullState, VerifyConnectionState,
 };

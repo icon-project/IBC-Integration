@@ -47,7 +47,6 @@ pub fn on_chan_open_ack_submessage(
     connection_id: &ConnectionId,
 ) -> Result<cosmwasm_std::IbcChannelConnectMsg, ContractError> {
     let port_id = port_id.clone();
-    let channel_id = channel_id;
     let counter_party_port_id = channel_end.counterparty().port_id.clone();
     let counter_party_channel = channel_end.counterparty().channel_id().unwrap().clone();
     let endpoint = cosmwasm_std::IbcEndpoint {

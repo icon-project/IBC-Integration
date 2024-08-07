@@ -4,7 +4,7 @@ use crate::ibc::core::ics24_host::identifier::ClientId;
 use constants::{
     ICON_CLIENT_STATE_TYPE_URL, ICON_CONSENSUS_STATE_TYPE_URL, ICON_SIGNED_HEADER_TYPE_URL,
 };
-use cosmwasm_std::StdError;
+use cosmwasm_std::{StdError, StdResult};
 use cw_storage_plus::{Key, KeyDeserialize, Prefixer, PrimaryKey};
 use ibc::core::{
     ics02_client::client_type::ClientType,
@@ -63,10 +63,8 @@ impl<'a> PrimaryKey<'a> for &ClientId {
 impl KeyDeserialize for &ClientId {
     type Output = ClientId;
 
-    fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
-        let result = String::from_utf8(value)
-            .map_err(StdError::invalid_utf8)
-            .unwrap();
+    fn from_vec(value: Vec<u8>) -> std::result::Result<ClientId, cosmwasm_std::StdError> {
+        let result = String::from_utf8(value).unwrap();
         let client_id = ClientId::from_str(&result).unwrap();
         Ok(client_id)
     }
@@ -193,7 +191,8 @@ impl<'a> PrimaryKey<'a> for &ChannelId {
 
 impl KeyDeserialize for &ChannelId {
     type Output = ChannelId;
-    fn from_vec(value: Vec<u8>) -> cosmwasm_std::StdResult<Self::Output> {
+
+    fn from_vec(value: Vec<u8>) -> StdResult<Self::Output> {
         let result = String::from_utf8(value)
             .map_err(StdError::invalid_utf8)
             .unwrap();

@@ -1,5 +1,3 @@
-use common::icon::icon::proto::core::channel::channel::Order;
-
 use cw_common::types::TimeoutMsgType;
 use cw_ibc_core::{light_client::light_client::LightClient, VALIDATE_ON_PACKET_TIMEOUT_ON_MODULE};
 

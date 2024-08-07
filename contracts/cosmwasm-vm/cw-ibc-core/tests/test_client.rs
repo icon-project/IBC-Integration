@@ -308,7 +308,7 @@ fn check_for_consensus_state_from_storage() {
     mock_lightclient_query(ctx.mock_queries, &mut deps);
 
     let height = &ctx.client_state.unwrap().latest_height();
-    let consensus_state_result = contract.consensus_state(deps.as_ref(), &ctx.client_id, &height);
+    let consensus_state_result = contract.consensus_state(deps.as_ref(), &ctx.client_id, height);
 
     assert!(consensus_state_result.is_ok());
     assert_eq!(

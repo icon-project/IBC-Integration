@@ -1,5 +1,5 @@
 use crate::error::ContractError;
-use cosmwasm_std::{attr, to_binary, Binary};
+use cosmwasm_std::{attr, to_json_binary as to_binary, Binary};
 use cw_common::cw_types::{CwBasicResponse, CwPacket};
 use cw_common::types::Ack;
 

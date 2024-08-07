@@ -13,8 +13,8 @@ on:
     branches:
       - main
 env:
-  RUSTC_VERSION: '1.69.0'
-  RUSTC_TOOLCHAIN: '1.69.0-x86_64-unknown-linux-gnu'
+  RUSTC_VERSION: '1.78.0'
+  RUSTC_TOOLCHAIN: '1.78.0-x86_64-unknown-linux-gnu'
 
 jobs:
 

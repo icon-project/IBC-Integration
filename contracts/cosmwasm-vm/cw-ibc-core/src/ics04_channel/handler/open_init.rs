@@ -16,7 +16,6 @@ pub fn on_chan_open_init_submessage(
     channel_id: &ChannelId,
     connection_id: &ConnectionId,
 ) -> cosmwasm_std::IbcChannelOpenMsg {
-    let channel_id = channel_id;
     let counter_party_port_id = channel.remote.port_id();
     let counter_party_channel = channel
         .remote

@@ -49,10 +49,9 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_state = self.client_state(deps.as_ref(), &client_id)?;
 
         if client_state.is_frozen() {
-            return Err(ClientError::ClientFrozen {
+            return Err(Into::<ContractError>::into(ClientError::ClientFrozen {
                 client_id: client_id.clone(),
-            })
-            .map_err(Into::<ContractError>::into);
+            }));
         }
 
         let delay_period = Duration::from_nanos(message.delay_period);
@@ -64,8 +63,7 @@ impl<'a> CwIbcCoreContext<'a> {
                 if self.get_compatible_versions().contains(&version) {
                     vec![version]
                 } else {
-                    return Err(ConnectionError::EmptyVersions)
-                        .map_err(Into::<ContractError>::into);
+                    return Err(Into::<ContractError>::into(ConnectionError::EmptyVersions));
                 }
             }
             None => self.get_compatible_versions(),
@@ -175,10 +173,9 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_state = self.client_state(deps.as_ref(), client_id)?;
 
         if client_state.is_frozen() {
-            return Err(ClientError::ClientFrozen {
+            return Err(Into::<ContractError>::into(ClientError::ClientFrozen {
                 client_id: client_id.clone(),
-            })
-            .map_err(Into::<ContractError>::into);
+            }));
         }
         let prefix = self.commitment_prefix(deps.as_ref(), &env);
 
@@ -316,10 +313,9 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_state = self.client_state(deps.as_ref(), &client_id)?;
 
         if client_state.is_frozen() {
-            return Err(ClientError::ClientFrozen {
+            return Err(Into::<ContractError>::into(ClientError::ClientFrozen {
                 client_id: client_id.clone(),
-            })
-            .map_err(Into::<ContractError>::into);
+            }));
         }
 
         let counterparty = to_ibc_counterparty(message.counterparty)?;
@@ -493,10 +489,9 @@ impl<'a> CwIbcCoreContext<'a> {
         let client_state = self.client_state(deps.as_ref(), client_id)?;
 
         if client_state.is_frozen() {
-            return Err(ClientError::ClientFrozen {
+            return Err(Into::<ContractError>::into(ClientError::ClientFrozen {
                 client_id: client_id.clone(),
-            })
-            .map_err(Into::<ContractError>::into);
+            }));
         }
         let prefix = self.commitment_prefix(deps.as_ref(), &env);
         cw_println!(

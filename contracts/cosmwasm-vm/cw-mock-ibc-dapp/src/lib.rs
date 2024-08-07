@@ -22,8 +22,8 @@ use crate::{
 };
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    entry_point, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Never, Reply, Response,
-    StdError, StdResult, Storage,
+    entry_point, to_json_binary as to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Never,
+    Reply, Response, StdError, StdResult, Storage,
 };
 #[cfg(feature = "native_ibc")]
 use cw_common::cw_types::{CwTimeout, CwTimeoutBlock};

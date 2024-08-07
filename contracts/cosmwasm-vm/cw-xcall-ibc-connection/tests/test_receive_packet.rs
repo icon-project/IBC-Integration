@@ -45,7 +45,7 @@ fn test_receive_packet_for_call_message_request() {
         vec![],
     );
 
-    let message: CSMessage = data.try_into().unwrap();
+    let message: CSMessage = data.into();
     let message: Message = Message {
         sn: common::rlp::Nullable::new(Some(0)),
         fee: 0,
@@ -95,7 +95,7 @@ fn test_receive_packet_for_call_message_response() {
         cw_xcall::types::response::CallServiceResponseType::CallServiceResponseSuccess,
     );
 
-    let message: CSMessage = data.try_into().unwrap();
+    let message: CSMessage = data.into();
     let message: Message = Message {
         sn: common::rlp::Nullable::new(Some(0)),
         fee: 0,
