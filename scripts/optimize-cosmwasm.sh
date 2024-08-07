@@ -36,13 +36,13 @@ cargo clean
 rustup target add wasm32-unknown-unknown
 cargo install cosmwasm-check@2.1.0 --locked
 
-RUSTFLAGS='-C link-arg=-s' cargo build --workspace --exclude test-utils --release --lib --target wasm32-unknown-unknown
+RUSTFLAGS='-C target-feature=-sign-ext -C link-arg=-s -C target-cpu=mvp' cargo build --workspace --exclude test-utils --release --lib --target wasm32-unknown-unknown
 for WASM in ./target/wasm32-unknown-unknown/release/*.wasm; do
   NAME=$(basename "$WASM" .wasm)${SUFFIX}.wasm
   echo "Creating intermediate hash for $NAME ..."
   sha256sum -- "$WASM" | tee -a artifacts/archway/checksums_intermediate.txt
   echo "Optimizing $NAME ..."
-  wasm-opt -Oz "$WASM" -o "artifacts/archway/$NAME"
+  wasm-opt -Os --signext-lowering "$WASM" -o "artifacts/archway/$NAME"
 done
 
 # check all generated wasm files

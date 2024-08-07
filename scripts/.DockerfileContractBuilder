@@ -4,7 +4,7 @@ FROM adoptopenjdk/openjdk11
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     PATH=/usr/local/cargo/bin:/opt/binaryen/bin:$PATH \
-    RUST_VERSION=1.69.0
+    RUST_VERSION=1.78.0
 
 
 RUN set -eux; \
@@ -15,7 +15,7 @@ RUN set -eux; \
         gcc  \
         libc6-dev \
         ; \
-    BINARYEN_VERS=110; \
+    BINARYEN_VERS=116; \
     BINARYEN_URL="https://github.com/WebAssembly/binaryen/releases/download/version_${BINARYEN_VERS}/binaryen-version_${BINARYEN_VERS}-x86_64-linux.tar.gz";\
     ARCH="$(dpkg --print-architecture)"; \
     case "${ARCH}" in \
