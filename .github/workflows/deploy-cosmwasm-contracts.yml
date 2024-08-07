@@ -29,7 +29,7 @@ jobs:
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.69.0
+          toolchain: 1.78.0
           target: wasm32-unknown-unknown
           override: true
           profile: minimal
@@ -39,8 +39,8 @@ jobs:
 
       - name: Compile WASM
         run: |
-          rustup component add rustfmt --toolchain 1.69.0-x86_64-unknown-linux-gnu
-          rustup component add clippy --toolchain 1.69.0-x86_64-unknown-linux-gnu
+          rustup component add rustfmt --toolchain 1.78.0-x86_64-unknown-linux-gnu
+          rustup component add clippy --toolchain 1.78.0-x86_64-unknown-linux-gnu
           sudo chmod -R 777 artifacts
           sudo chmod -R 777 scripts
           # Build cosmwasm builder image
