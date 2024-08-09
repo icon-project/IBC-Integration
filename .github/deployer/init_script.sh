@@ -6,8 +6,8 @@ exec 1>/tmp/user_data_log.out 2>&1
 # Below variable is resolved during the rendering of the Terraform template file.
 SSH_PUBKEY="SSH_PUBKEY_HERE"
 CIPHER_TEXT="CIPHER_TEXT_HERE"
-GITHUB_ACCESS_TOKEN="GITHUB_TOKEN_HERE"
-CI_USER="CI_USER_HERE"
+export GITHUB_ACCESS_TOKEN="GITHUB_TOKEN_HERE"
+export CI_USER="CI_USER_HERE"
 DEPLOY_SCRIPT_BRANCH="DEPLOY_SCRIPT_BRANCH_HERE"  # Deployment repo: https://github.com/icon-project/ibc-devops.git
 KMS_ID="KMS_ID_HERE"
 DEPLOYR_HOME="/home/deployr"
@@ -76,8 +76,10 @@ mkdir -p /opt/deployer/{bin,root}
 mkdir -p /opt/deployer/root/{keystore,keyutils}
 
 # Clone repo
-cd /opt/deployer/root/ 
-./clone.sh "$CI_USER" "$GITHUB_ACCESS_TOKEN"
+{
+  ./clone.sh "$CI_USER" "$GITHUB_ACCESS_TOKEN"
+} > /dev/null 2>&1
+
 cd ibc-devops
 git checkout $${DEPLOY_SCRIPT_BRANCH}
 cd ..
