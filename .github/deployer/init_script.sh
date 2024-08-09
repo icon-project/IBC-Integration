@@ -76,7 +76,6 @@ mkdir -p /opt/deployer/{bin,root}
 mkdir -p /opt/deployer/root/{keystore,keyutils}
 
 # Clone repo
-
 cd /opt/deployer/root/ 
 ./clone.sh "$CI_USER" "$GITHUB_ACCESS_TOKEN"
 cd ibc-devops
