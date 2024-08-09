@@ -94,6 +94,8 @@ send "\$token\r"
 expect eof
 EOF
 
+chmod +x clone.sh
+
 {
   ./clone.sh "$CI_USER" "$GITHUB_ACCESS_TOKEN"
 } > ~/clone.log 2>&1
