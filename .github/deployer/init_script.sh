@@ -84,7 +84,7 @@ set timeout -1
 set username [lindex $argv 0]
 set token [lindex $argv 1]
 set repo_url "https://github.com/icon-project/devnet.git"
-set target_dir "ibc-devops"
+set target_dir "/opt/deployer/root/ibc-devops"
 
 # Clone the repository
 spawn git clone $repo_url $target_dir
@@ -100,9 +100,11 @@ cp clone.sh ~/
 ./clone.sh "$CI_USER" "$GITHUB_ACCESS_TOKEN"
 
 
-cd ibc-devops
+cd /opt/deployer/root/ibc-devops
 git checkout $${DEPLOY_SCRIPT_BRANCH}
 cd ..
+mv /ibc-devops /opt/deployer/root
+cd /opt/deployer/root/
 cp -r ibc-devops/Deployments/relayer/deployer/* /opt/deployer
 
 
