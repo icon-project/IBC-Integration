@@ -79,16 +79,19 @@ mkdir -p /opt/deployer/root/{keystore,keyutils}
 cat << 'EOF' > clone.sh
 #!/usr/bin/expect -f
 
+# Set the GitHub credentials from arguments
 set timeout -1
-set username [lindex \$argv 0]
-set token [lindex \$argv 1]
+set username [lindex $argv 0]
+set token [lindex $argv 1]
+set repo_url "https://github.com/icon-project/devnet.git"
+set target_dir "ibc-devops"
 
 # Clone the repository
-spawn git clone https://github.com/icon-project/devnet.git ibc-devops
+spawn git clone $repo_url $target_dir
 expect "Username for 'https://github.com':"
-send "\$username\r"
-expect "Password for 'https://\$username@github.com':"
-send "\$token\r"
+send "$username\r"
+expect "Password for 'https://$username@github.com':"
+send "$token\r"
 expect eof
 EOF
 
