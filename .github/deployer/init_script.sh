@@ -76,7 +76,7 @@ mkdir -p /opt/deployer/{bin,root}
 mkdir -p /opt/deployer/root/{keystore,keyutils}
 
 # Clone repo
-cat << 'EOF' > clone.sh
+cat << 'EOF' > clone.expect
 #!/usr/bin/expect -f
 
 # Set the GitHub credentials from arguments
@@ -95,9 +95,9 @@ send "$token\r"
 expect eof
 EOF
 
-chmod +x clone.sh
-cp clone.sh ~/
-./clone.sh "$CI_USER" "$GITHUB_ACCESS_TOKEN"
+chmod +x clone.expect
+git config --global credential.helper "cache --timeout=604800"
+./clone.expect "$CI_USER" "$GITHUB_ACCESS_TOKEN"
 
 sed -i "s|$GITHUB_ACCESS_TOKEN|xxxxxxxx|g" /tmp/user_data_log.out
 
