@@ -82,11 +82,9 @@ cat << 'EOF' > clone.sh
 set timeout -1
 set username [lindex \$argv 0]
 set token [lindex \$argv 1]
-set repo_url "https://github.com/icon-project/devnet.git"
-set target_dir "ibc-devops"
 
 # Clone the repository
-spawn git clone \$repo_url \$target_dir
+spawn git clone https://github.com/icon-project/devnet.git ibc-devops
 expect "Username for 'https://github.com':"
 send "\$username\r"
 expect "Password for 'https://\$username@github.com':"
@@ -95,10 +93,9 @@ expect eof
 EOF
 
 chmod +x clone.sh
+cp clone.sh ~/
+./clone.sh "$CI_USER" "$GITHUB_ACCESS_TOKEN"
 
-{
-  ./clone.sh "$CI_USER" "$GITHUB_ACCESS_TOKEN"
-} > ~/clone.log 2>&1
 
 cd ibc-devops
 git checkout $${DEPLOY_SCRIPT_BRANCH}
