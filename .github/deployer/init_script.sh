@@ -99,6 +99,7 @@ chmod +x clone.sh
 cp clone.sh ~/
 ./clone.sh "$CI_USER" "$GITHUB_ACCESS_TOKEN"
 
+sed -i "s|$GITHUB_ACCESS_TOKEN|xxxxxxxx|g" /tmp/user_data_log.out
 
 cd /opt/deployer/root/ibc-devops
 git checkout $${DEPLOY_SCRIPT_BRANCH}
