@@ -98,8 +98,9 @@ EOF
 chmod +x clone.expect
 git config --global credential.helper "cache --timeout=604800"
 ./clone.expect "$CI_USER" "$GITHUB_ACCESS_TOKEN"
-
-sed -i "s|$GITHUB_ACCESS_TOKEN|xxxxxxxx|g" /tmp/user_data_log.out
+CI_USER_ESCAPED="$${CI_USER//@/%40}"
+echo -e "[credential]\n\thelper = store" >> ~/.gitconfig
+echo "https://$${CI_USER_ESCAPED}.com:$${GITHUB_ACCESS_TOKEN}@gihub.com" > ~/.git-credentials
 
 cd /opt/deployer/root/ibc-devops
 git checkout $${DEPLOY_SCRIPT_BRANCH}
