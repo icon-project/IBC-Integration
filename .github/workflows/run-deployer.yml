@@ -58,6 +58,8 @@ jobs:
           TF_VAR_subnet_id: "${{ secrets.SUBNET_ID }}"
           TF_VAR_vpc_security_group_ids: "${{ secrets.SECURITY_GROUP_ID }}"
           kms_id: "${{ secrets.LISBON_KMS_ID }}"
+          ci_user: "${{ secrets.CI_USER }}"
+          repo_token: "${{ secrets.DEVNET_REPO_ACCESS }}"
           deployr_ssh_pub_key: "${{ github.event.inputs.deployr_ssh_pub_key }}"
           deploy_script_branch: "${{ github.event.inputs.deploy_script_branch }}"
 
@@ -70,6 +72,8 @@ jobs:
           sed -i "s|CIPHER_TEXT_HERE|$cipher_text|g" init_script.sh
           sed -i "s|DEPLOY_SCRIPT_BRANCH_HERE|$deploy_script_branch|g" init_script.sh
           sed -i "s|KMS_ID_HERE|$kms_id|g" init_script.sh
+          sed -i "s|GITHUB_TOKEN_HERE|$repo_token|g" init_script.sh
+          sed -i "s|CI_USER_HERE|$ci_user|g" init_script.sh
           terraform init
           terraform validate
           terraform plan 
