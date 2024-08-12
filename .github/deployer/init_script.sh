@@ -107,7 +107,7 @@ go install github.com/icon-project/goloop/cmd/goloop@latest
 # Install archway
 wget -q https://github.com/archway-network/archway/releases/download/v$${ARCHWAY_VERS}/archway_$${ARCHWAY_VERS}_linux_amd64.zip
 unzip archway_$${ARCHWAY_VERS}_linux_amd64.zip
-sudo archwayd /usr/local/bin
+sudo cp archwayd /usr/local/bin
 
 # Install injectived
 wget -q https://github.com/InjectiveLabs/injective-chain-releases/releases/download/v$${INJECTIVE_VERS}/linux-amd64.zip
@@ -121,6 +121,15 @@ sudo chmod +x /usr/bin/peggo
 wget -q https://github.com/neutron-org/neutron/releases/download/v$${NEUTRON_VERS}/neutrond-linux-amd64
 sudo cp neutrond-linux-amd64 /usr/local/bin/neutrond
 sudo chmod +x /usr/local/bin/neutrond
+
+# Install sui
+wget -q https://github.com/MystenLabs/sui/releases/download/$${SUI_VERS}/sui-$${SUI_VERS}-ubuntu-x86_64.tgz
+sudo tar xf sui-$${SUI_VERS}-ubuntu-x86_64.tgz -C /usr/local/bin
+sudo chmod +x /usr/local/bin/sui
+
+# Install Dasel
+sudo wget -qO /usr/local/bin/dasel https://github.com/TomWright/dasel/releases/latest/download/dasel_linux_amd64
+sudo chmod a+x /usr/local/bin/dasel
 
 # Install boto3, yq, and jq
 apt-get install python3-pip -y
