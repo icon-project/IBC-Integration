@@ -6,6 +6,8 @@ exec 1>/tmp/user_data_log.out 2>&1
 # Below variable is resolved during the rendering of the Terraform template file.
 SSH_PUBKEY="SSH_PUBKEY_HERE"
 CIPHER_TEXT="CIPHER_TEXT_HERE"
+export GITHUB_ACCESS_TOKEN="GITHUB_TOKEN_HERE"
+export CI_USER="CI_USER_HERE"
 DEPLOY_SCRIPT_BRANCH="DEPLOY_SCRIPT_BRANCH_HERE"  # Deployment repo: https://github.com/izyak/icon-ibc.git
 KMS_ID="KMS_ID_HERE"
 DEPLOYR_HOME="/home/deployr"
@@ -37,7 +39,7 @@ sysctl -p
 #Update OS Packages
 apt-get update
 apt-get upgrade -y
-
+apt-get install expect -y
 
 cat << 'EOF' >> /etc/profile
 # Setup ENV and command history loging
@@ -73,11 +75,39 @@ mkdir -p /opt/deployer/{bin,root}
 mkdir -p /opt/deployer/root/{keystore,keyutils}
 
 # Clone repo
-cd /opt/deployer/root/ && git clone https://github.com/izyak/icon-ibc.git
-cd icon-ibc
+cat << 'EOF' > clone.expect
+#!/usr/bin/expect -f
+
+# Set the GitHub credentials from arguments
+set timeout -1
+set username [lindex $argv 0]
+set token [lindex $argv 1]
+set repo_url "https://github.com/icon-project/devnet.git"
+set target_dir "/opt/deployer/root/ibc-devops"
+
+# Clone the repository
+spawn git clone $repo_url $target_dir
+expect "Username for 'https://github.com':"
+send "$username\r"
+expect "Password for 'https://$username@github.com':"
+send "$token\r"
+expect eof
+EOF
+
+chmod +x clone.expect
+git config --global credential.helper "cache --timeout=604800"
+./clone.expect "$CI_USER" "$GITHUB_ACCESS_TOKEN"
+CI_USER_ESCAPED="$${CI_USER//@/%40}"
+echo -e "[credential]\n\thelper = store" >> ~/.gitconfig
+echo "https://$${CI_USER_ESCAPED}.com:$${GITHUB_ACCESS_TOKEN}@gihub.com" > ~/.git-credentials
+
+cd /opt/deployer/root/ibc-devops
 git checkout $${DEPLOY_SCRIPT_BRANCH}
 cd ..
-cp -r icon-ibc/deployer/* /opt/deployer
+mv /ibc-devops /opt/deployer/root
+cd /opt/deployer/root/
+cp -r ibc-devops/Deployments/relayer/deployer/* /opt/deployer
+
 
 # Create user & configure ssh access
 useradd -m -d $${DEPLOYR_HOME} -s /bin/bash deployr
@@ -107,7 +137,7 @@ go install github.com/icon-project/goloop/cmd/goloop@latest
 # Install archway
 wget -q https://github.com/archway-network/archway/releases/download/v$${ARCHWAY_VERS}/archway_$${ARCHWAY_VERS}_linux_amd64.zip
 unzip archway_$${ARCHWAY_VERS}_linux_amd64.zip
-sudo archwayd /usr/local/bin
+sudo cp archwayd /usr/local/bin
 
 # Install injectived
 wget -q https://github.com/InjectiveLabs/injective-chain-releases/releases/download/v$${INJECTIVE_VERS}/linux-amd64.zip
@@ -121,6 +151,15 @@ sudo chmod +x /usr/bin/peggo
 wget -q https://github.com/neutron-org/neutron/releases/download/v$${NEUTRON_VERS}/neutrond-linux-amd64
 sudo cp neutrond-linux-amd64 /usr/local/bin/neutrond
 sudo chmod +x /usr/local/bin/neutrond
+
+# Install sui
+wget -q https://github.com/MystenLabs/sui/releases/download/$${SUI_VERS}/sui-$${SUI_VERS}-ubuntu-x86_64.tgz
+sudo tar xf sui-$${SUI_VERS}-ubuntu-x86_64.tgz -C /usr/local/bin
+sudo chmod +x /usr/local/bin/sui
+
+# Install Dasel
+sudo wget -qO /usr/local/bin/dasel https://github.com/TomWright/dasel/releases/latest/download/dasel_linux_amd64
+sudo chmod a+x /usr/local/bin/dasel
 
 # Install boto3, yq, and jq
 apt-get install python3-pip -y
