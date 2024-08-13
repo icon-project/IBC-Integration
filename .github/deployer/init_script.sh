@@ -13,9 +13,10 @@ KMS_ID="KMS_ID_HERE"
 DEPLOYR_HOME="/home/deployr"
 GO_VERS="1.20.6"
 JAVA_VERS="11.0.18_10"
-ARCHWAY_VERS="6.0.0"
+ARCHWAY_VERS="7.0.0"
 INJECTIVE_VERS="1.12.1-1705909076"
 NEUTRON_VERS="3.0.2"
+SUI_VERS="mainnet-v1.25.1"
 
 set -x
 export GOROOT=/usr/local/go
@@ -135,8 +136,8 @@ tar xf OpenJDK11U-jdk_x64_linux_hotspot_$${JAVA_VERS}.tar.gz -C /opt/java
 go install github.com/icon-project/goloop/cmd/goloop@latest
 
 # Install archway
-wget -q https://github.com/archway-network/archway/releases/download/v$${ARCHWAY_VERS}/archway_$${ARCHWAY_VERS}_linux_amd64.zip
-unzip archway_$${ARCHWAY_VERS}_linux_amd64.zip
+wget -q https://github.com/archway-network/archway/releases/download/v$${ARCHWAY_VERS}/archwayd_$${ARCHWAY_VERS}_linux_amd64.zip
+unzip archwayd_$${ARCHWAY_VERS}_linux_amd64.zip
 sudo cp archwayd /usr/local/bin
 
 # Install injectived
