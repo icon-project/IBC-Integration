@@ -195,17 +195,11 @@ EOF
 
 chmod +x cargo.expect
 ./cargo.expect
-source "/root/.cargo/env"
-
-export PATH=$${PATH}:/root/.cargo/bin
-## Install solana
-sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
-/root/.cargo/bin/cargo install --git https://github.com/coral-xyz/anchor avm --locked --force || true
-avm install 0.30.1 || true
 
 cd - 
 
 # Create sui client config
+mkdir -p /root/.sui/sui_config
 cat <<EOF > /root/.sui/sui_config/sui.keystore
 keystore:
   File: /root/.sui/sui_config/sui.keystore
@@ -242,5 +236,14 @@ alias make='sudo /opt/deployer/bin/deploy.sh'" >> $${DEPLOYR_HOME}/.bashrc
 chmod +x /opt/deployer/root/keyutils/add_secret.sh
 echo "## Aliases
 alias add-secrets='/opt/deployer/root/keyutils/add_secret.sh'" >> /root/.bashrc
+
+## Install solana
+source "/root/.cargo/env"
+
+export PATH=$${PATH}:/root/.cargo/bin
+
+sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
+/root/.cargo/bin/cargo install --git https://github.com/coral-xyz/anchor avm --locked --force || true
+avm install 0.30.1 ||
 chmod 400 /tmp/user_data_log.out || true
 
