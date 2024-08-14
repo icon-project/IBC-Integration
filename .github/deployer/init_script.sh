@@ -195,7 +195,7 @@ EOF
 
 chmod +x clone.expect
 ./clone.expect
-source "$HOME/.cargo/env"
+source "/root/.cargo/env"
 
 ## Install solana
 sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
