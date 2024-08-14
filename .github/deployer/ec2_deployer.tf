@@ -41,7 +41,7 @@ data "template_file" "init_script" {
 }
 
 resource "aws_key_pair" "deployer_root_key" {
-  key_name = "deployer_root_key"
+  key_name = "deployer_root_key_mainnet"
   public_key = file("./id_rsa.pub")
   
 }
@@ -78,7 +78,7 @@ resource "aws_instance" "ibc-deployer" {
   }
 
   tags = {
-    Name = "ibc-contract-deployer"
+    Name = "ibc-contract-deployer-mainnet"
     Project = "IBC"
   }
 
