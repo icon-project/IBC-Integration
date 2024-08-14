@@ -197,9 +197,10 @@ chmod +x cargo.expect
 ./cargo.expect
 source "/root/.cargo/env"
 
+export PATH=$${PATH}:/root/.cargo/bin
 ## Install solana
 sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
-cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+/root/.cargo/bin/cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
 avm install 0.30.1
 
 cd - 
