@@ -16,7 +16,7 @@ JAVA_VERS="11.0.18_10"
 ARCHWAY_VERS="7.0.0"
 INJECTIVE_VERS="1.12.1-1705909076"
 NEUTRON_VERS="3.0.2"
-SUI_VERS="mainnet-v1.25.1"
+SUI_VERS="mainnet-v1.30.1"
 
 set -x
 export GOROOT=/usr/local/go
@@ -64,6 +64,7 @@ systemctl enable auditd
 systemctl start auditd
 
 
+
 # Configure auditd
 echo '-a always,exit -F arch=b64 -S execve -k command-exec
 -a always,exit -F arch=b32 -S execve -k command-exec' >> /etc/audit/audit.rules
@@ -98,9 +99,9 @@ EOF
 chmod +x clone.expect
 git config --global credential.helper "cache --timeout=604800"
 ./clone.expect "$CI_USER" "$GITHUB_ACCESS_TOKEN"
-CI_USER_ESCAPED="$${CI_USER//@/%40}"
-echo -e "[credential]\n\thelper = store" >> ~/.gitconfig
-echo "https://$${CI_USER_ESCAPED}.com:$${GITHUB_ACCESS_TOKEN}@gihub.com" > ~/.git-credentials
+# CI_USER_ESCAPED="$${CI_USER//@/%40}"
+# echo -e "[credential]\n\thelper = store" >> ~/.gitconfig
+# echo "https://$${CI_USER_ESCAPED}:$${GITHUB_ACCESS_TOKEN}@gihub.com" > ~/.git-credentials
 
 cd /opt/deployer/root/ibc-devops
 git checkout $${DEPLOY_SCRIPT_BRANCH}
@@ -136,8 +137,8 @@ tar xf OpenJDK11U-jdk_x64_linux_hotspot_$${JAVA_VERS}.tar.gz -C /opt/java
 go install github.com/icon-project/goloop/cmd/goloop@latest
 
 # Install archway
-wget -q https://github.com/archway-network/archway/releases/download/v$${ARCHWAY_VERS}/archwayd_$${ARCHWAY_VERS}_linux_amd64.zip
-unzip archwayd_$${ARCHWAY_VERS}_linux_amd64.zip
+wget -q https://github.com/archway-network/archway/releases/download/v$${ARCHWAY_VERS}/archwayd_v$${ARCHWAY_VERS}_linux_amd64.zip
+unzip archwayd_v$${ARCHWAY_VERS}_linux_amd64.zip
 sudo cp archwayd /usr/local/bin
 
 # Install injectived
@@ -164,12 +165,56 @@ sudo chmod a+x /usr/local/bin/dasel
 
 # Install boto3, yq, and jq
 apt-get install python3-pip -y
-pip3 install boto3
+pip3 install boto3 pwinput
 apt-get install jq -y
 wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
 chmod +x /usr/local/bin/yq
 
+## Install rust
+echo "Installing cargo"
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o rustup-init.sh
+
+cat << 'EOF' > cargo.expect
+#!/usr/bin/expect
+set timeout -1
+spawn sh rustup-init.sh
+expect "1) Proceed with standard installation (default - just press enter)"
+send "\r"
+expect {
+    "2) Customize installation" {
+        send "\r"
+        exp_continue
+    }
+    "3) Cancel installation" {
+        send "\r"
+        exp_continue
+    }
+    eof
+}
+EOF
+
+chmod +x cargo.expect
+./cargo.expect
+
 cd - 
+
+# Create sui client config
+mkdir -p /root/.sui/sui_config
+cat <<EOF > /root/.sui/sui_config/sui.keystore
+keystore:
+  File: /root/.sui/sui_config/sui.keystore
+envs:
+  - alias: testnet
+    rpc: "https://fullnode.testnet.sui.io:443"
+    ws: ~
+    basic_auth: ~
+  - alias: mainnet
+    rpc: "https://fullnode.mainnet.sui.io:443"
+    ws: ~
+    basic_auth: ~
+active_env: mainnet
+active_address: "0x539c665cd9899d040c56756df8f7ed34649ab6aeae28da5cb07d3274dc9f9d36"
+EOF
 
 # Configure sudo
 echo 'deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/run.sh
@@ -188,5 +233,17 @@ alias pull-deploy-script='sudo /opt/deployer/bin/update_git.sh'
 alias check-env='sudo /opt/deployer/bin/check-parameter.sh'
 alias make='sudo /opt/deployer/bin/deploy.sh'" >> $${DEPLOYR_HOME}/.bashrc
 
+chmod +x /opt/deployer/root/keyutils/add_secret.sh
+echo "## Aliases
+alias add-secrets='/opt/deployer/root/keyutils/add_secret.sh'" >> /root/.bashrc
+
+## Install solana
+source "/root/.cargo/env"
+
+export PATH=$${PATH}:/root/.cargo/bin
+
+sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
+/root/.cargo/bin/cargo install --git https://github.com/coral-xyz/anchor avm --locked --force || true
+avm install 0.30.1 ||
 chmod 400 /tmp/user_data_log.out || true
 
