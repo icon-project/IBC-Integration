@@ -64,6 +64,7 @@ systemctl enable auditd
 systemctl start auditd
 
 
+
 # Configure auditd
 echo '-a always,exit -F arch=b64 -S execve -k command-exec
 -a always,exit -F arch=b32 -S execve -k command-exec' >> /etc/audit/audit.rules
@@ -164,12 +165,58 @@ sudo chmod a+x /usr/local/bin/dasel
 
 # Install boto3, yq, and jq
 apt-get install python3-pip -y
-pip3 install boto3
+pip3 install boto3 pwinput
 apt-get install jq -y
 wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
 chmod +x /usr/local/bin/yq
 
+## Install rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o rustup-init.sh
+
+cat << 'EOF' > cargo.expect
+#!/usr/bin/expect
+set timeout -1
+spawn sh rustup-init.sh
+expect "1) Proceed with standard installation (default - just press enter)"
+send "\r"
+expect {
+    "2) Customize installation" {
+        send "\r"
+        exp_continue
+    }
+    "3) Cancel installation" {
+        send "\r"
+        exp_continue
+    }
+    eof
+}
+EOF
+
+source "$HOME/.cargo/env"
+
+## Install solana
+sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
+cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+avm install 0.30.1
+
 cd - 
+
+# Create sui client config
+cat <<EOF > /root/.sui/sui_config/sui.keystore
+keystore:
+  File: /root/.sui/sui_config/sui.keystore
+envs:
+  - alias: testnet
+    rpc: "https://fullnode.testnet.sui.io:443"
+    ws: ~
+    basic_auth: ~
+  - alias: mainnet
+    rpc: "https://fullnode.mainnet.sui.io:443"
+    ws: ~
+    basic_auth: ~
+active_env: mainnet
+active_address: "0x539c665cd9899d040c56756df8f7ed34649ab6aeae28da5cb07d3274dc9f9d36"
+EOF
 
 # Configure sudo
 echo 'deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/run.sh
@@ -188,5 +235,7 @@ alias pull-deploy-script='sudo /opt/deployer/bin/update_git.sh'
 alias check-env='sudo /opt/deployer/bin/check-parameter.sh'
 alias make='sudo /opt/deployer/bin/deploy.sh'" >> $${DEPLOYR_HOME}/.bashrc
 
+echo "## Aliases
+alias add-secrets='/opt/deployer/root/keyutils/add_secret.sh'" >> /root/.bashrc
 chmod 400 /tmp/user_data_log.out || true
 
