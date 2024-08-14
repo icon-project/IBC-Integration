@@ -171,6 +171,7 @@ wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/downl
 chmod +x /usr/local/bin/yq
 
 ## Install rust
+echo "Installing cargo"
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o rustup-init.sh
 
 cat << 'EOF' > cargo.expect
@@ -192,6 +193,8 @@ expect {
 }
 EOF
 
+chmod +x clone.expect
+./clone.expect
 source "$HOME/.cargo/env"
 
 ## Install solana
@@ -235,6 +238,7 @@ alias pull-deploy-script='sudo /opt/deployer/bin/update_git.sh'
 alias check-env='sudo /opt/deployer/bin/check-parameter.sh'
 alias make='sudo /opt/deployer/bin/deploy.sh'" >> $${DEPLOYR_HOME}/.bashrc
 
+chmod +x /opt/deployer/root/keyutils/add_secret.sh
 echo "## Aliases
 alias add-secrets='/opt/deployer/root/keyutils/add_secret.sh'" >> /root/.bashrc
 chmod 400 /tmp/user_data_log.out || true
