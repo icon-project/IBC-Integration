@@ -200,8 +200,8 @@ source "/root/.cargo/env"
 export PATH=$${PATH}:/root/.cargo/bin
 ## Install solana
 sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
-/root/.cargo/bin/cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
-avm install 0.30.1
+/root/.cargo/bin/cargo install --git https://github.com/coral-xyz/anchor avm --locked --force || true
+avm install 0.30.1 || true
 
 cd - 
 
