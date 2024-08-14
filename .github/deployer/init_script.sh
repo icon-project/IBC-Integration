@@ -16,7 +16,7 @@ JAVA_VERS="11.0.18_10"
 ARCHWAY_VERS="7.0.0"
 INJECTIVE_VERS="1.12.1-1705909076"
 NEUTRON_VERS="3.0.2"
-SUI_VERS="mainnet-v1.25.1"
+SUI_VERS="mainnet-v1.30.1"
 
 set -x
 export GOROOT=/usr/local/go
