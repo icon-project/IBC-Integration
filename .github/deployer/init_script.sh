@@ -193,8 +193,8 @@ expect {
 }
 EOF
 
-chmod +x clone.expect
-./clone.expect
+chmod +x cargo.expect
+./cargo.expect
 source "/root/.cargo/env"
 
 ## Install solana
