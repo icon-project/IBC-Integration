@@ -67,7 +67,7 @@ locals {
 resource "aws_instance" "ibc-deployer" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro" 
-  key_name      = "deployer_root_key"
+  key_name      = "deployer_root_key_mainnet"
 
   subnet_id             = var.subnet_id
   vpc_security_group_ids = local.parsed_security_groups
