@@ -247,3 +247,6 @@ sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
 avm install 0.30.1 ||
 chmod 400 /tmp/user_data_log.out || true
 
+## Install multisig
+cargo install --git https://github.com/icon-project/cw-plus.git --branch feat/test-multisig cwmultisig
+
