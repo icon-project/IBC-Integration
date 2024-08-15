@@ -16,7 +16,7 @@ JAVA_VERS="11.0.18_10"
 ARCHWAY_VERS="7.0.0"
 INJECTIVE_VERS="1.12.1-1705909076"
 NEUTRON_VERS="3.0.2"
-SUI_VERS="mainnet-v1.25.1"
+SUI_VERS="mainnet-v1.30.1"
 
 set -x
 export GOROOT=/usr/local/go
@@ -98,9 +98,9 @@ EOF
 chmod +x clone.expect
 git config --global credential.helper "cache --timeout=604800"
 ./clone.expect "$CI_USER" "$GITHUB_ACCESS_TOKEN"
-CI_USER_ESCAPED="$${CI_USER//@/%40}"
-echo -e "[credential]\n\thelper = store" >> ~/.gitconfig
-echo "https://$${CI_USER_ESCAPED}.com:$${GITHUB_ACCESS_TOKEN}@gihub.com" > ~/.git-credentials
+# CI_USER_ESCAPED="$${CI_USER//@/%40}"
+# echo -e "[credential]\n\thelper = store" >> ~/.gitconfig
+# echo "https://$${CI_USER_ESCAPED}.com:$${GITHUB_ACCESS_TOKEN}@gihub.com" > ~/.git-credentials
 
 cd /opt/deployer/root/ibc-devops
 git checkout $${DEPLOY_SCRIPT_BRANCH}
@@ -158,14 +158,65 @@ wget -q https://github.com/MystenLabs/sui/releases/download/$${SUI_VERS}/sui-$${
 sudo tar xf sui-$${SUI_VERS}-ubuntu-x86_64.tgz -C /usr/local/bin
 sudo chmod +x /usr/local/bin/sui
 
+
+
+# Install Dasel
+sudo wget -qO /usr/local/bin/dasel https://github.com/TomWright/dasel/releases/latest/download/dasel_linux_amd64
+sudo chmod a+x /usr/local/bin/dasel
+
 # Install boto3, yq, and jq
 apt-get install python3-pip -y
-pip3 install boto3
+pip3 install boto3 pwinput
 apt-get install jq -y
 wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
 chmod +x /usr/local/bin/yq
 
+## Install rust
+echo "Installing cargo"
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o rustup-init.sh
+
+cat << 'EOF' > cargo.expect
+#!/usr/bin/expect
+set timeout -1
+spawn sh rustup-init.sh
+expect "1) Proceed with standard installation (default - just press enter)"
+send "\r"
+expect {
+    "2) Customize installation" {
+        send "\r"
+        exp_continue
+    }
+    "3) Cancel installation" {
+        send "\r"
+        exp_continue
+    }
+    eof
+}
+EOF
+
+chmod +x cargo.expect
+./cargo.expect
+
+
 cd - 
+
+# Create sui client config
+mkdir -p /root/.sui/sui_config
+cat <<EOF > /root/.sui/sui_config/sui.keystore
+keystore:
+  File: /root/.sui/sui_config/sui.keystore
+envs:
+  - alias: testnet
+    rpc: "https://fullnode.testnet.sui.io:443"
+    ws: ~
+    basic_auth: ~
+  - alias: mainnet
+    rpc: "https://fullnode.mainnet.sui.io:443"
+    ws: ~
+    basic_auth: ~
+active_env: testnet
+active_address: "0x6d42f19888a4be1ce38add3c79d274bfe7c2f8f5eee4a55e36fe31c343c1b539"
+EOF
 
 # Configure sudo
 ## Use full path of command, else there will be syntax error
@@ -188,5 +239,13 @@ alias check-env='sudo /opt/deployer/bin/check-parameter.sh'
 alias backup-restore-contract-env='sudo python3 /opt/deployer/bin/backup_restore_env.py'
 alias make='sudo /opt/deployer/bin/deploy.sh'" >> $${DEPLOYR_HOME}/.bashrc
 
+## Install solana
+source "/root/.cargo/env"
+
+export PATH=$${PATH}:/root/.cargo/bin
+
+sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
+/root/.cargo/bin/cargo install --git https://github.com/coral-xyz/anchor avm --locked --force || true
+avm install 0.30.1 ||
 chmod 400 /tmp/user_data_log.out || true
 
