@@ -86,8 +86,8 @@ resource "aws_instance" "ibc-deployer-testnet" {
 }
 
 output "public_ip" {
-  value = aws_instance.ibc-deployer.public_ip
+  value = aws_instance.ibc-deployer-testnet.public_ip
 }
 output "private_ip" {
-  value = aws_instance.ibc-deployer.private_ip
+  value = aws_instance.ibc-deployer-testnet.private_ip
 }
