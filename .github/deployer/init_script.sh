@@ -248,6 +248,8 @@ sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
 /root/.cargo/bin/cargo install --git https://github.com/coral-xyz/anchor avm --locked --force || true
 avm install 0.30.1 ||
 
+echo "export PATH=$${PATH}:/root/.local/share/solana/install/releases/1.18.18/solana-release/bin" >> /root/.bashrc
+
 ## Install multisig
 cargo install --git https://github.com/icon-project/cw-plus.git --branch feat/test-multisig cwmultisig
 
