@@ -4,11 +4,11 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket         = "logrotate-ibc-contract-deployer-testnet"
+    bucket         = "logrotate-ibc-contract-deployer"
     key            = "terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
-    #workspace_key_prefix = "ibc-deployer-environment"
+    workspace_key_prefix = "ibc-deployer-environment"
   }
 }
 
