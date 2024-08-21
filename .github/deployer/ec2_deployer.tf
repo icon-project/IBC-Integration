@@ -4,7 +4,7 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket         = "logrotate-ibc-contract-deployer"
+    bucket         = "logrotate-ibc-contract-deployer-testnet"
     key            = "terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
@@ -40,8 +40,8 @@ data "template_file" "init_script" {
   template = file("init_script.sh") 
 }
 
-resource "aws_key_pair" "deployer_root_key" {
-  key_name = "deployer_root_key"
+resource "aws_key_pair" "deployer_root_key_testnet" {
+  key_name = "deployer_root_key_testnet"
   public_key = file("./id_rsa.pub")
   
 }
@@ -64,10 +64,10 @@ locals {
   parsed_security_groups = split(" ", var.vpc_security_group_ids)
 }
 
-resource "aws_instance" "ibc-deployer" {
+resource "aws_instance" "ibc-deployer-testnet" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.medium" 
-  key_name      = "deployer_root_key"
+  key_name      = "deployer_root_key_testnet"
 
   subnet_id             = var.subnet_id
   vpc_security_group_ids = local.parsed_security_groups
