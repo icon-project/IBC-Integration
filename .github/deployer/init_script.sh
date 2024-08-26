@@ -243,7 +243,7 @@ alias make='sudo /opt/deployer/bin/deploy.sh'" >> $${DEPLOYR_HOME}/.bashrc
 source "/root/.cargo/env"
 
 export PATH=$${PATH}:/root/.cargo/bin
-
+sh -c "$(curl -sSfL https://release.solana.com/v1.18.18/install)"
 sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
 /root/.cargo/bin/cargo install --git https://github.com/coral-xyz/anchor avm --locked --force || true
 avm install 0.30.1 ||
