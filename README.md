@@ -138,7 +138,7 @@ make optimize-build
 
 ## Deploy <a name = "deploy"> </a>
 
-For deployment and usage follow steps provided [here](https://github.com/izyak/icon-ibc/tree/master).
+For deployment and usage follow the steps provided [here](https://github.com/izyak/icon-ibc/tree/master).
 
 ## Developing IBC Dapp <a name = "developing-ibc-dapp"> </a>
 
