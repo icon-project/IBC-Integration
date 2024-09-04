@@ -201,7 +201,7 @@ If you're interested in contributing code to the project, follow these steps to 
 
 Contributors are expected to adhere to the project's [Code of Conduct](CODE_OF_CONDUCT.md) at all times. This ensures a respectful and inclusive environment for all contributors and participants.
 
-We appreciate your dedication to contributing to the IBC Integration for ICON Project. Your efforts help improve the project's quality and expand its capabilities. Thank you for being a part of our community!
+We appreciate your dedication to contributing to the IBC Integration for ICON Project. Your efforts help improve the project's quality and expand its capabilities. Thank you for being a part of our community!.
 
 ## License <a name = "license"> </a>
 
