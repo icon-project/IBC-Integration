@@ -156,7 +156,7 @@ If you encounter a bug or have an idea for a new feature, please follow these st
 
 #### Bug Reports
 
-1. Before submitting a bug report, search the [existing issues](https://github.com/icon-project/IBC-Integration/issues) to see if the bug has already been reported. If you find a similar issue, you can add relevant details in the comments.
+1. Before submitting a bug report please search the [existing issues](https://github.com/icon-project/IBC-Integration/issues) to see if the bug has already been reported. If you find a similar issue, you can add relevant details in the comments.
 
 2. If the bug hasn't been reported yet, [open a new issue](https://github.com/icon-project/IBC-Integration/issues/new/choose) with a clear and descriptive title. Provide as much detail as possible, including:
 
