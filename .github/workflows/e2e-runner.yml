@@ -1,7 +1,8 @@
-name: Trigger on Comment
+name: Run E2E 
 on:
-  issue_comment:
-    types: [created]
+  push:
+    branches:
+      - main
 permissions:
   contents: read
   issues: read
