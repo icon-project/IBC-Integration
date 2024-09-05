@@ -138,7 +138,7 @@ make optimize-build
 
 ## Deploy <a name = "deploy"> </a>
 
-For deployment and usage follow steps provided [here](https://github.com/izyak/icon-ibc/tree/master).
+For deployment and usage follow the steps provided [here](https://github.com/izyak/icon-ibc/tree/master).
 
 ## Developing IBC Dapp <a name = "developing-ibc-dapp"> </a>
 
@@ -156,7 +156,7 @@ If you encounter a bug or have an idea for a new feature, please follow these st
 
 #### Bug Reports
 
-1. Before submitting a bug report, search the [existing issues](https://github.com/icon-project/IBC-Integration/issues) to see if the bug has already been reported. If you find a similar issue, you can add relevant details in the comments.
+1. Before submitting a bug report please search the [existing issues](https://github.com/icon-project/IBC-Integration/issues) to see if the bug has already been reported. If you find a similar issue, you can add relevant details in the comments.
 
 2. If the bug hasn't been reported yet, [open a new issue](https://github.com/icon-project/IBC-Integration/issues/new/choose) with a clear and descriptive title. Provide as much detail as possible, including:
 
@@ -201,7 +201,7 @@ If you're interested in contributing code to the project, follow these steps to 
 
 Contributors are expected to adhere to the project's [Code of Conduct](CODE_OF_CONDUCT.md) at all times. This ensures a respectful and inclusive environment for all contributors and participants.
 
-We appreciate your dedication to contributing to the IBC Integration for ICON Project. Your efforts help improve the project's quality and expand its capabilities. Thank you for being a part of our community!
+We appreciate your dedication to contributing to the IBC Integration for ICON Project. Your efforts help improve the project's quality and expand its capabilities. Thank you for being a part of our community!.
 
 ## License <a name = "license"> </a>
 
