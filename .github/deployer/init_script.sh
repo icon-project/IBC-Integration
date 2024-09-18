@@ -120,11 +120,14 @@ echo "$SSH_PUBKEY" > $${DEPLOYR_HOME}/.ssh/authorized_keys
 set +x
 echo -n "$CIPHER_TEXT" | tr -d ' ' | base64 -d > /opt/deployer/root/keyutils/.cipher_text
 echo -n "$KMS_ID" > /opt/deployer/root/keyutils/kms_id
+echo -n "$SOROBAN_SECRET_KEY" > /opt/deployer/root/keyutils/.soroban_key
 chmod -R 400 /opt/deployer/root/keyutils/.cipher_text
+chmod 400 /opt/deployer/root/keyutils/.soroban_key
 chmod 770 /opt/deployer/root/keystore
 set -x
 
 cd /tmp
+sysctl -p
 # Install go
 wget -q https://go.dev/dl/go$${GO_VERS}.linux-amd64.tar.gz
 tar xf go$${GO_VERS}.linux-amd64.tar.gz -C /usr/local
