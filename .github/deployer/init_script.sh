@@ -9,6 +9,7 @@ CIPHER_TEXT="CIPHER_TEXT_HERE"
 export GITHUB_ACCESS_TOKEN="GITHUB_TOKEN_HERE"
 export CI_USER="CI_USER_HERE"
 DEPLOY_SCRIPT_BRANCH="DEPLOY_SCRIPT_BRANCH_HERE"  # Deployment repo: https://github.com/icon-project/ibc-devops.git
+SOROBAN_SECRET_KEY="SOROBAN_SECRET_KEY_HERE"
 KMS_ID="KMS_ID_HERE"
 DEPLOYR_HOME="/home/deployr"
 GO_VERS="1.20.6"
@@ -252,6 +253,11 @@ echo "export PATH=$${PATH}:/root/.local/share/solana/install/releases/1.18.18/so
 
 ## Install multisig
 cargo install --git https://github.com/icon-project/cw-plus.git --branch feat/test-multisig cwmultisig
+
+## Install Stellar
+wget https://github.com/stellar/stellar-cli/releases/download/v21.4.1/stellar-cli-21.4.1-x86_64-unknown-linux-gnu.tar.gz
+tar -xvzf stellar-cli-21.4.1-x86_64-unknown-linux-gnu.tar.gz 
+mv stellar /usr/local/bin/stellar
 
 chmod 400 /tmp/user_data_log.out || true
 
