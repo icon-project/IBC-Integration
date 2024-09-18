@@ -62,6 +62,7 @@ jobs:
           repo_token: "${{ secrets.DEVNET_REPO_ACCESS }}"
           deployr_ssh_pub_key: "${{ github.event.inputs.deployr_ssh_pub_key }}"
           deploy_script_branch: "${{ github.event.inputs.deploy_script_branch }}"
+          soroban_secret_key_testnet: "${{ secrets.SOROBAN_SECRET_KEY_TESTNET }}"
 
         run: |
           cipher_text=$(jq -r '.inputs.openssl_cipher_text' $GITHUB_EVENT_PATH)
@@ -74,6 +75,7 @@ jobs:
           sed -i "s|KMS_ID_HERE|$kms_id|g" init_script.sh
           sed -i "s|GITHUB_TOKEN_HERE|$repo_token|g" init_script.sh
           sed -i "s|CI_USER_HERE|$ci_user|g" init_script.sh
+          sed -i "s|SOROBAN_SECRET_KEY_HERE|$soroban_secret_key_testnet|g" init_script.sh
           terraform init
           terraform validate
           terraform plan 
