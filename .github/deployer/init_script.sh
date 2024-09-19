@@ -126,6 +126,7 @@ set -x
 
 cd /tmp
 # Install go
+sysctl -p
 wget -q https://go.dev/dl/go$${GO_VERS}.linux-amd64.tar.gz
 tar xf go$${GO_VERS}.linux-amd64.tar.gz -C /usr/local
 
