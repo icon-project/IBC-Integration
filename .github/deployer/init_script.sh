@@ -170,7 +170,7 @@ sudo chmod a+x /usr/local/bin/dasel
 
 # Install boto3, yq, and jq
 apt-get install python3-pip -y
-pip3 install boto3 pwinput
+pip3 install boto3 pwinput solana
 apt-get install jq -y
 wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
 chmod +x /usr/local/bin/yq
