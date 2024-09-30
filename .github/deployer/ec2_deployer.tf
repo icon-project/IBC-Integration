@@ -74,7 +74,7 @@ resource "aws_instance" "ibc-deployer-testnet" {
   iam_instance_profile = "SecretManagerReadAccess-ibc"
   # associate_public_ip_address = false
   root_block_device {
-    volume_size = 15
+    volume_size = 25
   }
   tags = {
     Name = "testnet-deployer-machine"

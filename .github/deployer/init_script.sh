@@ -247,12 +247,11 @@ alias make='sudo /opt/deployer/bin/deploy.sh'" >> $${DEPLOYR_HOME}/.bashrc
 source "/root/.cargo/env"
 
 export PATH=$${PATH}:/root/.cargo/bin
-sh -c "$(curl -sSfL https://release.solana.com/v1.18.18/install)"
-sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
-/root/.cargo/bin/cargo install --git https://github.com/coral-xyz/anchor avm --locked --force || true
-avm install 0.30.1 ||
-
-echo "export PATH=$${PATH}:/root/.local/share/solana/install/releases/1.18.18/solana-release/bin" >> /root/.bashrc
+sh -c "$(curl -sSfL https://release.solana.com/v1.18.11/install)"
+/root/.cargo/bin/cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli
+sudo apt-get install npm -y
+npm install -g yarn
+echo "export PATH=$${PATH}:/root/.local/share/solana/install/active_release/bin" >> /root/.bashrc
 
 ## Install multisig
 cargo install --git https://github.com/icon-project/cw-plus.git --branch feat/test-multisig cwmultisig
@@ -261,6 +260,8 @@ cargo install --git https://github.com/icon-project/cw-plus.git --branch feat/te
 wget https://github.com/stellar/stellar-cli/releases/download/v21.4.1/stellar-cli-21.4.1-x86_64-unknown-linux-gnu.tar.gz
 tar -xvzf stellar-cli-21.4.1-x86_64-unknown-linux-gnu.tar.gz 
 mv stellar /usr/local/bin/stellar
+
+
 
 chmod 400 /tmp/user_data_log.out || true
 
