@@ -233,7 +233,8 @@ deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/check-parameter.sh
 deployr ALL=(ALL) NOPASSWD: /usr/bin/python3 /opt/deployer/bin/backup_restore_env.py' > /etc/sudoers.d/deployr_sudo_commands
 
 # Add goloop binary path to secure path
-sed -i '/secure_path/ s/"$/:\/usr\/local\/go\/bin:\/opt\/ibc\/bin:\/opt\/java\/jdk-11.0.18+10\/bin:\/root\/.local\/share\/solana\/install\/active_release\/bin"/' /etc/sudoers
+sed -i '/secure_path/ s/"$/:\/usr\/local\/go\/bin:\/opt\/ibc\/bin:\/opt\/java\/jdk-11.0.18+10\/bin:\/root\/.local\/share\/solana\/install\/active_release\/bin:\/root\/.cargo\/bin\/"/' /etc/sudoers
+
 # Create Aliases for the user 'deployr'
 echo "## Aliases
 alias fetch-walletkeys='sudo /opt/deployer/bin/fetch_keys.sh'
