@@ -74,7 +74,7 @@ resource "aws_instance" "ibc-deployer" {
   iam_instance_profile = "SecretManagerReadAccess-ibc"
 
   root_block_device {
-    volume_size           = 15 
+    volume_size           = 25
   }
 
   tags = {

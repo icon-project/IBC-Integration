@@ -166,7 +166,7 @@ sudo chmod a+x /usr/local/bin/dasel
 
 # Install boto3, yq, and jq
 apt-get install python3-pip -y
-pip3 install boto3 pwinput
+pip3 install boto3 pwinput solana
 apt-get install jq -y
 wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
 chmod +x /usr/local/bin/yq
@@ -224,9 +224,8 @@ deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/update_git.sh
 deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/deploy.sh
 deployr ALL=(ALL) NOPASSWD: /opt/deployer/bin/check-parameter.sh' > /etc/sudoers.d/deployr_sudo_commands
 
-# Add goloop binary path to secure path
-sed -i '/secure_path/ s/"$/:\/usr\/local\/go\/bin:\/opt\/ibc\/bin:\/opt\/java\/jdk-11.0.18+10\/bin"/' /etc/sudoers
-
+# Add chain command binary path to secure path
+sed -i '/secure_path/ s/"$/:\/usr\/local\/go\/bin:\/opt\/ibc\/bin:\/opt\/java\/jdk-11.0.18+10\/bin:\/root\/.local\/share\/solana\/install\/active_release\/bin:\/root\/.cargo\/bin\/"/' /etc/sudoers
 # Create Aliases for the user 'deployr'
 echo "## Aliases
 alias fetch-walletkeys='sudo /opt/deployer/bin/fetch_keys.sh'
@@ -243,15 +242,11 @@ alias add-stellar-key='/opt/deployer/root/keyutils/add_stellar_key.sh'" >> /root
 source "/root/.cargo/env"
 
 export PATH=$${PATH}:/root/.cargo/bin
-sh -c "$(curl -sSfL https://release.solana.com/v1.18.18/install)"
-
-sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
-/root/.cargo/bin/cargo install --git https://github.com/coral-xyz/anchor avm --locked --force || true
-avm install 0.30.1 || true
-
-echo "export PATH=$${PATH}:/root/.local/share/solana/install/releases/1.18.18/solana-release/bin" >> /root/.bashrc
-
-
+sh -c "$(curl -sSfL https://release.solana.com/v1.18.11/install)"
+/root/.cargo/bin/cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli
+sudo apt-get install npm -y
+npm install -g yarn
+echo "export PATH=$${PATH}:/root/.local/share/solana/install/active_release/bin" >> /root/.bashrc
 
 ## Install multisig
 cargo install --git https://github.com/icon-project/cw-plus.git --branch feat/test-multisig cwmultisig
