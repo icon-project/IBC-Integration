@@ -242,7 +242,7 @@ alias add-stellar-key='/opt/deployer/root/keyutils/add_stellar_key.sh'" >> /root
 source "/root/.cargo/env"
 
 export PATH=$${PATH}:/root/.cargo/bin
-sh -c "$(curl -sSfL https://release.solana.com/v1.18.11/install)"
+sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"
 /root/.cargo/bin/cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli
 sudo apt-get install npm -y
 npm install -g yarn
