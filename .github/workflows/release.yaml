@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
       - name: Install stable toolchain
@@ -54,7 +54,7 @@ jobs:
           cd artifacts/archway && zip -r ../../cosmwasm-contracts.zip . -j
           
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cosmwasm-contracts
           path: cosmwasm-contracts.zip
@@ -71,13 +71,13 @@ jobs:
           echo «::set-output name=date::$(date +'%Y-%m-%d')»
           echo «::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)»
       - name: Download Javascore Artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: javascore-contracts
           path: javascore-contracts
 
       - name: Download Cosmwasm Artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: cosmwasm-contracts
           path: cosmwasm-contracts
