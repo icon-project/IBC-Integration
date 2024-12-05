@@ -19,7 +19,7 @@ jobs:
     steps:
       # Clone
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Install and setup go
       - name: Set up Go 1.19
