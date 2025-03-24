@@ -76,32 +76,11 @@ mkdir -p /opt/deployer
 mkdir -p /opt/deployer/{bin,root}
 mkdir -p /opt/deployer/root/{keystore,keyutils}
 
-# Clone repo
-cat << 'EOF' > clone.expect
-#!/usr/bin/expect -f
-
-# Set the GitHub credentials from arguments
-set timeout -1
-set username [lindex $argv 0]
-set token [lindex $argv 1]
-set repo_url "https://github.com/icon-project/devnet.git"
-set target_dir "/opt/deployer/root/ibc-devops"
-
-# Clone the repository
-spawn git clone $repo_url $target_dir
-expect "Username for 'https://github.com':"
-send "$username\r"
-expect "Password for 'https://$username@github.com':"
-send "$token\r"
-expect eof
-EOF
-
-chmod +x clone.expect
-git config --global credential.helper "cache --timeout=604800"
-./clone.expect "$CI_USER" "$GITHUB_ACCESS_TOKEN"
-# CI_USER_ESCAPED="$${CI_USER//@/%40}"
-# echo -e "[credential]\n\thelper = store" >> ~/.gitconfig
-# echo "https://$${CI_USER_ESCAPED}:$${GITHUB_ACCESS_TOKEN}@gihub.com" > ~/.git-credentials
+mkdir -p /root/.ssh
+echo "${GITHUB_ACCESS_TOKEN}" | base64 -d > /root/.ssh/id_rsa
+chmod 600 /root/.ssh/id_rsa
+ssh-keyscan github.com >> /root/.ssh/known_hosts
+git clone git@github.com:icon-project/devnet.git /opt/deployer/root/ibc-devops
 
 cd /opt/deployer/root/ibc-devops
 git checkout $${DEPLOY_SCRIPT_BRANCH}
