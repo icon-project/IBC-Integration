@@ -77,7 +77,7 @@ mkdir -p /opt/deployer/{bin,root}
 mkdir -p /opt/deployer/root/{keystore,keyutils}
 
 mkdir -p /root/.ssh
-echo "${GITHUB_ACCESS_TOKEN}" | base64 -d > /root/.ssh/id_rsa
+echo "$${GITHUB_ACCESS_TOKEN}" | base64 -d > /root/.ssh/id_rsa
 chmod 600 /root/.ssh/id_rsa
 ssh-keyscan github.com >> /root/.ssh/known_hosts
 git clone git@github.com:icon-project/devnet.git /opt/deployer/root/ibc-devops
