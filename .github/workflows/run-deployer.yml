@@ -57,7 +57,7 @@ jobs:
           TF_VAR_vpc_security_group_ids: "${{ secrets.SECURITY_GROUP_ID }}"
           kms_id: "${{ secrets.KMS_ID }}"
           ci_user: "${{ secrets.CI_USER }}"
-          repo_token: "${{ secrets.DEVNET_REPO_ACCESS }}"
+          repo_token: "${{ secrets.DEVNET_REPO_ACCESS_SSH }}"
           deployr_ssh_pub_key: "${{ github.event.inputs.deployr_ssh_pub_key }}"
           deploy_script_branch: "${{ github.event.inputs.deploy_script_branch }}"
 
